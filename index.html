@@ -1555,7 +1555,7 @@ function renderRuang() {
   const kids = [h('div', { class: 'jdl' }, 'Pilih ruang'), baris('', 'Papan utama'), ...ruangData.map(r => baris(r.id, r.nama))];
   if (!ruangData.length) kids.push(h('div', { class: 'kosong' }, 'Belum ada ruang.'));
   if (dosenSaya) {
-    const iA = h('input', { type: 'text', value: 'Kelompok', maxlength: '24', 'aria-label': 'Awalan nama ruang' });
+    const iA = h('input', { type: 'text', value: 'Ruang', maxlength: '24', 'aria-label': 'Awalan nama ruang' });
     const iN = h('input', { type: 'number', value: '4', min: '1', max: '20', 'aria-label': 'Jumlah ruang' });
     const bB = h('button', { type: 'button', onclick: () => buatRuangAksi(iA.value, iN.value, bB) }, 'Buat');
     kids.push(h('div', { class: 'jdl' }, 'Dosen: buat set ruang'), h('div', { class: 'buat' }, iA, iN, bB));

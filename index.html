@@ -93,13 +93,13 @@
   #menu-tema[hidden] { display:none; }
   #akun-wrap { position:relative; display:inline-flex; }
   #btn-akun { max-width:160px; overflow:hidden; text-overflow:ellipsis; border:2px solid var(--h); padding:4px 10px; font-size:14px; }
-  #menu-akun { position:absolute; right:0; top:calc(100% + 6px); z-index:40; padding:4px; background:var(--p); border:2px solid var(--h); }
+  #menu-akun, #menu-ruang { position:absolute; right:0; top:calc(100% + 6px); z-index:40; padding:4px; background:var(--p); border:2px solid var(--h); }
   #menu-akun[hidden] { display:none; }
-  #menu-akun button { font:inherit; font-size:14px; white-space:nowrap; min-width:90px; padding:6px 12px; background:var(--p); color:var(--h); border:2px solid transparent; cursor:pointer; }
-  #menu-akun button:hover { border-color:var(--h); }
+  #menu-akun button, #menu-ruang button { font:inherit; font-size:14px; white-space:nowrap; min-width:90px; padding:6px 12px; background:var(--p); color:var(--h); border:2px solid transparent; cursor:pointer; }
+  #menu-akun button:hover, #menu-ruang button:hover { border-color:var(--h); }
   #menu-tema button { font:inherit; font-size:16px; line-height:1; min-width:36px; padding:6px 8px; background:var(--p); color:var(--h); border:2px solid transparent; cursor:pointer; }
   #menu-tema button:hover { border-color:var(--h); }
-  #menu-tema button.aktif { background:var(--h); color:var(--p); }
+  #menu-tema button.aktif, #menu-ruang button.aktif { background:var(--h); color:var(--p); }
   html[data-latar="mati"] #titik { display:none; }
   /* monokrom: hanya hitam dan putih, kontras penuh */
   :root[data-mono="1"] .dek .teks { color:inherit !important; }
@@ -292,32 +292,32 @@
   #banner div { border:2px dashed var(--h); padding:10px 14px; margin:8px 0; }
 
   /* ===== gaya tombol ala "Sign in with Google": sudut 4px, garis tepi 1px abu ===== */
-  header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-foto, header #btn-rapi, header #urut {
+  header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-foto, header #btn-rapi, header #urut {
     height:40px; box-sizing:border-box; border:1px solid #dadce0 !important; border-radius:4px !important; background:#fff !important; color:#3c4043 !important;
     font:500 14px/1 "Google Sans", Roboto, Arial, sans-serif !important; letter-spacing:.2px; padding:0 14px !important; min-width:40px !important;
     display:inline-flex; align-items:center; justify-content:center; text-decoration:none; transition:background .15s, box-shadow .15s; }
   header .kanan select, header #urut { padding:0 10px !important; }
-  header #btn-tema, header #btn-suara, header #btn-foto, header #btn-help { width:40px; padding:0 !important; }
+  header #btn-tema, header #btn-suara, header #btn-ruang, header #btn-foto, header #btn-help { width:40px; padding:0 !important; }
   header .kanan .btn:hover:not(:disabled), header .kanan select:hover { background:#f8f9fa !important; box-shadow:0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); }
   header #btn-akun { max-width:160px; display:inline-block; line-height:38px; }
   header #btn-suara.mati { opacity:.55; }
   header .kanan { gap:8px; }
   #login { min-height:40px; }
-  #menu-tema, #menu-akun { border:1px solid #dadce0 !important; border-radius:4px; background:#fff !important; box-shadow:0 2px 6px rgba(60,64,67,.3); }
-  #menu-tema button, #menu-akun button { background:#fff !important; color:#3c4043 !important; border:1px solid transparent !important; border-radius:4px; font-family:"Google Sans", Roboto, Arial, sans-serif; }
-  #menu-tema button:hover, #menu-akun button:hover { background:#f1f3f4 !important; border-color:transparent !important; }
-  #menu-tema button.aktif { background:#e8f0fe !important; color:#1a73e8 !important; }
+  #menu-tema, #menu-akun, #menu-ruang { border:1px solid #dadce0 !important; border-radius:4px; background:#fff !important; box-shadow:0 2px 6px rgba(60,64,67,.3); }
+  #menu-tema button, #menu-akun button, #menu-ruang button { background:#fff !important; color:#3c4043 !important; border:1px solid transparent !important; border-radius:4px; font-family:"Google Sans", Roboto, Arial, sans-serif; }
+  #menu-tema button:hover, #menu-akun button:hover, #menu-ruang button:hover { background:#f1f3f4 !important; border-color:transparent !important; }
+  #menu-tema button.aktif, #menu-ruang button.aktif { background:#e8f0fe !important; color:#1a73e8 !important; }
   :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
   :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover { background:#1f1f1f !important; box-shadow:none; }
-  :root[data-tema="gelap"] #menu-tema, :root[data-tema="gelap"] #menu-akun { background:#131314 !important; border-color:#5f6368 !important; }
-  :root[data-tema="gelap"] #menu-tema button, :root[data-tema="gelap"] #menu-akun button { background:#131314 !important; color:#e3e3e3 !important; }
-  :root[data-tema="gelap"] #menu-tema button:hover, :root[data-tema="gelap"] #menu-akun button:hover { background:#1f1f1f !important; }
-  :root[data-tema="gelap"] #menu-tema button.aktif { background:#1f3a5f !important; color:#8ab4f8 !important; }
+  :root[data-tema="gelap"] #menu-tema, :root[data-tema="gelap"] #menu-akun, :root[data-tema="gelap"] #menu-ruang { background:#131314 !important; border-color:#5f6368 !important; }
+  :root[data-tema="gelap"] #menu-tema button, :root[data-tema="gelap"] #menu-akun button, :root[data-tema="gelap"] #menu-ruang button { background:#131314 !important; color:#e3e3e3 !important; }
+  :root[data-tema="gelap"] #menu-tema button:hover, :root[data-tema="gelap"] #menu-akun button:hover, :root[data-tema="gelap"] #menu-ruang button:hover { background:#1f1f1f !important; }
+  :root[data-tema="gelap"] #menu-tema button.aktif, :root[data-tema="gelap"] #menu-ruang button.aktif { background:#1f3a5f !important; color:#8ab4f8 !important; }
 
-  :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #btn-akun, :root[data-tema="gelap"] header #btn-tema, :root[data-tema="gelap"] header #btn-help, :root[data-tema="gelap"] header #btn-suara, :root[data-tema="gelap"] header #btn-foto, :root[data-tema="gelap"] header #btn-rapi, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
-  :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover:not(:disabled), :root[data-tema="gelap"] header #btn-akun:hover:not(:disabled), :root[data-tema="gelap"] header #btn-tema:hover:not(:disabled), :root[data-tema="gelap"] header #btn-help:hover:not(:disabled), :root[data-tema="gelap"] header #btn-suara:hover:not(:disabled), :root[data-tema="gelap"] header #btn-foto:hover:not(:disabled), :root[data-tema="gelap"] header #btn-rapi:hover:not(:disabled), :root[data-tema="gelap"] header #urut:hover:not(:disabled) { background:#1f1f1f !important; box-shadow:none; }
-  :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #btn-akun, :root[data-mono="1"][data-tema="terang"] header #btn-tema, :root[data-mono="1"][data-tema="terang"] header #btn-help, :root[data-mono="1"][data-tema="terang"] header #btn-suara, :root[data-mono="1"][data-tema="terang"] header #btn-foto, :root[data-mono="1"][data-tema="terang"] header #btn-rapi, :root[data-mono="1"][data-tema="terang"] header #urut { border-color:#000 !important; color:#000 !important; background:#fff !important; }
-  :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #btn-akun, :root[data-mono="1"][data-tema="gelap"] header #btn-tema, :root[data-mono="1"][data-tema="gelap"] header #btn-help, :root[data-mono="1"][data-tema="gelap"] header #btn-suara, :root[data-mono="1"][data-tema="gelap"] header #btn-foto, :root[data-mono="1"][data-tema="gelap"] header #btn-rapi, :root[data-mono="1"][data-tema="gelap"] header #urut { border-color:#fff !important; color:#fff !important; background:#000 !important; }
+  :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #btn-akun, :root[data-tema="gelap"] header #btn-tema, :root[data-tema="gelap"] header #btn-help, :root[data-tema="gelap"] header #btn-suara, :root[data-tema="gelap"] header #btn-ruang, :root[data-tema="gelap"] header #btn-foto, :root[data-tema="gelap"] header #btn-rapi, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
+  :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover:not(:disabled), :root[data-tema="gelap"] header #btn-akun:hover:not(:disabled), :root[data-tema="gelap"] header #btn-tema:hover:not(:disabled), :root[data-tema="gelap"] header #btn-help:hover:not(:disabled), :root[data-tema="gelap"] header #btn-suara:hover:not(:disabled), :root[data-tema="gelap"] header #btn-ruang:hover:not(:disabled), :root[data-tema="gelap"] header #btn-foto:hover:not(:disabled), :root[data-tema="gelap"] header #btn-rapi:hover:not(:disabled), :root[data-tema="gelap"] header #urut:hover:not(:disabled) { background:#1f1f1f !important; box-shadow:none; }
+  :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #btn-akun, :root[data-mono="1"][data-tema="terang"] header #btn-tema, :root[data-mono="1"][data-tema="terang"] header #btn-help, :root[data-mono="1"][data-tema="terang"] header #btn-suara, :root[data-mono="1"][data-tema="terang"] header #btn-ruang, :root[data-mono="1"][data-tema="terang"] header #btn-foto, :root[data-mono="1"][data-tema="terang"] header #btn-rapi, :root[data-mono="1"][data-tema="terang"] header #urut { border-color:#000 !important; color:#000 !important; background:#fff !important; }
+  :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #btn-akun, :root[data-mono="1"][data-tema="gelap"] header #btn-tema, :root[data-mono="1"][data-tema="gelap"] header #btn-help, :root[data-mono="1"][data-tema="gelap"] header #btn-suara, :root[data-mono="1"][data-tema="gelap"] header #btn-ruang, :root[data-mono="1"][data-tema="gelap"] header #btn-foto, :root[data-mono="1"][data-tema="gelap"] header #btn-rapi, :root[data-mono="1"][data-tema="gelap"] header #urut { border-color:#fff !important; color:#fff !important; background:#000 !important; }
   /* kotak Statistik */
   #statistik { background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font-family:"Google Sans", Roboto, Arial, sans-serif; }
   #stat-judul { background:transparent; color:#3c4043; font-weight:500; padding:10px 12px; }
@@ -335,10 +335,10 @@
   #bantuan .tutup-bantuan:hover { background:#f8f9fa !important; }
   /* monokrom tetap hitam putih tegas, hanya sudutnya membulat dan garis tepinya 1px */
   :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #urut,
-  :root[data-mono="1"][data-tema="terang"] #menu-tema, :root[data-mono="1"][data-tema="terang"] #menu-akun, :root[data-mono="1"][data-tema="terang"] #statistik { border-color:#000 !important; color:#000 !important; }
+  :root[data-mono="1"][data-tema="terang"] #menu-tema, :root[data-mono="1"][data-tema="terang"] #menu-akun, :root[data-mono="1"][data-tema="terang"] #menu-ruang, :root[data-mono="1"][data-tema="terang"] #statistik { border-color:#000 !important; color:#000 !important; }
   :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #urut,
-  :root[data-mono="1"][data-tema="gelap"] #menu-tema, :root[data-mono="1"][data-tema="gelap"] #menu-akun, :root[data-mono="1"][data-tema="gelap"] #statistik { border-color:#fff !important; color:#fff !important; }
-  @media (max-width:640px) { header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-foto, header #btn-rapi, header #urut { height:34px; font-size:12px !important; padding:0 8px !important; min-width:34px !important; } header #btn-akun { line-height:32px; } header .kanan { gap:5px; } }
+  :root[data-mono="1"][data-tema="gelap"] #menu-tema, :root[data-mono="1"][data-tema="gelap"] #menu-akun, :root[data-mono="1"][data-tema="gelap"] #menu-ruang, :root[data-mono="1"][data-tema="gelap"] #statistik { border-color:#fff !important; color:#fff !important; }
+  @media (max-width:640px) { header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-foto, header #btn-rapi, header #urut { height:34px; font-size:12px !important; padding:0 8px !important; min-width:34px !important; } header #btn-akun { line-height:32px; } header .kanan { gap:5px; } }
 
   /* ===== Peta kartu (minimap) ===== */
   #peta { position:fixed; left:12px; bottom:12px; z-index:26; width:208px; background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font:14px "Google Sans", Roboto, Arial, sans-serif; --pm-dim:rgba(255,255,255,.62); }
@@ -469,6 +469,32 @@
   #palet-stiker .alat-p { font:inherit; font-size:13px; padding:5px 10px; margin-left:4px; background:var(--p); color:var(--h); border:2px solid var(--h); cursor:pointer; }
   #palet-stiker .alat-p[aria-pressed="true"], #palet-stiker .alat-p.selesai { background:var(--h); color:var(--p); }
   @media (max-width:640px) { #btn-stiker .lbl { display:none; } #palet-stiker { bottom:62px; } }
+
+  /* ===== Ruang (breakout) ===== */
+  #ruang-wrap { position:relative; display:inline-flex; }
+  #btn-ruang { border:2px solid var(--h); padding:4px 10px; font-size:14px; white-space:nowrap; }
+  #btn-ruang .t { display:block; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #btn-ruang[hidden], #ruang-wrap[hidden] { display:none; }
+  #menu-ruang { position:absolute; right:0; top:calc(100% + 6px); z-index:45; width:280px; max-height:min(70vh, 480px); overflow:auto; padding:4px; background:var(--p); border:2px solid var(--h); text-align:left; }
+  #menu-ruang[hidden] { display:none; }
+  #menu-ruang .jdl { font:inherit; font-size:11px; letter-spacing:.06em; text-transform:uppercase; opacity:.65; padding:6px 8px 2px; }
+  #menu-ruang button { display:flex; width:100%; justify-content:space-between; gap:8px; font:inherit; font-size:14px; text-align:left; padding:7px 10px; background:var(--p); color:var(--h); border:2px solid transparent; cursor:pointer; }
+  #menu-ruang button:hover { border-color:var(--h); }
+  #menu-ruang button.aktif { background:var(--h); color:var(--p); }
+  #menu-ruang button .n { opacity:.7; font-variant-numeric:tabular-nums; }
+  #menu-ruang .buat { display:flex; gap:4px; padding:4px 4px 6px; }
+  #menu-ruang .buat input { font:inherit; font-size:14px; min-width:0; padding:5px 8px; border:2px solid var(--h); background:var(--p); color:var(--h); }
+  #menu-ruang .buat input[type=text] { flex:1; }
+  #menu-ruang .buat input[type=number] { width:56px; }
+  #menu-ruang .buat button { width:auto; padding:5px 10px; border:2px solid var(--h); }
+  #menu-ruang .bahaya { font-size:13px; }
+  #menu-ruang .jdl { color:#5f6368 !important; }
+  :root[data-tema="gelap"] #menu-ruang .jdl { color:#9aa0a6 !important; }
+  :root[data-mono="1"][data-tema="terang"] #menu-ruang .jdl { color:#000 !important; }
+  :root[data-mono="1"][data-tema="gelap"] #menu-ruang .jdl { color:#fff !important; }
+  header #btn-ruang { width:auto !important; padding:0 12px !important; }
+  #menu-ruang .kosong { padding:8px 10px; font-size:13px; opacity:.7; }
+  @media (max-width:640px) { #btn-ruang .t { max-width:84px; } #menu-ruang { position:fixed; left:12px; right:12px; top:56px; width:auto; } }
 </style>
 </head>
 <body>
@@ -478,7 +504,7 @@
   <div class="judul">
     <h1><b aria-label="Dekken"><span style="font-size:1.3333em">D</span><span style="font-size:1.2667em">e</span><span style="font-size:1.2em">k</span><span style="font-size:1.1333em">k</span><span style="font-size:1.0667em">e</span><span style="font-size:1em">n</span></b> : Tumpuk, balas, dan naikkan! <span id="timer" title="Sisa waktu tempel catatan sebelum papan di-reset"></span></h1>
   </div>
-  <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><div id="login"></div></div>
+  <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><span id="ruang-wrap" hidden><button type="button" id="btn-ruang" class="btn garis" aria-haspopup="true" aria-expanded="false" title="Pilih ruang (breakout)">▣ Ruang</button><div id="menu-ruang" role="menu" hidden></div></span><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><div id="login"></div></div>
 </header>
 <aside id="statistik"><button type="button" id="stat-judul" aria-expanded="true"><span>Statistik</span><span id="stat-panah">▾</span></button><div id="stat-isi"></div></aside>
 <aside id="peta" hidden><button type="button" id="peta-judul" aria-expanded="true"><span>Peta kartu</span><span id="peta-panah">▾</span></button><div id="peta-isi"><div id="peta-kanvas" role="presentation" title="Klik atau seret untuk berpindah"><canvas></canvas><div id="peta-kotak"></div></div></div><div id="peta-zoom"><button type="button" id="pz-min" aria-label="Perkecil" title="Perkecil (Ctrl + gulir)">−</button><button type="button" id="pz-nilai" title="Kembali ke 100%">100%</button><button type="button" id="pz-plus" aria-label="Perbesar" title="Perbesar (Ctrl + gulir)">+</button></div></aside>
@@ -523,6 +549,10 @@ let tombServer = { ids: new Set(), reset: 0 };   // kartu yang dihapus di perang
 let ovHapus = {};             // id kartu yang baru dihapus di sini (menutupi cache CSV sebentar)
 let ovPoll = {};              // hasil polling terbaru dari server setelah saya memilih
 let statusAkun = 'aktif';     // 'aktif' | 'baru' (belum terdaftar) | 'blokir'
+let ruangData = [];          // [{id, nama, urut}] dari server
+let ruangSaya = '';          // '' = papan utama
+try { ruangSaya = localStorage.getItem('deck-ruang') || ''; } catch (e) {}
+let ruangBuka = false, ruangKonfirm = '';
 let dosenSaya = false;        // akun yang masuk adalah dosen (boleh membuat polling)
 let pollBuka = false;         // kartu penulis polling sedang terbuka
 let pollDraft = { u: '', q: '', o: ['', ''], menit: 60 };
@@ -648,7 +678,8 @@ function normal(o) {
            up: parseInt(o.up) || 0, down: parseInt(o.down) || 0,
            tautan: (Array.isArray(o.tautan) ? o.tautan : String(o.tautan || '').split(',')).map(x => String(x).trim()).filter(Boolean).slice(0, MAKS_TAUTAN),
            poll: bacaPoll(o.polling), tmr: String(o.bentuk || '').toLowerCase() === 'waktu', habis: Number(o.habis) > 0 && String(o.bentuk || '').toLowerCase() === 'waktu' ? Number(o.habis) : 0,
-           game: Number(o.game) > 0 ? Number(o.game) : 0 };   // game: 0 tidak ada, 1 berjalan/tersegel, 2 sudah ditampilkan
+           game: Number(o.game) > 0 ? Number(o.game) : 0,
+           ruang: String(o.ruang_id || '') };   // game: 0 tidak ada, 1 berjalan/tersegel, 2 sudah ditampilkan
 }
 
 /* ================== MUAT DATA ================== */
@@ -661,20 +692,26 @@ async function muat(otomatis) {
   sinkronMulai();
   try {
     const t0 = Date.now();
-    const [r, w, st] = await Promise.all([
+    const [r, w, st, rg] = await Promise.all([
       sb.from('posts').select('*').order('waktu', { ascending: true }).limit(5000),
       sb.rpc('kini_ms'),
-      ambilStiker()
+      ambilStiker(),
+      sb.from('ruang').select('*').order('urut', { ascending: true }).limit(60)
     ]);
     if (r.error) throw r.error;
     if (!w.error && Number(w.data) > 0) skew = Number(w.data) - (t0 + Date.now()) / 2;
     dataServer = (r.data || []).map(normal).filter(p => p.id && p.teks);
+    if (!rg.error && Array.isArray(rg.data)) {   // tabel ruang belum ada / gagal dibaca: pertahankan yang lama
+      ruangData = rg.data;
+      if (ruangSaya && !ruangData.some(x => x.id === ruangSaya)) { ruangSaya = ''; simpanRuang(); hadirKirim(); toast('Ruang ini ditutup. Kartunya digabung ke papan utama.'); }
+      renderRuang();
+    }
     if (st) stikerData = st;   // null = tabel stiker belum ada / gagal dibaca: pertahankan yang lama
     // data dari server adalah kebenaran: tutupan sementara tidak diperlukan lagi
     lokal = []; override = {}; ovPoll = {}; ovTautan = {}; ovHapus = {}; ovBuka = {}; ovGame = {};
     {   // bunyi "dek dek" bila ada kartu baru dari orang lain
-      const kini = new Set(dataServer.map(p => p.id));
-      if (suaraKead.dikenal && otomatis && dataServer.some(p => !suaraKead.dikenal.has(p.id) && !milikSaya.has(p.id))) bunyiDekdek();
+      const kini = new Set(dataServer.filter(p => p.ruang === ruangSaya).map(p => p.id));
+      if (suaraKead.dikenal && otomatis && dataServer.some(p => p.ruang === ruangSaya && !suaraKead.dikenal.has(p.id) && !milikSaya.has(p.id))) bunyiDekdek();
       suaraKead.dikenal = kini;
     }
     render();
@@ -686,7 +723,11 @@ let muatTunda = false, muatUlang = false;
 let tRealtime = null;
 function realtimeMulai() {
   if (!sb) return;
-  sb.channel('kartu-berubah').on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
+  sb.channel('kartu-berubah').on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, p => {
+    // kartu di ruang lain tidak perlu memuat ulang layar ini (hapus tidak membawa info ruang, jadi tetap dimuat)
+    if (p && p.new && p.eventType !== 'DELETE' && String(p.new.ruang_id || '') !== ruangSaya) return;
+    clearTimeout(tRealtime); tRealtime = setTimeout(() => muat(true), 350);
+  }).on('postgres_changes', { event: '*', schema: 'public', table: 'ruang' }, () => {
     clearTimeout(tRealtime); tRealtime = setTimeout(() => muat(true), 350);
   }).on('postgres_changes', { event: '*', schema: 'public', table: 'stiker' }, p => {   // stiker: ubah langsung di tempatnya, tanpa memuat ulang papan
     if (p.eventType === 'INSERT' && p.new) terapkanStiker(p.new);
@@ -716,7 +757,7 @@ function semua() {
   for (const [id, t] of Object.entries(ovBuka)) { const p = m.get(id); if (p) { p.teks = t; if (p.parent) p.game = 2; } }
   for (const [id, a] of Object.entries(ovGame)) { const p = m.get(id); if (p && p.game < a) p.game = a; }
   for (const [id, o] of Object.entries(ovTautan)) { const p = m.get(id); if (p && now - o.t < 360000) p.tautan = o.a; }
-  return [...m.values()];
+  return [...m.values()].filter(p => p.ruang === ruangSaya);
 }
 const skor = p => p.up - p.down;
 const urut = (a, b) => skor(b) - skor(a) || new Date(b.waktu) - new Date(a.waktu);
@@ -757,8 +798,10 @@ const RPC = {
   ronde:   i => ['ronde', { p_id: i.id }],
   tampil:  i => ['tampil', { p_id: i.id }],
   tautan:  i => ['tautan', { p_id: i.id, p_ke: i.ke }],
-  polling: i => ['buat_polling', { p: { username: i.username, tanya: i.tanya, opsi: i.opsi, menit: i.menit } }],
-  post:    i => ['kirim', { p: { username: i.username, teks: i.teks, parent: i.parent || '', membalas: i.membalas || '', warna: i.warna, kartu: i.kartu, bentuk: i.bentuk, menit: i.menit, game: i.game ? 'true' : '' } }]
+  polling: i => ['buat_polling', { p: { username: i.username, tanya: i.tanya, opsi: i.opsi, menit: i.menit, ruang: ruangSaya } }],
+  buatRuang: i => ['buat_ruang', { p: { awalan: i.awalan, jumlah: i.jumlah } }],
+  tutupRuang: i => ['tutup_ruang', { p_id: i.id || null }],
+  post:    i => ['kirim', { p: { username: i.username, teks: i.teks, parent: i.parent || '', membalas: i.membalas || '', warna: i.warna, kartu: i.kartu, bentuk: i.bentuk, menit: i.menit, game: i.game ? 'true' : '', ruang: ruangSaya } }]
 };
 async function panggilInti(isi) {
   if (!sb) throw new Error('Pustaka Supabase belum termuat. Muat ulang halaman.');
@@ -768,6 +811,7 @@ async function panggilInti(isi) {
   if (error) {
     const m = String(error.message || '');
     if (m === 'LOGIN') keluar(true);
+    if (/sudah ditutup/.test(m)) muat();   // ruang tutup saat mengetik: segarkan daftar ruang
     throw new Error(PESAN[m] || m || 'Terjadi kesalahan.');
   }
   return data || {};
@@ -1114,6 +1158,7 @@ async function daftarAkun(btn) {
   renderAlat(); render();
 }
 function renderAlat() {
+  renderRuang();   // tombol Ruang ikut peran (dosen / mahasiswa)
   const el = document.getElementById('bentuk-baris');
   const belum = tokenHidup() && statusAkun !== 'aktif';
   el.classList.toggle('belum', belum);
@@ -1467,6 +1512,66 @@ function kartuUtama(p, balasan) {
   return item;
 }
 
+/* ================== RUANG (BREAKOUT) ================== */
+const simpanRuang = () => { try { localStorage.setItem('deck-ruang', ruangSaya); } catch (e) {} };
+const namaRuang = id => id ? ((ruangData.find(r => r.id === id) || {}).nama || 'Ruang') : 'Papan utama';
+function pilihRuang(id) {
+  if (id === ruangSaya) { tutupMenuRuang(); return; }
+  ruangSaya = id; simpanRuang();
+  komposBuka = false; pollBuka = false; balasTerbuka = null; balasKe = null; dekBuka = null;
+  suaraKead.dikenal = new Set(dataServer.filter(p => p.ruang === ruangSaya).map(p => p.id));
+  tutupMenuRuang(); renderRuang(); renderAlat(); render(); hadirKirim();
+  toast('Masuk: ' + namaRuang(id));
+  muat(true);   // kartu ruang ini mungkin berubah selagi saya di ruang lain
+}
+function tutupMenuRuang() { ruangBuka = false; ruangKonfirm = ''; renderRuang(); }
+async function buatRuangAksi(awalan, jumlah, btn) {
+  if (!butuhLogin()) return;
+  btn.disabled = true;
+  try { await panggil({ aksi: 'buatRuang', awalan: awalan.trim() || 'Ruang', jumlah: parseInt(jumlah) || 0 }); await muat(); toast('Ruang dibuat ✓'); }
+  catch (e) { toast(e.message); }
+  btn.disabled = false; renderRuang();
+}
+async function tutupRuangAksi(id) {
+  try { const j = await panggil({ aksi: 'tutupRuang', id }); ruangKonfirm = ''; await muat(); toast('Ruang ditutup' + (j.kartu_digabung ? ' · ' + j.kartu_digabung + ' kartu digabung ke papan utama' : '')); }
+  catch (e) { toast(e.message); }
+  renderRuang();
+}
+function renderRuang() {
+  const wrap = document.getElementById('ruang-wrap'), tb = document.getElementById('btn-ruang'), menu = document.getElementById('menu-ruang');
+  if (!wrap || !tb || !menu) return;
+  const tampak = dosenSaya || ruangData.length > 0;
+  wrap.hidden = !tampak;
+  tb.replaceChildren(h('span', { class: 't' }, '▣ ' + (ruangSaya ? namaRuang(ruangSaya) : 'Ruang')));
+  tb.title = 'Ruang saat ini: ' + namaRuang(ruangSaya);
+  tb.setAttribute('aria-expanded', ruangBuka ? 'true' : 'false');
+  menu.hidden = !ruangBuka || !tampak;
+  if (menu.hidden) return;
+  const per = (hadirData && hadirData.per) || {};
+  const baris = (id, nama) => h('button', { type: 'button', role: 'menuitemradio', class: id === ruangSaya ? 'aktif' : '', 'aria-checked': id === ruangSaya ? 'true' : 'false', onclick: () => pilihRuang(id) },
+    h('span', {}, nama), h('span', { class: 'n', title: 'Orang yang sedang aktif di sini' }, per[id] ? String(per[id]) : ''));
+  const aktifInput = document.activeElement && menu.contains(document.activeElement) ? document.activeElement : null;
+  if (aktifInput && aktifInput.tagName === 'INPUT') return;   // jangan membongkar form saat sedang diketik
+  const kids = [h('div', { class: 'jdl' }, 'Pilih ruang'), baris('', 'Papan utama'), ...ruangData.map(r => baris(r.id, r.nama))];
+  if (!ruangData.length) kids.push(h('div', { class: 'kosong' }, 'Belum ada ruang.'));
+  if (dosenSaya) {
+    const iA = h('input', { type: 'text', value: 'Kelompok', maxlength: '24', 'aria-label': 'Awalan nama ruang' });
+    const iN = h('input', { type: 'number', value: '4', min: '1', max: '20', 'aria-label': 'Jumlah ruang' });
+    const bB = h('button', { type: 'button', onclick: () => buatRuangAksi(iA.value, iN.value, bB) }, 'Buat');
+    kids.push(h('div', { class: 'jdl' }, 'Dosen: buat set ruang'), h('div', { class: 'buat' }, iA, iN, bB));
+    if (ruangSaya) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === ruangSaya) tutupRuangAksi(ruangSaya); else { ruangKonfirm = ruangSaya; renderRuang(); } } }, ruangKonfirm === ruangSaya ? 'Yakin? Klik lagi untuk menutup' : 'Tutup ruang ini (gabung ke utama)'));
+    if (ruangData.length) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === '*') tutupRuangAksi(null); else { ruangKonfirm = '*'; renderRuang(); } } }, ruangKonfirm === '*' ? 'Yakin? Klik lagi untuk menutup semua' : 'Tutup semua ruang'));
+  }
+  menu.replaceChildren(...kids);
+}
+(function ruangMulai() {
+  const tb = document.getElementById('btn-ruang'), menu = document.getElementById('menu-ruang'), wrap = document.getElementById('ruang-wrap');
+  tb.addEventListener('click', e => { e.stopPropagation(); ruangBuka = !ruangBuka; ruangKonfirm = ''; renderRuang(); });
+  document.addEventListener('click', e => { if (ruangBuka && !e.composedPath().includes(wrap)) tutupMenuRuang(); });   // composedPath: tombol di menu ikut diganti saat render
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && ruangBuka) tutupMenuRuang(); });
+  renderRuang();
+})();
+
 /* ================== STIKER TEMPEL ================== */
 /* Daftar ini harus sama dengan jenis_stiker() di stiker.sql */
 const STIKER = [['senyum', '\u{1F600}', 'Senyum'], ['jempol', '\u{1F44D}', 'Jempol'], ['hati', '❤️', 'Hati'], ['api', '\u{1F525}', 'Api'], ['ide', '\u{1F4A1}', 'Ide'], ['tanya', '❓', 'Tanya'],
@@ -1590,6 +1695,7 @@ function isiBantuan() {
     ...bagian('Kartu game', 'Di kartu biasa milikmu (selain polling dan timer) ada tombol berikon kontroler game di dekat tombol Balas. Klik untuk menjadikannya kartu game: label GAME muncul, dan semua jawaban dari orang lain tersegel (bergembok), isinya hanya terlihat pengirimnya sendiri. Satu akun satu jawaban, dan pembuat kartu tidak ikut menjawab. Ketika siap, pembuat menekan ikon mata di baris tombol kartunya: semua jawaban terbuka untuk semua orang dan menjadi balasan biasa. Kartu game dihapus dengan \u2715 seperti kartu lain; balasannya ikut terhapus.'),
     ...bagian('Polling', 'Kartu oranye bertanda POLLING berisi satu pertanyaan dengan 2 sampai 5 pilihan. Semua akun terdaftar yang sudah masuk boleh memilih: klik satu pilihan (satu akun satu pilihan), klik pilihan lain untuk mengganti, atau klik pilihan yang sama lagi untuk membatalkan. Hasil berupa persentase dan jumlah suara langsung terlihat oleh semua orang, juga oleh yang belum masuk. Tiap polling punya hitung mundur sendiri di bagian bawah kartu; setelah selesai pilihan terkunci dan pilihan terbanyak diberi bingkai. Polling yang sedang berjalan selalu di posisi pertama, hanya satu polling berjalan pada satu waktu, warnanya oranye di semua tampilan (juga monokrom), tidak bisa dibalas, dan bisa disambungkan seperti kartu biasa. Polling hanya bisa dibuat oleh dosen: setelah masuk, tombol polling di ujung kanan deretan bentuk di bawah layar membuka kartu pembuat polling (pertanyaan, pilihan, dan lama polling: 15 menit, 30 menit, 1 jam, 2 jam, 4 jam, atau 8 jam). Polling ikut dikosongkan oleh reset harian.'),
     ...bagian('Stiker', 'Tombol ☺ Stiker di kanan atas membuka koleksi 12 stiker (senyum, jempol, hati, api, ide, dan lainnya). Pilih satu, lalu ketuk di mana saja pada kartu mana pun untuk menempelkannya. Satu akun hanya bisa satu stiker per kartu: menempel lagi di kartu yang sama memindahkan atau mengganti stikermu. Tombol ✕ Cabut membiarkanmu mencabut stiker dengan mengetuknya, dan siapa pun yang sudah masuk boleh mencabut stiker mana pun. Stiker ikut terhapus saat kartunya dihapus atau papan di-reset. Jawaban kartu game yang masih tersegel tidak bisa distiker. Tutup koleksi dengan Selesai atau tombol Esc.'),
+    ...bagian('Ruang (breakout)', 'Dosen dapat membagi kelas ke beberapa ruang: tombol ▣ Ruang di kanan atas, isi awalan dan jumlah, lalu Buat. Setiap orang memilih ruangnya lewat tombol yang sama dan hanya melihat kartu, balasan, dan stiker di ruang itu; kartu baru otomatis masuk ke ruang yang sedang dipilih. Boleh pindah ruang kapan saja, dan angka di samping nama ruang menunjukkan berapa orang yang sedang aktif di sana. Papan utama tetap ada dan tidak terpengaruh. Polling dosen masuk ke ruang tempat dosen berada. Setelah selesai, dosen menutup ruang (satu per satu atau semuanya) dan semua kartunya otomatis digabung ke papan utama. Reset harian juga menutup semua ruang.'),
     ...bagian('Urut dan Rapi/Acak', 'Di kanan atas, pilihan "Urut" mengurutkan kartu menurut suara, yang terbaru, atau nama username A–Z. Tombol di sebelahnya menunjukkan kondisi tampilan: "Acak" (kartu tertempel miring seperti biasa) atau "Rapi" (semua kartu tersusun dalam kolom rapi dan semua balasan terbuka); klik untuk berganti. Keduanya hanya mengubah tampilanmu sendiri dan diingat di browser ini; orang lain tidak terpengaruh dan isi papan tidak berubah.'),
     ...bagian('Statistik', 'Kotak "Statistik" di kanan bawah menampilkan jumlah pengguna aktif, kartu, balasan, dan koneksi, serta username yang sedang aktif. Klik judulnya untuk menyembunyikan atau menampilkannya. Yang tampil hanya username, bukan email; pengunjung yang belum masuk hanya terhitung di angka.'),
     ...bagian('Tampilan', 'Tombol ikon di kanan atas (di samping tombol ?) membuka pilihan: ☀ terang, ☾ gelap, ○ monokrom terang, ● monokrom gelap, dan ⊘ untuk mematikan atau menyalakan latar tanda ^ (lihat "Latar tanda ^"). Mode monokrom hanya memakai hitam dan putih (kontras penuh): kartu dan balasan saling berlawanan warna. Pilihan pertama mengikuti pengaturan perangkatmu, lalu diingat di browser ini dan tidak mengubah isi kartu.'),
@@ -2042,16 +2148,16 @@ function renderStat() {
 let kanalHadir = null;
 function hadirKirim() {
   if (!kanalHadir) return;
-  try { kanalHadir.track({ id: idKlien, nama: tokenHidup() ? (getUser() || '') : '' }); } catch (e) {}
+  try { kanalHadir.track({ id: idKlien, nama: tokenHidup() ? (getUser() || '') : '', ruang: ruangSaya }); } catch (e) {}
 }
 function hadirMulai() {
   if (!sb) return;
   kanalHadir = sb.channel('hadir', { config: { presence: { key: idKlien } } });
   kanalHadir.on('presence', { event: 'sync' }, () => {
     const st = kanalHadir.presenceState(), nama = [];
-    let aktif = 0;
-    Object.values(st).forEach(arr => { aktif++; const n = String((arr[arr.length - 1] || {}).nama || '').trim(); if (n && !nama.includes(n)) nama.push(n); });
-    hadirData = { aktif, nama }; renderStat();
+    let aktif = 0; const per = {};
+    Object.values(st).forEach(arr => { aktif++; const x = arr[arr.length - 1] || {}, n = String(x.nama || '').trim(); if (n && !nama.includes(n)) nama.push(n); const r = String(x.ruang || ''); per[r] = (per[r] || 0) + 1; });
+    hadirData = { aktif, nama, per }; renderStat(); renderRuang();
   }).subscribe(status => { if (status === 'SUBSCRIBED') hadirKirim(); });
 }
 function hadir() { hadirKirim(); }

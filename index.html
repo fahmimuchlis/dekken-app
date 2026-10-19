@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dekken</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:wght@400;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#FEE440">
+<meta name="description" content="Dekken: papan kartu tempel untuk kelas paralel. Tumpuk, balas, dan naikkan!">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dekken">
+<script src="vendor/supabase.js"></script>
+<style>
+  :root {
+    --h:#000; --p:#fff; --abu:#555; --kuning:#FEE440;
+    --c-enam: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+    --c-lima: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%);
+  }
+  /* mode gelap: latar jadi hitam, teks putih; kartu tetap berwarna dengan teks gelap */
+  :root[data-tema="gelap"] { --h:#fff; --p:#000; --abu:#aaa; }
+  :root[data-tema="gelap"] .kartu, :root[data-tema="gelap"] .balas, :root[data-tema="gelap"] .kompos,
+  :root[data-tema="gelap"] #bantuan .lembar, :root[data-tema="gelap"] .kontrol { --h:#000; --p:#fff; --abu:#555; color:#000; }
+  :root[data-tema="gelap"] .kartu:not(.lapis), :root[data-tema="gelap"] .balas { filter:brightness(.92); }
+  :root[data-tema="gelap"] #bantuan { background:rgba(0,0,0,.72); }
+  :root[data-tema="gelap"] .petunjuk { background:#000; color:#fff; }
+  :root[data-tema="gelap"] #toast { box-shadow:0 0 0 6px rgba(0,0,0,.85); }
+  :root[data-tema="gelap"] .ikon { background:#777; }
+  :root[data-tema="gelap"] .ikon:hover, :root[data-tema="gelap"] .ikon.pilih { background:#fff; }
+  :root[data-tema="gelap"] .item.terbuka > .bingkai path { fill:#2b2b2b; }
+  * { box-sizing: border-box; }
+  body { padding-top:var(--hh,72px); padding-bottom:84px; margin:0; background-color:var(--p); color:var(--h); font-family:Arial, Helvetica, sans-serif; line-height:1.35; }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+           margin:0; padding:22px 16px 10px;
+           position:fixed; left:0; right:0; top:0; z-index:30; pointer-events:none; }   /* tetap di atas saat digulir (juga saat digeser ke samping), latar transparan */
+  header .judul, header .kanan { pointer-events:auto; }   /* judul rapat kiri layar, kontrol rapat kanan layar */
+  h1 { margin:0; font-size:14px; font-weight:400; white-space:nowrap; }   /* sama dengan huruf tombol (14px); Dekken mengecil dari D 14pt ke n 14px, tagline dan timer sebesar n */
+  h1 b { font-weight:700; }
+  @media (max-width:640px) {
+    h1 { font-size:12px; white-space:normal; line-height:1.25; }   /* sama dengan huruf tombol di HP */
+  }
+  footer { max-width:1200px; margin:0 auto; padding:0 24px 16px; text-align:left; font-size:11px; color:var(--h); }
+  @media (min-width:900px) {
+    footer { position:fixed; left:0; bottom:0; margin:0; padding:0 0 10px 16px; z-index:15; pointer-events:none; }
+  }
+  .judul { flex:1 1 auto; min-width:0; }
+  #timer { font-size:1em; font-weight:700; margin-left:12px; white-space:nowrap; }
+  #bantuan { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:16px;
+             background:rgba(255,255,255,.72); }
+  #bantuan.buka { display:flex; }
+  #bantuan .lembar { background:#fff; border:2px solid #000; width:100%; max-width:560px; max-height:86vh; overflow:auto; padding:20px 24px 22px;
+                     font-family:'Shantell Sans','Segoe Print','Bradley Hand',cursive; font-size:15px; line-height:1.45; transform:rotate(-.4deg); }
+  #bantuan h2 { margin:0 0 10px; font-size:21px; }
+  #bantuan h3 { margin:14px 0 2px; font-size:16px; }
+  #bantuan p { margin:0; }
+  #bantuan .tutup-bantuan { margin-top:18px; }
+  #bantuan .ikon.kecil { display:inline-block; width:14px; height:14px; margin:0 3px; vertical-align:-2px; background:#555; cursor:default; }
+  #statistik { position:fixed; right:12px; bottom:12px; z-index:26; width:230px; background:var(--p); color:var(--h); border:2px solid var(--h); font-size:14px; }
+  #stat-judul { display:flex; justify-content:space-between; align-items:center; width:100%; font:inherit; font-weight:700; background:var(--h); color:var(--p); border:none; padding:6px 10px; cursor:pointer; }
+  #statistik.tutup { width:auto; }
+  #statistik.tutup #stat-isi { display:none; }
+  #statistik.tutup #stat-judul { gap:10px; }
+  #stat-isi { padding:8px 12px 10px; line-height:1.7; }
+  #stat-isi .baris-s { display:flex; justify-content:space-between; }
+  #stat-isi .nama-s { margin-top:6px; font-size:13px; line-height:1.45; color:var(--abu); overflow-wrap:anywhere; }
+  @media (max-width:640px) { #statistik { right:8px; bottom:58px; } }
+  @media (max-width:640px) { .kanan { gap:5px; } .kanan select, .kanan .btn { font-size:12px !important; padding:3px 6px !important; min-width:0 !important; } #urut { max-width:105px; } #btn-akun { max-width:90px; } }
+  .kanan { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
+  #urut { font:inherit; font-size:14px; padding:4px 8px; background:var(--p); color:var(--h); border:2px solid var(--h); border-radius:0; cursor:pointer; }
+  #btn-rapi { border:2px solid var(--h); padding:4px 10px; font-size:14px; }
+  #btn-rapi[aria-pressed="true"] { background:var(--h); color:var(--p); }
+  #login { display:flex; align-items:center; gap:10px; font-size:14px; min-height:40px; }
+
+  /* deretan tombol bentuk */
+  #alat { position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:18px;
+          padding:10px 16px calc(10px + env(safe-area-inset-bottom)); font-size:14px; pointer-events:none; }
+  #alat > * { pointer-events:auto; }
+  #bentuk-baris { display:contents; }
+  #bentuk-baris.belum > .ikon, #bentuk-baris.belum > .petunjuk { display:none; }
+  .daftar-kotak { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; background:var(--h); color:var(--p); padding:8px 14px; font-size:14px; }
+  .daftar-kotak .btn { background:var(--p); color:var(--h); border-color:var(--p); }
+  @media (max-width:640px) {   /* HP: deretan bentuk tetap di tengah bawah */
+    #alat { gap:10px; padding-left:8px; padding-right:8px; }
+    #alat .ikon:not(.kecil) { width:28px; height:28px; }
+    .petunjuk { order:3; }
+  }
+  #tema-wrap { position:relative; display:inline-flex; }
+  #menu-tema { position:absolute; right:0; top:calc(100% + 6px); z-index:40; display:flex; gap:4px; padding:4px; background:var(--p); border:2px solid var(--h); }
+  #menu-tema[hidden] { display:none; }
+  #akun-wrap { position:relative; display:inline-flex; }
+  #btn-akun { max-width:160px; overflow:hidden; text-overflow:ellipsis; border:2px solid var(--h); padding:4px 10px; font-size:14px; }
+  #menu-akun { position:absolute; right:0; top:calc(100% + 6px); z-index:40; padding:4px; background:var(--p); border:2px solid var(--h); }
+  #menu-akun[hidden] { display:none; }
+  #menu-akun button { font:inherit; font-size:14px; white-space:nowrap; min-width:90px; padding:6px 12px; background:var(--p); color:var(--h); border:2px solid transparent; cursor:pointer; }
+  #menu-akun button:hover { border-color:var(--h); }
+  #menu-tema button { font:inherit; font-size:16px; line-height:1; min-width:36px; padding:6px 8px; background:var(--p); color:var(--h); border:2px solid transparent; cursor:pointer; }
+  #menu-tema button:hover { border-color:var(--h); }
+  #menu-tema button.aktif { background:var(--h); color:var(--p); }
+  html[data-latar="mati"] #titik { display:none; }
+  /* monokrom: hanya hitam dan putih, kontras penuh */
+  :root[data-mono="1"] .dek .teks { color:inherit !important; }
+  :root[data-mono="1"] .dek .btn.garis { border-color:var(--h); }
+  :root[data-mono="1"] .kartu:not(.lapis), :root[data-mono="1"] .balas { filter:none !important; }
+  :root[data-mono="1"][data-tema="terang"] .dek .kartu { --h:#fff; --p:#000; --abu:#ccc; background:#000 !important; color:#fff; }
+  :root[data-mono="1"][data-tema="terang"] .dek .balas { --h:#000; --p:#fff; --abu:#555; background:#fff !important; color:#000; box-shadow:inset 0 0 0 1px #000; }
+  :root[data-mono="1"][data-tema="terang"] .dek .lapis.kartu { background:#fff !important; box-shadow:inset 0 0 0 1px #000; }
+  :root[data-mono="1"][data-tema="terang"] .item.terbuka > .bingkai path { fill:#e0e0e0; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .kartu { --h:#000; --p:#fff; --abu:#555; background:#fff !important; color:#000; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .balas { --h:#fff; --p:#000; --abu:#ccc; background:#000 !important; color:#fff; box-shadow:inset 0 0 0 1px #fff; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu { background:#000 !important; box-shadow:inset 0 0 0 1px #fff; }
+  :root[data-mono="1"][data-tema="gelap"] .item.terbuka > .bingkai path { fill:#333; }
+  /* bentuk bersudut (clip-path): garis tepi 1px digambar dengan lapisan yang dipotong sama */
+  :root[data-mono="1"][data-tema="terang"] .dek .balas.kartu.b-enam { background:#000 !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="terang"] .dek .balas.kartu.b-enam::before { content:""; position:absolute; inset:1px; z-index:-1; background:#fff; clip-path:var(--c-enam); }
+  :root[data-mono="1"][data-tema="terang"] .dek .lapis.kartu.b-enam { background:#000 !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="terang"] .dek .lapis.kartu.b-enam::before { content:""; position:absolute; inset:1px; z-index:-1; background:#fff; clip-path:var(--c-enam); }
+  :root[data-mono="1"][data-tema="terang"] .dek .balas.kartu.b-lima { background:#000 !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="terang"] .dek .balas.kartu.b-lima::before { content:""; position:absolute; inset:1px; z-index:-1; background:#fff; clip-path:var(--c-lima); }
+  :root[data-mono="1"][data-tema="terang"] .dek .lapis.kartu.b-lima { background:#000 !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="terang"] .dek .lapis.kartu.b-lima::before { content:""; position:absolute; inset:1px; z-index:-1; background:#fff; clip-path:var(--c-lima); }
+  :root[data-mono="1"][data-tema="terang"] .dek .balas.kartu.b-ledak { background:#000 !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="terang"] .dek .balas.kartu.b-ledak::before { content:""; position:absolute; inset:1px; z-index:-1; background:#fff; clip-path:var(--c-ledak); }
+  :root[data-mono="1"][data-tema="terang"] .dek .lapis.kartu.b-ledak { background:#000 !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="terang"] .dek .lapis.kartu.b-ledak::before { content:""; position:absolute; inset:1px; z-index:-1; background:#fff; clip-path:var(--c-ledak); }
+  :root[data-mono="1"][data-tema="gelap"] .dek .balas.kartu.b-enam { background:#fff !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .balas.kartu.b-enam::before { content:""; position:absolute; inset:1px; z-index:-1; background:#000; clip-path:var(--c-enam); }
+  :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu.b-enam { background:#fff !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu.b-enam::before { content:""; position:absolute; inset:1px; z-index:-1; background:#000; clip-path:var(--c-enam); }
+  :root[data-mono="1"][data-tema="gelap"] .dek .balas.kartu.b-lima { background:#fff !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .balas.kartu.b-lima::before { content:""; position:absolute; inset:1px; z-index:-1; background:#000; clip-path:var(--c-lima); }
+  :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu.b-lima { background:#fff !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu.b-lima::before { content:""; position:absolute; inset:1px; z-index:-1; background:#000; clip-path:var(--c-lima); }
+  :root[data-mono="1"][data-tema="gelap"] .dek .balas.kartu.b-ledak { background:#fff !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .balas.kartu.b-ledak::before { content:""; position:absolute; inset:1px; z-index:-1; background:#000; clip-path:var(--c-ledak); }
+  :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu.b-ledak { background:#fff !important; box-shadow:none; isolation:isolate; }
+  :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu.b-ledak::before { content:""; position:absolute; inset:1px; z-index:-1; background:#000; clip-path:var(--c-ledak); }
+  #btn-foto { border:2px solid var(--h); padding:4px 10px; min-width:34px; display:inline-flex; align-items:center; justify-content:center; }
+  html.foto header, html.foto #alat, html.foto #statistik, html.foto footer, html.foto #titik, html.foto #banner, html.foto #toast { visibility:hidden !important; }
+  html.foto { background:#fff !important; }
+  html.foto body { background:transparent !important; }
+  html.foto .dek, html.foto .dek.rapi { zoom:1 !important; }
+  #btn-suara { border:2px solid var(--h); padding:4px 10px; font-size:14px; min-width:34px; }
+  #btn-suara.mati { opacity:.55; text-decoration:line-through; }
+  #btn-tema, #btn-help { border:2px solid var(--h); padding:4px 10px; font-size:14px; min-width:34px; }
+  .petunjuk { color:var(--h); background:#fff; padding:4px 10px; }
+  #titik { position:fixed; inset:0; width:100%; height:100%; z-index:-1; pointer-events:none; }
+  .ikon { width:34px; height:34px; background:#9a9a9a; border:none; padding:0; cursor:pointer; flex-shrink:0; }
+  .ikon.kecil { width:26px; height:26px; }
+  .ikon:hover, .ikon.pilih { background:var(--h); }
+  .ikon { transition:transform .16s cubic-bezier(.2,.8,.3,1), background-color .15s; }
+  .ikon.pilih { transform:scale(1.1); }
+  #alat .ikon { transform-origin:50% 100%; }
+  @media (prefers-reduced-motion:reduce) { .ikon { transition:none; } }
+  .ikon.b-lingkaran { border-radius:50%; }
+  .ikon.b-enam { clip-path:var(--c-enam); }
+  .ikon.b-ledak { clip-path:var(--c-ledak); }
+  .ikon.b-lima { clip-path:var(--c-lima); }
+  .ikon.b-tumpul { border-radius:7px; height:22px; margin:6px 0; }
+  .ikon.kecil.b-tumpul { height:17px; margin:4px 0; border-radius:5px; }
+
+  .dek { display:grid; grid-template-columns:repeat(auto-fill, minmax(310px, 1fr)); gap:30px 26px;
+         align-items:start; margin:0; padding:14px 24px 40px; zoom:var(--z,1); }
+  @media (min-width:641px) { .dek:not(.rapi) { min-width:calc(6 * 310px + 5 * 26px + 48px); grid-template-columns:repeat(auto-fit, 310px); justify-content:center; } }   /* mode Acak: minimal 6 kolom, geser ke samping; layar lebar menambah kolom otomatis */
+
+  /* kartu */
+  .kartu { background:var(--kuning); border:none; padding:16px 18px; }
+  .kartu, .balas { font-family:'Shantell Sans','Segoe Print','Bradley Hand',cursive; }
+  .item.terbuka { position:relative; margin-top:calc(var(--dy,0px) + 8px); margin-bottom:8px; padding:var(--pad, 16px); }
+  .item.terbuka > .bingkai { position:absolute; left:0; top:0; width:1px; height:1px; overflow:visible; pointer-events:none; }
+  .item.terbuka > .bingkai { z-index:-1; }
+  .item.terbuka > .bingkai path { fill:#e6e6e6; stroke:none; }
+  .item { transform:translateX(var(--dx,0)) rotate(var(--rot,0)); margin-top:var(--dy,0); }
+  .kepala { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  /* centang dosen selalu biru, di semua tema dan semua jenis kartu (cincin putih tipis agar tetap terlihat di kartu biru/merah/oranye) */
+  .lencana, :root[data-tema] .lencana, :root[data-mono="1"] .lencana, .dek .kartu .lencana, .poll .lencana, .tmr .lencana { background:#1d9bf0 !important; color:#fff !important; box-shadow:0 0 0 1.5px #fff; }
+  .lencana { display:inline-flex; align-items:center; justify-content:center; width:17px; height:17px; margin-left:6px;
+             border-radius:50%; background:#1d9bf0; color:#fff; font-size:12px; font-weight:900; line-height:1;
+             vertical-align:2px; cursor:help; }
+  .nama { font-weight:700; font-size:17px; overflow-wrap:anywhere; }
+  .membalas { color:var(--abu); font-size:12px; margin-top:6px; overflow-wrap:anywhere; }
+  .kartu.lain .membalas { order:1; text-align:center; margin-top:2px; }
+  .balas > .bawah { margin-top:8px; font-size:13px; }
+  .balas > .bawah .btn { font-size:12px; padding:3px 10px; }
+  .kompos.popup { position:relative; z-index:4; margin:12px 0 4px; padding-top:8px; }
+  .kompos.popup::before { content:''; position:absolute; top:-2px; left:34px; border:9px solid transparent; border-bottom-color:#000; border-top:0; }
+  .ke { font-size:13px; color:var(--abu); margin:0 0 4px 4px; }
+  .waktu { color:var(--abu); font-size:14px; margin-top:2px; }
+  .teks { margin:10px 0 12px; text-align:justify; white-space:pre-wrap; overflow-wrap:anywhere; font-size:16px; }
+  .aksi { display:flex; gap:6px; flex-shrink:0; }
+  .bawah { display:flex; align-items:center; gap:12px; font-size:14px; color:var(--abu); }
+  .kartu.lain .bawah { order:4; justify-content:center; gap:8px; margin-top:6px; font-size:12px; }
+  .kartu.lain .bawah .btn { font-size:12px; padding:3px 10px; }
+
+  /* bentuk selain persegi */
+  .kartu.lain { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+                width:100%; max-width:330px; margin-left:auto; margin-right:auto; }
+  .kartu.b-lingkaran { aspect-ratio:1; border-radius:50%; padding:15% 14%; }
+  .kartu.b-enam { aspect-ratio:1.15; clip-path:var(--c-enam); padding:8% 19%; }
+  .kartu.b-lima { aspect-ratio:1; clip-path:var(--c-lima); padding:24% 20% 9%; }
+  .kartu.b-ledak { aspect-ratio:1.3; clip-path:var(--c-ledak); padding:15% 17%; }
+  .kartu.b-tumpul { aspect-ratio:1.7; border-radius:22px; padding:7% 8%; }
+  .kartu.lain .kepala { display:contents; }
+  .kartu.lain .kepala > div:first-child { order:1; }
+  .kartu.lain .nama { font-size:15px; }
+  .kartu.lain .waktu { font-size:12px; margin-top:0; white-space:nowrap; }
+  .kartu.lain .teks { order:2; margin:6px 0 8px; text-align:center; font-size:14px; }
+  .kartu.lain .aksi { order:3; justify-content:center; }
+  .kartu.lain .btn.garis { font-size:12px; padding:3px 8px; }
+
+  /* titik sambungan antar kartu */
+  .tt { display:inline-block; width:18px; height:18px; border-radius:50%; background:#fff; border:2px solid #222; position:relative; flex-shrink:0; margin-left:2px; opacity:.55; }
+  .tt::before { content:''; position:absolute; inset:-9px; }
+  .tt::after { content:''; position:absolute; left:50%; top:50%; width:8px; height:8px; margin:-4px 0 0 -4px; border-radius:50%; background:#222; }
+  .tt.milik { opacity:1; cursor:crosshair; touch-action:none; }
+  .tt.aktif { background:#222; }
+  .tt.aktif::after { background:#fff; }
+  article.kartu.sasaran { outline:3px dashed #222; outline-offset:5px; }
+  #garis { position:absolute; left:0; top:0; z-index:6; pointer-events:none; overflow:visible; }
+  .terhubung { display:none; flex-wrap:wrap; gap:4px 8px; font-size:12px; margin-top:8px; }
+  .terhubung button { font:inherit; background:none; border:none; border-bottom:1px solid currentColor; padding:0; cursor:pointer; color:inherit; }
+  @media (max-width:640px) { .terhubung { display:flex; } .kartu.lain .terhubung { justify-content:center; order:5; } }
+
+  /* tombol */
+  .btn { font:inherit; font-size:14px; white-space:nowrap; background:var(--h); color:var(--p); border:2px solid transparent;
+         border-radius:0; padding:6px 14px; cursor:pointer; }
+  .btn:hover:not(:disabled) { background:var(--p); color:var(--h); }
+  .btn:disabled { opacity:.45; cursor:wait; }
+  .btn.garis { background:var(--p); color:var(--h); padding:4px 10px; }
+  .btn.garis:hover:not(:disabled) { background:var(--h); color:var(--p); }
+  .aksi .btn { font-weight:700; }
+  .btn.garis.aktif { background:var(--h); color:var(--p); }
+
+  /* tumpukan balasan */
+  .tumpukan { margin:0; }
+  .balas { border:none; background:var(--kuning); margin-top:6px; padding:12px 16px; position:relative; }
+  .deck { position:relative; }
+  .deck.berbalas > .kartu { cursor:pointer; position:relative; z-index:2; }
+  /* mode Susun rapi: kolom rapi, tanpa kemiringan, semua balasan terbuka (hanya tampilan) */
+  .dek.rapi { display:block; column-width:310px; column-gap:26px; zoom:calc(.8 * var(--z,1)); }   /* semua kartu 80%; mengikuti lebar layar */
+  .dek.rapi > .item { --dx:0px; --rot:0deg; --dy:0px; transform:none; break-inside:avoid; margin:0 0 26px; display:block; }
+  .dek.rapi > .item.terbuka { margin:0 0 26px; }
+  .dek.rapi .kartu, .dek.rapi .balas { transform:none !important; }
+  .dek.rapi .balas { margin-top:10px !important; }
+  .dek.rapi .balas.kartu.lain { margin-top:12px !important; }
+  .dek.rapi .deck.berbalas > .kartu { cursor:default; }
+  .dek.rapi .panah { display:none; }
+  .deck > .lapis { position:absolute !important; inset:0; z-index:1; pointer-events:none; aspect-ratio:auto !important; }
+  .lapis.kartu { padding:0; }
+  .lapis.kartu.lain { display:block; }
+  .panah { display:inline-block; transition:transform .2s; }
+  .balas .teks { margin:8px 0 0; font-size:15px; }
+
+  /* kartu penulis (pratinjau langsung) */
+  .kompos { margin-bottom:6px; }
+  .tulis input.in-nama { background:transparent; border:none; border-bottom:1px dashed rgba(0,0,0,.35); font-weight:700;
+                         font-size:17px; padding:2px 4px; width:100%; text-align:inherit; }
+  .tulis textarea { background:transparent; border:none; resize:none; min-height:0; width:100%; padding:6px 4px;
+                    font-size:16px; line-height:1.35; text-align:inherit; }
+  .tulis input:focus, .tulis textarea:focus { outline:none; background:rgba(255,255,255,.25); }
+  .kartu.lain.tulis input.in-nama { font-size:15px; }
+  .kartu.lain.tulis textarea { font-size:14px; }
+  .kontrol { display:flex; flex-direction:column; gap:8px; margin-top:12px; font-size:14px;
+             background:rgba(255,255,255,.85); padding:10px 12px; }
+  .baris { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:13px; color:var(--abu); }
+  .tombol { display:flex; gap:8px; }
+  .warna, .bentuk-baris { display:flex; flex-wrap:wrap; align-items:center; gap:7px; font-size:14px; }
+  .warna button { width:22px; height:22px; border:none; border-radius:50%; padding:0; cursor:pointer; }
+  .warna button.putih { box-shadow:inset 0 0 0 1px #888; }
+  .warna button.pilih { outline:2px solid var(--h); outline-offset:2px; }
+
+  /* ikon sinkron: beberapa tanda ^ naik ke atas selagi data disinkronkan (di kiri tombol Urut) */
+  #sinkron { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; color:#5f6368; opacity:0; transition:opacity .25s; pointer-events:none; }
+  #sinkron.on { opacity:1; }
+  #sinkron svg { overflow:visible; }
+  #sinkron .cr { fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; opacity:0; }
+  #sinkron.on .cr { animation:sinkron-naik 1.1s ease-in-out infinite; }
+  #sinkron.on .cr:nth-child(2) { animation-delay:.18s; }
+  #sinkron.on .cr:nth-child(3) { animation-delay:.36s; }
+  @keyframes sinkron-naik { 0% { transform:translateY(7px); opacity:0; } 30% { opacity:1; } 70% { opacity:1; } 100% { transform:translateY(-7px); opacity:0; } }
+  :root[data-tema="gelap"] #sinkron { color:#9aa0a6; }
+  :root[data-mono="1"][data-tema="terang"] #sinkron { color:#000; }
+  :root[data-mono="1"][data-tema="gelap"] #sinkron { color:#fff; }
+  @media (prefers-reduced-motion:reduce) { #sinkron.on .cr { animation:none; opacity:1; } }
+  #toast { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:var(--h); color:var(--p);
+           padding:16px 26px; font-size:16px; line-height:1.4; text-align:center; display:none; max-width:min(90vw, 420px);
+           z-index:100; pointer-events:none; box-shadow:0 0 0 6px rgba(255,255,255,.85); }
+  #banner { max-width:1200px; margin:0 auto; padding:0 24px; font-size:14px; }
+  #banner div { border:2px dashed var(--h); padding:10px 14px; margin:8px 0; }
+
+  /* ===== gaya tombol ala "Sign in with Google": sudut 4px, garis tepi 1px abu ===== */
+  header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-foto, header #btn-rapi, header #urut {
+    height:40px; box-sizing:border-box; border:1px solid #dadce0 !important; border-radius:4px !important; background:#fff !important; color:#3c4043 !important;
+    font:500 14px/1 "Google Sans", Roboto, Arial, sans-serif !important; letter-spacing:.2px; padding:0 14px !important; min-width:40px !important;
+    display:inline-flex; align-items:center; justify-content:center; text-decoration:none; transition:background .15s, box-shadow .15s; }
+  header .kanan select, header #urut { padding:0 10px !important; }
+  header #btn-tema, header #btn-suara, header #btn-foto, header #btn-help { width:40px; padding:0 !important; }
+  header .kanan .btn:hover:not(:disabled), header .kanan select:hover { background:#f8f9fa !important; box-shadow:0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); }
+  header #btn-akun { max-width:160px; display:inline-block; line-height:38px; }
+  header #btn-suara.mati { opacity:.55; }
+  header .kanan { gap:8px; }
+  #login { min-height:40px; }
+  #menu-tema, #menu-akun { border:1px solid #dadce0 !important; border-radius:4px; background:#fff !important; box-shadow:0 2px 6px rgba(60,64,67,.3); }
+  #menu-tema button, #menu-akun button { background:#fff !important; color:#3c4043 !important; border:1px solid transparent !important; border-radius:4px; font-family:"Google Sans", Roboto, Arial, sans-serif; }
+  #menu-tema button:hover, #menu-akun button:hover { background:#f1f3f4 !important; border-color:transparent !important; }
+  #menu-tema button.aktif { background:#e8f0fe !important; color:#1a73e8 !important; }
+  :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
+  :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover { background:#1f1f1f !important; box-shadow:none; }
+  :root[data-tema="gelap"] #menu-tema, :root[data-tema="gelap"] #menu-akun { background:#131314 !important; border-color:#5f6368 !important; }
+  :root[data-tema="gelap"] #menu-tema button, :root[data-tema="gelap"] #menu-akun button { background:#131314 !important; color:#e3e3e3 !important; }
+  :root[data-tema="gelap"] #menu-tema button:hover, :root[data-tema="gelap"] #menu-akun button:hover { background:#1f1f1f !important; }
+  :root[data-tema="gelap"] #menu-tema button.aktif { background:#1f3a5f !important; color:#8ab4f8 !important; }
+
+  :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #btn-akun, :root[data-tema="gelap"] header #btn-tema, :root[data-tema="gelap"] header #btn-help, :root[data-tema="gelap"] header #btn-suara, :root[data-tema="gelap"] header #btn-foto, :root[data-tema="gelap"] header #btn-rapi, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
+  :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover:not(:disabled), :root[data-tema="gelap"] header #btn-akun:hover:not(:disabled), :root[data-tema="gelap"] header #btn-tema:hover:not(:disabled), :root[data-tema="gelap"] header #btn-help:hover:not(:disabled), :root[data-tema="gelap"] header #btn-suara:hover:not(:disabled), :root[data-tema="gelap"] header #btn-foto:hover:not(:disabled), :root[data-tema="gelap"] header #btn-rapi:hover:not(:disabled), :root[data-tema="gelap"] header #urut:hover:not(:disabled) { background:#1f1f1f !important; box-shadow:none; }
+  :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #btn-akun, :root[data-mono="1"][data-tema="terang"] header #btn-tema, :root[data-mono="1"][data-tema="terang"] header #btn-help, :root[data-mono="1"][data-tema="terang"] header #btn-suara, :root[data-mono="1"][data-tema="terang"] header #btn-foto, :root[data-mono="1"][data-tema="terang"] header #btn-rapi, :root[data-mono="1"][data-tema="terang"] header #urut { border-color:#000 !important; color:#000 !important; background:#fff !important; }
+  :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #btn-akun, :root[data-mono="1"][data-tema="gelap"] header #btn-tema, :root[data-mono="1"][data-tema="gelap"] header #btn-help, :root[data-mono="1"][data-tema="gelap"] header #btn-suara, :root[data-mono="1"][data-tema="gelap"] header #btn-foto, :root[data-mono="1"][data-tema="gelap"] header #btn-rapi, :root[data-mono="1"][data-tema="gelap"] header #urut { border-color:#fff !important; color:#fff !important; background:#000 !important; }
+  /* kotak Statistik */
+  #statistik { background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font-family:"Google Sans", Roboto, Arial, sans-serif; }
+  #stat-judul { background:transparent; color:#3c4043; font-weight:500; padding:10px 12px; }
+  #statistik:not(.tutup) #stat-judul { border-bottom:1px solid #dadce0; }
+  #stat-judul:hover { background:#f8f9fa; }
+  #stat-isi .nama-s { color:#5f6368; }
+  :root[data-tema="gelap"] #statistik { background:#131314; color:#e3e3e3; border-color:#5f6368; }
+  :root[data-tema="gelap"] #stat-judul { color:#e3e3e3; }
+  :root[data-tema="gelap"] #statistik:not(.tutup) #stat-judul { border-bottom-color:#5f6368; }
+  :root[data-tema="gelap"] #stat-judul:hover { background:#1f1f1f; }
+  :root[data-tema="gelap"] #stat-isi .nama-s { color:#9aa0a6; }
+  /* menu Petunjuk */
+  #bantuan .lembar { border:1px solid #dadce0; border-radius:4px; transform:none; box-shadow:0 4px 16px rgba(60,64,67,.3); }
+  #bantuan .tutup-bantuan { height:36px; box-sizing:border-box; padding:0 18px; background:#fff !important; color:#3c4043 !important; border:1px solid #dadce0 !important; border-radius:4px; font:500 14px/1 "Google Sans", Roboto, Arial, sans-serif; }
+  #bantuan .tutup-bantuan:hover { background:#f8f9fa !important; }
+  /* monokrom tetap hitam putih tegas, hanya sudutnya membulat dan garis tepinya 1px */
+  :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #urut,
+  :root[data-mono="1"][data-tema="terang"] #menu-tema, :root[data-mono="1"][data-tema="terang"] #menu-akun, :root[data-mono="1"][data-tema="terang"] #statistik { border-color:#000 !important; color:#000 !important; }
+  :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #urut,
+  :root[data-mono="1"][data-tema="gelap"] #menu-tema, :root[data-mono="1"][data-tema="gelap"] #menu-akun, :root[data-mono="1"][data-tema="gelap"] #statistik { border-color:#fff !important; color:#fff !important; }
+  @media (max-width:640px) { header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-foto, header #btn-rapi, header #urut { height:34px; font-size:12px !important; padding:0 8px !important; min-width:34px !important; } header #btn-akun { line-height:32px; } header .kanan { gap:5px; } }
+
+  /* ===== Peta kartu (minimap) ===== */
+  #peta { position:fixed; left:12px; bottom:12px; z-index:26; width:208px; background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font:14px "Google Sans", Roboto, Arial, sans-serif; --pm-dim:rgba(255,255,255,.62); }
+  #peta[hidden] { display:none; }
+  #peta-judul { display:flex; justify-content:space-between; align-items:center; width:100%; font:inherit; font-weight:500; background:transparent; color:inherit; border:none; padding:10px 12px; cursor:pointer; }
+  #peta-judul:hover { background:#f8f9fa; }
+  #peta:not(.tutup) #peta-judul { border-bottom:1px solid #dadce0; }
+  #peta.tutup { width:auto; }
+  #peta.tutup #peta-isi { display:none; }
+  #peta.tutup #peta-judul { gap:10px; }
+  #peta-zoom { display:flex; align-items:center; justify-content:space-between; gap:4px; padding:6px 8px; border-top:1px solid #dadce0; }
+  #peta-zoom button { font:inherit; font-weight:500; min-width:30px; height:28px; padding:0 8px; background:transparent; color:inherit; border:1px solid #dadce0; border-radius:4px; cursor:pointer; }
+  #peta-zoom button:hover { background:#f8f9fa; }
+  #peta.tutup #peta-zoom { display:none; }
+  :root[data-tema="gelap"] #peta-zoom, :root[data-tema="gelap"] #peta-zoom button { border-color:#5f6368; }
+  :root[data-tema="gelap"] #peta-zoom button:hover { background:#1f1f1f; }
+  :root[data-mono="1"][data-tema="terang"] #peta-zoom, :root[data-mono="1"][data-tema="terang"] #peta-zoom button { border-color:#000; }
+  :root[data-mono="1"][data-tema="gelap"] #peta-zoom, :root[data-mono="1"][data-tema="gelap"] #peta-zoom button { border-color:#fff; }
+  html.geser, html.geser * { cursor:grabbing !important; user-select:none; }
+  #peta-isi { padding:8px; display:flex; justify-content:center; }
+  #peta-kanvas { position:relative; overflow:hidden; cursor:pointer; touch-action:none; background:transparent; }
+  #peta-kanvas canvas { position:absolute; left:0; top:0; display:block; }
+  #peta-kotak { position:absolute; box-sizing:border-box; border:2px solid currentColor; box-shadow:0 0 0 999px var(--pm-dim); pointer-events:none; }
+  :root[data-tema="gelap"] #peta { background:#131314; color:#e3e3e3; border-color:#5f6368; --pm-dim:rgba(19,19,20,.66); }
+  :root[data-tema="gelap"] #peta-judul:hover { background:#1f1f1f; }
+  :root[data-tema="gelap"] #peta:not(.tutup) #peta-judul { border-bottom-color:#5f6368; }
+  :root[data-mono="1"][data-tema="terang"] #peta { border-color:#000 !important; color:#000 !important; --pm-dim:rgba(255,255,255,.72); }
+  :root[data-mono="1"][data-tema="gelap"] #peta { border-color:#fff !important; color:#fff !important; --pm-dim:rgba(0,0,0,.72); }
+  html.foto #peta { visibility:hidden !important; }
+  @media (max-width:640px) { #peta { display:none !important; } }
+  /* ===== Kartu polling (selalu oranye di semua tema) ===== */
+  :root { --merah:#C81D25; --oranye:#E8590C; }
+  .kartu.poll { background:var(--oranye); color:#fff; --h:#fff; --p:var(--oranye); --abu:#ffe8d6; }
+  :root[data-tema] .dek article.kartu.poll { background:var(--oranye) !important; color:#fff !important; filter:none !important; box-shadow:none; --h:#fff; --p:#E8590C; --abu:#ffe8d6; }
+  :root[data-tema] .dek article.kartu.poll .teks, :root[data-tema] .dek article.kartu.poll .nama, :root[data-tema] .dek article.kartu.poll .waktu { color:#fff !important; }
+  .poll .label-poll { display:inline-block; font:700 11px Arial, sans-serif; letter-spacing:.08em; border:2px solid #fff; padding:1px 6px; margin-bottom:6px; }
+  .poll .poll-q { margin:10px 0 6px; font-size:18px; line-height:1.3; overflow-wrap:anywhere; white-space:pre-wrap; }
+  .poll .poll-o { position:relative; display:flex; justify-content:space-between; gap:10px; width:100%; margin:8px 0 0; padding:8px 10px; font:inherit; font-size:15px; text-align:left; color:#fff; background:transparent; border:2px solid #fff; cursor:pointer; overflow:hidden; }
+  .poll .poll-o i { position:absolute; left:0; top:0; bottom:0; background:rgba(255,255,255,.34); pointer-events:none; transition:width .35s; }
+  .poll .poll-o span { position:relative; overflow-wrap:anywhere; }
+  .poll .poll-o span:last-child { white-space:nowrap; font-weight:700; }
+  .poll .poll-o.saya { background:#fff; color:var(--oranye); font-weight:700; }
+  .poll .poll-o.saya i { background:rgba(232,89,12,.22); }
+  .poll .poll-o:disabled { cursor:default; }
+  .poll .poll-o.menang { outline:3px solid #fff; outline-offset:2px; }
+  .poll .poll-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:12px; font:13px Arial, sans-serif; }
+  .poll .tt { background:#fff; border-color:#fff; }
+  .poll .tt::after { background:#111; }
+  .poll .tt.aktif { background:#111; } .poll .tt.aktif::after { background:#fff; }
+  .poll.tulis input[type=text], .poll.tulis textarea, .poll.tulis select { width:100%; font:inherit; font-size:15px; padding:7px 9px; color:#111; background:#fff; border:2px solid #111; border-radius:0; box-sizing:border-box; margin:6px 0 0; }
+  .poll.tulis textarea { resize:vertical; font-size:17px; }
+  .poll .poll-baris { display:flex; gap:6px; align-items:center; }
+  .poll .poll-baris button, .poll .poll-aksi button { font:inherit; font-size:14px; color:#fff; background:transparent; border:2px solid #fff; padding:5px 12px; margin-top:6px; cursor:pointer; }
+  .poll .poll-aksi { display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:8px; font:13px Arial, sans-serif; }
+  .poll .poll-aksi .utama { background:#fff; color:var(--oranye); font-weight:700; }
+  .poll .poll-lama { margin-top:8px; font:13px Arial, sans-serif; display:flex; align-items:center; gap:8px; }
+  .poll .poll-lama select { width:auto; }
+  .ikon.poll { border-radius:6px; position:relative; }
+  .ikon.poll::before { content:''; position:absolute; left:20%; right:20%; top:22%; bottom:22%; background:linear-gradient(var(--p) 0 0) 0 0/100% 18% no-repeat, linear-gradient(var(--p) 0 0) 0 50%/70% 18% no-repeat, linear-gradient(var(--p) 0 0) 0 100%/40% 18% no-repeat; }
+  .btn.ikon-btn { display:inline-flex; align-items:center; justify-content:center; width:40px !important; height:30px !important; padding:0 !important; }
+  .btn.ikon-btn svg { display:block; pointer-events:none; }
+  .btn.kecil-teks { font-size:12px; padding:3px 10px; font-weight:700; }
+  .hapus-konfirm { display:inline-flex; align-items:center; flex-wrap:wrap; gap:6px; font-size:12px; }
+  .poll .btn.ikon-btn, .poll .btn.kecil-teks { background:#111; color:#fff; border-color:transparent; }
+  .poll .btn.ikon-btn:hover:not(:disabled), .poll .btn.kecil-teks:hover:not(:disabled) { background:#fff; color:#111; }
+  .poll .poll-kanan { display:inline-flex; align-items:center; gap:8px; }
+  /* ===== Kartu timer (persegi panjang merah, selalu merah di semua tema) ===== */
+  .kartu.tmr { background:var(--merah); color:#fff; --h:#fff; --p:var(--merah); --abu:#ffd9db; border-radius:0; min-height:150px; width:100%; box-sizing:border-box; }
+  :root[data-tema] .dek article.kartu.tmr, :root[data-tema] .dek .kartu.tulis.tmr { background:var(--merah) !important; color:#fff !important; filter:none !important; box-shadow:none; --h:#fff; --p:#C81D25; --abu:#ffd9db; }
+  :root[data-tema] .dek .lapis.kartu.tmr { background:#8f1219 !important; box-shadow:none; }
+  :root[data-tema] .dek article.kartu.tmr .teks, :root[data-tema] .dek article.kartu.tmr .nama, :root[data-tema] .dek article.kartu.tmr .waktu { color:#fff !important; }
+  .btn.tampil { font-weight:700; }
+  .tmr .label-tmr { display:inline-flex; align-items:center; gap:6px; font:700 12px Arial, sans-serif; letter-spacing:.04em; border:2px solid #fff; padding:2px 8px; margin-bottom:8px; }
+  .tmr .label-tmr svg { flex-shrink:0; }
+  .tmr .btn.garis { background:#fff; color:var(--merah); border-color:#fff; }
+  .tmr .btn.garis.aktif { background:#111; color:#fff; border-color:#111; }
+  .tmr .btn.ikon-btn, .tmr .btn.kecil-teks { background:#111; color:#fff; border-color:transparent; }
+  .tmr .btn.ikon-btn:hover:not(:disabled), .tmr .btn.kecil-teks:hover:not(:disabled) { background:#fff; color:#111; }
+  .tmr .tt { background:#fff; border-color:#fff; }
+  .tmr .tt::after { background:#111; }
+  .tmr .tt.aktif { background:#111; } .tmr .tt.aktif::after { background:#fff; }
+  .kartu.tulis.tmr input, .kartu.tulis.tmr textarea { color:#fff !important; background:transparent; border-color:#fff; }
+  .kartu.tulis.tmr input::placeholder, .kartu.tulis.tmr textarea::placeholder { color:#ffd9db; }
+  /* ===== Game: ronde pertanyaan dan kartu game (isi tersegel) ===== */
+  .label-game { display:inline-flex; align-items:center; gap:6px; background:#111; color:#fff; font:700 12px Arial, sans-serif; letter-spacing:.04em; padding:3px 9px; margin-bottom:8px; }
+  .label-game svg { flex-shrink:0; width:16px; height:16px; }
+  .game-panel { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 2px; padding:8px 10px; background:#111; color:#fff; font:13px Arial, sans-serif; }
+  .game-panel .btn { background:#fff; color:#111; font-size:12px; padding:3px 9px; font-weight:700; }
+  .game-panel .btn:hover:not(:disabled) { background:#ddd; }
+  .game-toggle { display:flex; align-items:flex-start; gap:8px; font-size:14px; margin:6px 0; cursor:pointer; }
+  .game-toggle input { margin-top:3px; }
+  .game-info { font-size:13px; margin:6px 0; color:var(--abu); }
+  .segel .label-segel { display:inline-block; background:#111; color:#fff; font:700 11px Arial, sans-serif; letter-spacing:.04em; padding:3px 8px; margin:12px 0 6px; }
+  .segel .garis-semu { height:9px; margin:8px 0; border-radius:2px; background:currentColor; opacity:.5; }
+  .peran { padding:6px 12px; font-size:12px; opacity:.75; white-space:nowrap; border-bottom:1px solid currentColor; }
+  .tmr-pilih { display:flex; align-items:center; gap:8px; font-size:14px; margin:6px 0; }
+  .tmr-pilih select { font:inherit; padding:4px 8px; }
+  .item.padam { opacity:0; transition:opacity .6s; }
+  .ikon.b-waktu { width:34px; height:34px; margin:0; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cmask id='m'%3E%3Crect width='24' height='24' fill='white'/%3E%3Cg fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round'%3E%3Ccircle cx='12' cy='13.5' r='6'/%3E%3Cpath d='M12 13.5V10M9.5 5.5h5M12 5.5v2M17 8l1.2-1.2'/%3E%3C/g%3E%3C/mask%3E%3C/defs%3E%3Crect width='24' height='24' mask='url(%23m)'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cmask id='m'%3E%3Crect width='24' height='24' fill='white'/%3E%3Cg fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round'%3E%3Ccircle cx='12' cy='13.5' r='6'/%3E%3Cpath d='M12 13.5V10M9.5 5.5h5M12 5.5v2M17 8l1.2-1.2'/%3E%3C/g%3E%3C/mask%3E%3C/defs%3E%3Crect width='24' height='24' mask='url(%23m)'/%3E%3C/svg%3E") center/contain no-repeat; }   /* kotak dengan stopwatch (kartu timer) */
+  .ikon.kecil.b-waktu { width:26px; height:26px; }
+  #tip { position:fixed; z-index:120; padding:5px 9px; font:12px Arial, sans-serif; color:#fff; background:#111; border:1px solid rgba(255,255,255,.55); border-radius:3px; pointer-events:none; white-space:nowrap; transform:translate(-50%, -100%); }
+  #tip[hidden] { display:none; }
+  html.foto #tip { display:none !important; }
+  footer.hukum { position:static !important; pointer-events:auto !important; padding:28px 16px 100px !important; font-size:12px; text-align:center; max-width:none; }
+  footer.hukum a { color:inherit; }
+</style>
+</head>
+<body>
+<canvas id="titik" aria-hidden="true"></canvas>
+
+<header>
+  <div class="judul">
+    <h1><b aria-label="Dekken"><span style="font-size:1.3333em">D</span><span style="font-size:1.2667em">e</span><span style="font-size:1.2em">k</span><span style="font-size:1.1333em">k</span><span style="font-size:1.0667em">e</span><span style="font-size:1em">n</span></b> : Tumpuk, balas, dan naikkan! <span id="timer" title="Sisa waktu tempel catatan sebelum papan di-reset"></span></h1>
+  </div>
+  <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><div id="login"></div></div>
+</header>
+<aside id="statistik"><button type="button" id="stat-judul" aria-expanded="true"><span>Statistik</span><span id="stat-panah">▾</span></button><div id="stat-isi"></div></aside>
+<aside id="peta" hidden><button type="button" id="peta-judul" aria-expanded="true"><span>Peta kartu</span><span id="peta-panah">▾</span></button><div id="peta-isi"><div id="peta-kanvas" role="presentation" title="Klik atau seret untuk berpindah"><canvas></canvas><div id="peta-kotak"></div></div></div><div id="peta-zoom"><button type="button" id="pz-min" aria-label="Perkecil" title="Perkecil (Ctrl + gulir)">−</button><button type="button" id="pz-nilai" title="Kembali ke 100%">100%</button><button type="button" id="pz-plus" aria-label="Perbesar" title="Perbesar (Ctrl + gulir)">+</button></div></aside>
+<nav id="alat"><div id="bentuk-baris"></div></nav>
+<div id="banner"></div>
+<main class="dek" id="dek"></main>
+<footer class="hukum"><a href="privasi.html">Kebijakan Privasi</a> · <a href="syarat.html">Syarat Layanan</a></footer>
+<div id="bantuan"></div>
+<div id="toast"></div>
+<div id="tip" hidden></div>
+
+<script>
+/* ================== KONFIGURASI ================== */
+/* Dua nilai ini boleh publik (aman ada di browser); keamanan dijaga aturan RLS di database. */
+const CONFIG = {
+  SUPABASE_URL: 'https://azodsyofwwnbomuqkwkb.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_8IG0nRF6EhQWc4XKS-h4UQ_4c2PDAKF',
+  REFRESH_MS: 45000,   // cadangan; pembaruan utama datang langsung lewat Realtime
+  MAKS_USERNAME: 20
+};
+const sb = (window.supabase && CONFIG.SUPABASE_URL) ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
+}) : null;
+
+/* ================== STATE ================== */
+const siap = v => v && !String(v).startsWith('GANTI');
+let dataServer = [];          // dari CSV / API
+let lokal = [];               // postingan yang baru saya kirim (menunggu CSV terbarui)
+let override = {};            // jumlah up/down terbaru dari server setelah saya vote
+let sayaVote = {};            // { idPost: 1 | -1 }
+let segelSaya = {};           // isi kartu game milikku yang masih tersegel: { idKartu: teks }
+let ovBuka = {};              // isi kartu game yang baru dibuka (menutupi cache CSV): { idKartu: teks }
+let ovGame = {};              // status game yang baru berubah di sini: { idKartu: 1 berjalan | 2 ditampilkan }
+let gameBuka = null;          // id kartu yang panel mulai-gamenya sedang terbuka
+const bukaCoba = new Map();
+const TANDA_SEGEL = '\uD83D\uDD12';
+let skew = 0;                 // selisih jam server dan jam perangkat (ms), dipakai untuk kartu timer
+const waktuServer = () => Date.now() + skew;
+let sayaPilih = {};           // pilihan polling akun ini: { idKartu: indeksPilihan }
+let hapusKonfirm = null;      // id kartu yang sedang meminta konfirmasi hapus
+let tombServer = { ids: new Set(), reset: 0 };   // kartu yang dihapus di perangkat lain / waktu reset terakhir (dari server)
+let ovHapus = {};             // id kartu yang baru dihapus di sini (menutupi cache CSV sebentar)
+let ovPoll = {};              // hasil polling terbaru dari server setelah saya memilih
+let statusAkun = 'aktif';     // 'aktif' | 'baru' (belum terdaftar) | 'blokir'
+let dosenSaya = false;        // akun yang masuk adalah dosen (boleh membuat polling)
+let pollBuka = false;         // kartu penulis polling sedang terbuka
+let pollDraft = { u: '', q: '', o: ['', ''], menit: 60 };
+const MAKS_TANYA = 120, MAKS_OPSI = 50, MAKS_OPSI_N = 5;   // harus sama dengan Kode.gs
+const DURASI_TIMER = [[5, '5 menit'], [15, '15 menit'], [30, '30 menit']];   // menit; harus sama dengan DURASI_TIMER_MENIT di Kode.gs
+const DURASI = [[15, '15 menit'], [30, '30 menit'], [60, '1 jam'], [120, '2 jam'], [240, '4 jam'], [480, '8 jam']];   // menit; harus sama dengan DURASI_MENIT di Kode.gs
+let dekBuka = null;           // id post yang tumpukan balasannya sedang terbuka (hanya satu)
+let balasKe = null;           // id balasan yang sedang dibalas (null = membalas post induk)
+let balasTerbuka = null;      // id post yang kartu balasnya sedang terbuka
+let milikSaya = new Set();    // id kartu yang dibuat akun ini (dari server)
+let ovTautan = {};            // sambungan yang baru diubah di sini (menutupi cache CSV sebentar)
+let petaTaut = {}, namaPost = {}, warnaPost = {};
+let seret = null;             // sedang membuat sambungan: { id, mode: 'tarik' | 'pilih', x, y, gerak }
+let sorot = null;             // id kartu yang sedang disorot kursor
+const MAKS_TAUTAN = 5;        // harus sama dengan MAKS_TAUTAN di Kode.gs
+let urutan = 'suara';         // urutan kartu utama: suara | terbaru | nama (pilihan tampilan, tersimpan di browser ini saja)
+let statKartu = 0, statBalasan = 0, hadirData = null;   // angka untuk kotak Statistik
+let rapi = false;             // mode Susun rapi (pilihan tampilan, tersimpan di browser ini saja)
+let komposBuka = false;       // kartu penulis baru baru tampil setelah memilih bentuk di atas
+let draft = {};               // isi kartu penulis yang belum terkirim
+let sesi = null;              // sesi login Supabase (null = belum masuk); diperbarui otomatis oleh supabase-js
+
+/* ================== UTIL ================== */
+const WARNA = ['#000000', '#ffffff', '#1e3a8a', '#991b1b', '#166534'];   // maksimum 5; harus sama dengan WARNA di Kode.gs
+const WARNA_LAMA = ['#1d4ed8', '#b91c1c', '#15803d', '#7e22ce', '#be185d'];   // warna teks versi lama: tetap tampil di kiriman lama
+function cekWarna(w) { w = String(w || '').toLowerCase(); return WARNA.includes(w) || WARNA_LAMA.includes(w) ? w : WARNA[0]; }
+const KARTU = { ungu: '#9B5DE5', pink: '#F15BB5', kuning: '#FEE440', biru: '#00BBF9', hijau: '#00F5D4' };  // nama harus sama dengan KARTU di Kode.gs
+// kontras teks terhadap warna kartu (WCAG)
+function luminans(hex) {
+  const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4));
+  return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+}
+function kontras(a, b) { const x = luminans(a), y = luminans(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+// hitam dan putih selalu tersedia; warna lain hanya bila cukup terbaca di atas kartu itu
+const warnaTersedia = kartuHex => WARNA.filter(w => w === '#000000' || w === '#ffffff' || kontras(w, kartuHex) >= 3);
+function cekKartu(k) { k = String(k || '').toLowerCase(); return KARTU[k] ? k : 'kuning'; }
+// batas huruf per bentuk (angka harus sama dengan BENTUK di Kode.gs)
+const BENTUK = {
+  persegi:  { label: 'Persegi',   maks: 200, baris: 4 },
+  lingkaran:{ label: 'Lingkaran', maks: 120, baris: 4 },
+  enam:     { label: 'Segi enam', maks: 120, baris: 4 },
+  lima:     { label: 'Segi lima', maks: 100, baris: 3 },
+  tumpul:   { label: 'Persegi panjang', maks: 120, baris: 4 },
+  ledak:    { label: 'Ledakan',   maks: 80,  baris: 3 },
+  waktu:    { label: 'Kartu timer', maks: 120, baris: 4 }   // persegi panjang merah dengan hitung mundur 5/15/30 menit; hilang sendiri saat habis
+};
+// bentuk ledakan: bintang bergerigi (jumlah gerigi sengaja sedikit agar jelas di layar HP)
+(function () {
+  const ujung = 16, luar = 50, dalam = 41, titik = [];
+  for (let i = 0; i < ujung * 2; i++) {
+    const r = i % 2 ? dalam : luar, a = Math.PI * i / ujung - Math.PI / 2;
+    titik.push((50 + r * Math.cos(a)).toFixed(1) + '% ' + (50 + r * Math.sin(a)).toFixed(1) + '%');
+  }
+  document.documentElement.style.setProperty('--c-ledak', 'polygon(' + titik.join(', ') + ')');
+})();
+function cekBentuk(b) { b = String(b || '').toLowerCase(); return Object.prototype.hasOwnProperty.call(BENTUK, b) ? b : 'persegi'; }
+const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function fmt(w) {
+  const d = new Date(w); if (isNaN(d)) return '';
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getHours())}.${p(d.getMinutes())} – ${d.getDate()} ${BLN[d.getMonth()]} ${d.getFullYear()}`;
+}
+function acak(id, n) { let x = 0; for (const c of id + n) x = (x * 31 + c.charCodeAt(0)) >>> 0; return (x % 1000) / 1000; }
+function h(tag, a = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(a)) {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  kids.flat().forEach(c => { if (c != null && c !== false) e.append(c); });
+  return e;
+}
+let tToast;
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(tToast); tToast = setTimeout(() => t.style.display = 'none', 3500);
+}
+const getUser = () => localStorage.getItem('deck_user') || '';
+const setUser = v => localStorage.setItem('deck_user', v);
+const getWarna = () => cekWarna(localStorage.getItem('deck_warna'));
+const getKartu = () => cekKartu(localStorage.getItem('deck_kartu'));
+const getBentuk = () => { const b = cekBentuk(localStorage.getItem('deck_bentuk')); return b === 'waktu' ? 'persegi' : b; };
+function ambilDraft(kunci) {
+  return draft[kunci] = draft[kunci] || { u: getUser(), t: '', w: getWarna(), k: getKartu(), b: getBentuk(), j: 15 };
+}
+function ubahBentuk(d, b) {
+  d.b = b; d.t = d.t.slice(0, BENTUK[b].maks);
+  if (b !== 'waktu') localStorage.setItem('deck_bentuk', b);
+}
+
+/* ================== CSV ================== */
+function parseCSV(t) {
+  const rows = []; let r = [], c = '', q = false;
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (q) { if (ch === '"') { if (t[i + 1] === '"') { c += '"'; i++; } else q = false; } else c += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ',') { r.push(c); c = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && t[i + 1] === '\n') i++; r.push(c); c = ''; rows.push(r); r = []; }
+    else c += ch;
+  }
+  if (c !== '' || r.length) { r.push(c); rows.push(r); }
+  return rows;
+}
+function dariCSV(teks) {
+  const rows = parseCSV(teks); if (rows.length < 2) return [];
+  const kop = rows[0].map(s => s.trim().toLowerCase());
+  return rows.slice(1).map(r => { const o = {}; kop.forEach((k, i) => o[k] = r[i] ?? ''); return o; });
+}
+function bacaPoll(t) {   // kolom 'polling' berisi JSON { o: [pilihan], h: [jumlah suara], akhir: ms }
+  if (!t) return null;
+  try {
+    const j = typeof t === 'string' ? JSON.parse(t) : t;
+    if (!j || !Array.isArray(j.o) || j.o.length < 2 || j.o.length > MAKS_OPSI_N || !(Number(j.akhir) > 0)) return null;
+    return { o: j.o.map(x => String(x).slice(0, MAKS_OPSI)), h: j.o.map((_, i) => Math.max(0, parseInt((j.h || [])[i]) || 0)), akhir: Number(j.akhir) };
+  } catch (e) { return null; }
+}
+function normal(o) {
+  return { id: String(o.id || '').trim(), parent: String(o.parent_id || '').trim(), waktu: o.waktu,
+           username: String(o.username || ''), teks: String(o.teks || ''), warna: cekWarna(o.warna), kartu: String(o.kartu || '').toLowerCase() === 'merah' ? 'kuning' : cekKartu(o.kartu),
+           membalas: String(o.membalas || '').slice(0, 40), ke: String(o.ke || '').trim(), bentuk: cekBentuk(o.bentuk), dosen: o.dosen === true || String(o.dosen || '').trim().toLowerCase() === 'ya',
+           up: parseInt(o.up) || 0, down: parseInt(o.down) || 0,
+           tautan: (Array.isArray(o.tautan) ? o.tautan : String(o.tautan || '').split(',')).map(x => String(x).trim()).filter(Boolean).slice(0, MAKS_TAUTAN),
+           poll: bacaPoll(o.polling), tmr: String(o.bentuk || '').toLowerCase() === 'waktu', habis: Number(o.habis) > 0 && String(o.bentuk || '').toLowerCase() === 'waktu' ? Number(o.habis) : 0,
+           game: Number(o.game) > 0 ? Number(o.game) : 0 };   // game: 0 tidak ada, 1 berjalan/tersegel, 2 sudah ditampilkan
+}
+
+/* ================== MUAT DATA ================== */
+let muatJalan = false;
+async function muat(otomatis) {
+  if (!sb) return;
+  if (otomatis && (document.hidden || sedangMengetik() || (seret && seret.mode === 'tarik'))) { muatTunda = true; return; }
+  if (muatJalan) { muatUlang = true; return; }
+  muatJalan = true; muatTunda = false;
+  sinkronMulai();
+  try {
+    const t0 = Date.now();
+    const [r, w] = await Promise.all([
+      sb.from('posts').select('*').order('waktu', { ascending: true }).limit(5000),
+      sb.rpc('kini_ms')
+    ]);
+    if (r.error) throw r.error;
+    if (!w.error && Number(w.data) > 0) skew = Number(w.data) - (t0 + Date.now()) / 2;
+    dataServer = (r.data || []).map(normal).filter(p => p.id && p.teks);
+    // data dari server adalah kebenaran: tutupan sementara tidak diperlukan lagi
+    lokal = []; override = {}; ovPoll = {}; ovTautan = {}; ovHapus = {}; ovBuka = {}; ovGame = {};
+    {   // bunyi "dek dek" bila ada kartu baru dari orang lain
+      const kini = new Set(dataServer.map(p => p.id));
+      if (suaraKead.dikenal && otomatis && dataServer.some(p => !suaraKead.dikenal.has(p.id) && !milikSaya.has(p.id))) bunyiDekdek();
+      suaraKead.dikenal = kini;
+    }
+    render();
+  } catch (e) { if (!otomatis) toast('Gagal memuat data.'); }
+  finally { muatJalan = false; sinkronSelesai(); if (muatUlang) { muatUlang = false; muat(true); } }
+}
+let muatTunda = false, muatUlang = false;
+/* Realtime: setiap perubahan pada tabel kartu memicu muat ulang (digabung bila beruntun) */
+let tRealtime = null;
+function realtimeMulai() {
+  if (!sb) return;
+  sb.channel('kartu-berubah').on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
+    clearTimeout(tRealtime); tRealtime = setTimeout(() => muat(true), 350);
+  }).subscribe();
+  document.addEventListener('focusout', () => { if (muatTunda) setTimeout(() => muat(true), 300); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) muat(true); });
+}
+function sedangMengetik() {
+  const a = document.activeElement;
+  return a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT') && document.getElementById('dek').contains(a);
+}
+function semua() {
+  const m = new Map();
+  dataServer.forEach(p => m.set(p.id, { ...p }));
+  lokal.forEach(p => { if (!m.has(p.id)) m.set(p.id, { ...p }); });
+  const now = Date.now();
+  for (const [id, o] of Object.entries(override)) {
+    const p = m.get(id); if (p && now - o.t < 360000) { p.up = o.up; p.down = o.down; }
+  }
+  for (const [id, t] of Object.entries(ovHapus)) { if (now - t < 600000) m.delete(id); }
+  if (tombServer.ids.size || tombServer.reset) [...m.values()].forEach(p => {
+    if (tombServer.ids.has(p.id) || (p.parent && tombServer.ids.has(p.parent)) || (tombServer.reset && !lokal.some(l => l.id === p.id) && Date.parse(p.waktu) < tombServer.reset)) m.delete(p.id);
+  });
+  for (const [id, o] of Object.entries(ovPoll)) { const p = m.get(id); if (p && p.poll && now - o.t < 360000) p.poll = { ...p.poll, h: o.h.slice() }; }
+  { const kini = waktuServer(), mati = new Set(); m.forEach(p => { if (p.habis && p.habis <= kini) mati.add(p.id); }); if (mati.size) [...m.values()].forEach(p => { if (mati.has(p.id) || mati.has(p.parent)) m.delete(p.id); }); }
+  for (const [id, t] of Object.entries(ovBuka)) { const p = m.get(id); if (p) { p.teks = t; if (p.parent) p.game = 2; } }
+  for (const [id, a] of Object.entries(ovGame)) { const p = m.get(id); if (p && p.game < a) p.game = a; }
+  for (const [id, o] of Object.entries(ovTautan)) { const p = m.get(id); if (p && now - o.t < 360000) p.tautan = o.a; }
+  return [...m.values()];
+}
+const skor = p => p.up - p.down;
+const urut = (a, b) => skor(b) - skor(a) || new Date(b.waktu) - new Date(a.waktu);
+const urutKartu = () => urutan === 'terbaru' ? (a, b) => new Date(b.waktu) - new Date(a.waktu) || skor(b) - skor(a)
+  : urutan === 'nama' ? (a, b) => a.username.localeCompare(b.username, 'id', { sensitivity: 'base' }) || urut(a, b)
+  : urut;
+
+/* ================== PANGGIL SERVER (Supabase RPC) ================== */
+const PESAN = {
+  LOGIN: 'Sesi login habis. Silakan masuk lagi dengan Google.',
+  DILARANG: 'Akun belum terdaftar atau sedang diblokir.'
+};
+let sinkronN = 0, sinkronAwal = 0, sinkronTunda = null;
+// ikon sinkron: menyala saat ada permintaan ke server, minimal 0,7 detik supaya sempat terlihat
+function sinkronMulai() {
+  sinkronN++; if (sinkronTunda) { clearTimeout(sinkronTunda); sinkronTunda = null; }
+  const el = document.getElementById('sinkron'); if (!el) return;
+  if (!el.classList.contains('on')) { sinkronAwal = Date.now(); el.classList.add('on'); el.removeAttribute('aria-hidden'); }
+}
+function sinkronSelesai() {
+  sinkronN = Math.max(0, sinkronN - 1); if (sinkronN) return;
+  const sisa = Math.max(0, 700 - (Date.now() - sinkronAwal));
+  sinkronTunda = setTimeout(() => { sinkronTunda = null; if (sinkronN) return; const el = document.getElementById('sinkron'); if (el) { el.classList.remove('on'); el.setAttribute('aria-hidden', 'true'); } }, sisa);
+}
+async function panggil(isi) {
+  sinkronMulai();
+  try { return await panggilInti(isi); } finally { sinkronSelesai(); }
+}
+// peta aksi lama -> fungsi database (nama dan parameter sama dengan skema.sql)
+const RPC = {
+  saya:    () => ['saya', {}],
+  daftar:  () => ['daftar', {}],
+  vote:    i => ['vote', { p_id: i.id, p_nilai: i.nilai }],
+  hapus:   i => ['hapus', { p_id: i.id }],
+  pilih:   i => ['pilih', { p_id: i.id, p_indeks: i.indeks }],
+  ronde:   i => ['ronde', { p_id: i.id }],
+  tampil:  i => ['tampil', { p_id: i.id }],
+  tautan:  i => ['tautan', { p_id: i.id, p_ke: i.ke }],
+  polling: i => ['buat_polling', { p: { username: i.username, tanya: i.tanya, opsi: i.opsi, menit: i.menit } }],
+  post:    i => ['kirim', { p: { username: i.username, teks: i.teks, parent: i.parent || '', membalas: i.membalas || '', warna: i.warna, kartu: i.kartu, bentuk: i.bentuk, menit: i.menit, game: i.game ? 'true' : '' } }]
+};
+async function panggilInti(isi) {
+  if (!sb) throw new Error('Pustaka Supabase belum termuat. Muat ulang halaman.');
+  const f = RPC[isi.aksi]; if (!f) throw new Error('Aksi tidak dikenal.');
+  const [nama, args] = f(isi);
+  const { data, error } = await sb.rpc(nama, args);
+  if (error) {
+    const m = String(error.message || '');
+    if (m === 'LOGIN') keluar(true);
+    throw new Error(PESAN[m] || m || 'Terjadi kesalahan.');
+  }
+  return data || {};
+}
+
+/* ================== LOGIN GOOGLE (lewat Supabase Auth) ================== */
+const tokenHidup = () => !!sesi;
+function namaAkun() {
+  const m = (sesi && sesi.user && sesi.user.user_metadata) || {};
+  return String(m.name || m.full_name || (sesi && sesi.user && sesi.user.email) || getUser() || 'Akun').trim();
+}
+async function masukGoogle() {
+  if (!sb) return toast('Pustaka Supabase belum termuat. Muat ulang halaman.');
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/', queryParams: { prompt: 'select_account' } } });
+  if (error) toast('Gagal memulai login: ' + error.message);
+}
+document.addEventListener('click', e => { const m = document.getElementById('menu-akun'); if (m && !m.hidden && !m.contains(e.target)) m.hidden = true; });
+document.addEventListener('keydown', e => { const m = document.getElementById('menu-akun'); if (e.key === 'Escape' && m && !m.hidden) m.hidden = true; });
+function renderLogin() {
+  const el = document.getElementById('login'); el.innerHTML = '';
+  if (tokenHidup()) {
+    const nm = namaAkun();
+    const menu = h('div', { id: 'menu-akun', role: 'menu', hidden: '' }, h('div', { class: 'peran' }, dosenSaya ? 'Peran: dosen \u2713 (bisa membuat polling)' : 'Peran: akun biasa'), h('button', { type: 'button', role: 'menuitem', onclick: () => { menu.hidden = true; keluar(); } }, 'Keluar'));
+    const tb = h('button', { type: 'button', class: 'btn garis', id: 'btn-akun', 'aria-haspopup': 'true', 'aria-expanded': 'false', title: 'Akun: ' + nm,
+      onclick: e => { e.stopPropagation(); menu.hidden = !menu.hidden; tb.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true'); } }, nm);
+    el.append(h('span', { id: 'akun-wrap' }, tb, menu));
+  } else if (sb) {
+    el.append(h('button', { type: 'button', class: 'btn garis', id: 'btn-masuk', onclick: masukGoogle }, 'Masuk dengan Google'));
+  } else {
+    el.append(h('span', {}, 'Login belum dikonfigurasi'));
+  }
+}
+async function sapa() {
+  try { const j = await panggil({ aksi: 'saya' }); sayaVote = j.votes || {}; milikSaya = new Set(j.milik || []); sayaPilih = j.pilihan || {}; segelSaya = j.segel || {}; dosenSaya = !!j.dosen; statusAkun = j.status || 'aktif'; toast(statusAkun === 'baru' ? 'Berhasil masuk. Klik Daftar untuk mulai menulis.' : statusAkun === 'blokir' ? 'Akun ini diblokir.' : 'Berhasil masuk.'); }
+  catch (e) { toast(e.message); }
+  renderLogin(); renderAlat(); render(); hadirKirim();
+}
+function bersihkanAkun() {
+  sayaVote = {}; milikSaya = new Set(); seret = null; sayaPilih = {}; segelSaya = {}; gameBuka = null; dosenSaya = false; statusAkun = 'aktif'; komposBuka = false; pollBuka = false; hapusKonfirm = null;
+}
+function keluar(diam) {
+  sesi = null; bersihkanAkun();
+  if (sb) { try { sb.auth.signOut({ scope: 'local' }); } catch (e) {} }
+  renderLogin(); if (!diam) toast('Anda sudah keluar.'); renderAlat(); render(); hadirKirim();
+}
+function butuhLogin() {
+  if (tokenHidup()) return true;
+  renderLogin(); toast('Masuk dengan akun Google dulu.'); return false;
+}
+function authMulai() {
+  if (!sb) return;
+  let terakhir = null;
+  sb.auth.onAuthStateChange((ev, s) => {
+    const id = s && s.user ? s.user.id : null;
+    sesi = s || null;
+    if (ev === 'SIGNED_OUT') { bersihkanAkun(); renderLogin(); renderAlat(); render(); return; }
+    if (id && id !== terakhir) { terakhir = id; setTimeout(sapa, 0); }   // setTimeout: jangan memanggil Supabase di dalam callback ini
+    else renderLogin();
+  });
+  // setelah kembali dari Google, bersihkan parameter di alamat
+  if (/[?&#](code|error|error_description)=/.test(location.search + location.hash)) {
+    setTimeout(() => { try { history.replaceState(null, '', location.pathname); } catch (e) {} }, 1500);
+  }
+}
+
+/* ================== AKSI ================== */
+async function vote(id, n, btn) {
+  if (!butuhLogin()) return;
+  btn.disabled = true;
+  try {
+    const j = await panggil({ aksi: 'vote', id, nilai: n });
+    sayaVote[id] = j.saya; override[id] = { up: j.up, down: j.down, t: Date.now() };
+  } catch (e) { toast(e.message); }
+  render();
+}
+async function hapusKartu(id, btn) {
+  if (!butuhLogin()) return;
+  btn.disabled = true;
+  try {
+    const j = await panggil({ aksi: 'hapus', id });
+    (j.dihapus || [id]).forEach(x => { ovHapus[x] = Date.now(); });
+    lokal = lokal.filter(p => !(j.dihapus || [id]).includes(p.id));
+    if (dekBuka === id) dekBuka = null;
+    if (balasTerbuka === id) { balasTerbuka = null; balasKe = null; }
+    toast('Terhapus ✓');
+  } catch (e) { toast(e.message); }
+  hapusKonfirm = null; render();
+}
+async function pilihOpsi(id, i, btn) {
+  if (!butuhLogin()) return;
+  btn.disabled = true;
+  try {
+    const j = await panggil({ aksi: 'pilih', id, indeks: i });
+    if (j.saya >= 0) sayaPilih[id] = j.saya; else delete sayaPilih[id];
+    ovPoll[id] = { h: j.h, t: Date.now() };
+  } catch (e) { toast(e.message); }
+  render();
+}
+async function kirimPolling(btn) {
+  if (!butuhLogin()) return;
+  const d = pollDraft, u = d.u.trim(), q = d.q.trim(), opsi = d.o.map(x => x.trim()).filter(Boolean);
+  if (!u) return toast('Isi username dulu.');
+  if (!q) return toast('Tulis pertanyaannya dulu.');
+  if (opsi.length < 2) return toast('Isi minimal 2 pilihan.');
+  btn.disabled = true;
+  try {
+    const j = await panggil({ aksi: 'polling', username: u, tanya: q, opsi, menit: d.menit });
+    lokal.push(normal(j.post)); milikSaya.add(j.post.id); setUser(u);
+    pollDraft = { u, q: '', o: ['', ''], menit: d.menit }; pollBuka = false;
+    toast('Polling terkirim ✓'); bunyiDekdek();
+    if (suaraKead.dikenal) suaraKead.dikenal.add(j.post.id);
+  } catch (e) { toast(e.message); }
+  renderAlat(); render();
+}
+async function kirim(kunci, parent, btn, ke) {
+  if (!butuhLogin()) return;
+  const d = ambilDraft(kunci);
+  const u = d.u.trim(), t = d.t.trim();
+  if (!u) return toast('Isi username dulu.');
+  if (!t) return toast('Tulis sesuatu dulu.');
+  if (t.length > BENTUK[d.b].maks) return toast(`Teks terlalu panjang untuk bentuk ini (maks ${BENTUK[d.b].maks}).`);
+  btn.disabled = true;
+  try {
+    const j = await panggil({ aksi: 'post', username: u, teks: t, parent: parent || '', membalas: ke ? ke.id : '', warna: d.w, kartu: d.k, bentuk: d.b, menit: d.b === 'waktu' ? d.j : undefined, game: (parent && !ke && gameBisa(parent)) ? true : undefined });
+    lokal.push(normal(j.post)); milikSaya.add(j.post.id); setUser(u);
+    if (j.segel) segelSaya[j.post.id] = j.segel;
+    if (d.b !== 'waktu') { localStorage.setItem('deck_warna', d.w); localStorage.setItem('deck_kartu', d.k); localStorage.setItem('deck_bentuk', d.b); }
+    delete draft[kunci];
+    if (parent) { balasTerbuka = null; balasKe = null; dekBuka = parent; } else komposBuka = false;
+    toast('Terkirim ✓'); bunyiDekdek();
+    if (suaraKead.dikenal) suaraKead.dikenal.add(j.post.id);
+  } catch (e) { toast(e.message); }
+  renderAlat(); render();
+}
+
+/* ================== BAR BENTUK: membesar seperti dock (macOS) ================== */
+(function dokMulai() {
+  const bar = document.getElementById('alat');
+  const MAKS = 1.7, SEBAR = 52;   // skala tertinggi dan lebar pengaruh (px)
+  const ikon = () => [...bar.querySelectorAll('.ikon')];
+  const reset = () => ikon().forEach(k => { k.style.transform = ''; });
+  bar.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse') return;
+    const L = ikon(); if (!L.length) return;
+    const px = e.clientX - bar.getBoundingClientRect().left;   // satu sistem koordinat dengan offsetLeft
+    const info = L.map(k => {
+      const w = k.offsetWidth, c = k.offsetLeft + w / 2, d = (px - c) / SEBAR;
+      const s = Math.max(k.classList.contains('pilih') ? 1.1 : 1, 1 + (MAKS - 1) * Math.exp(-d * d));
+      return { k, w, c, s, tambah: w * (s - 1) };
+    });
+    const total = info.reduce((a, o) => a + o.tambah, 0);
+    const awal = info[0].k.offsetLeft, lebar = info[info.length - 1].k.offsetLeft + info[info.length - 1].w - awal;
+    const rasio = Math.min(1, Math.max(0, (px - awal) / (lebar || 1)));   // ikon di bawah kursor tetap di tempatnya
+    let kiri = 0;
+    info.forEach(o => {
+      const geser = kiri + o.tambah / 2 - total * rasio; kiri += o.tambah;
+      o.k.style.transform = `translateX(${geser.toFixed(1)}px) scale(${o.s.toFixed(3)})`;
+    });
+  });
+  bar.addEventListener('pointerleave', reset);
+  bar.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') reset(); });
+})();
+
+/* ================== FOTO SEMUA KARTU -> CLIPBOARD ================== */
+const FOTO_LIB = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
+let fotoLib = null;
+function muatFotoLib() {
+  if (window.htmlToImage) return Promise.resolve();
+  if (!fotoLib) fotoLib = new Promise((ok, gagal) => {
+    const sc = document.createElement('script'); sc.src = FOTO_LIB; sc.onload = ok; sc.onerror = () => { fotoLib = null; gagal(new Error('lib')); };
+    document.head.append(sc);
+  });
+  return fotoLib;
+}
+const tunggu = ms => new Promise(r => setTimeout(r, ms));
+async function buatFotoKartu() {
+  const root = document.documentElement, rapiLama = rapi, temaLama = root.dataset.tema, gulirX = scrollX, gulirY = scrollY;
+  try {
+    await muatFotoLib();
+    // semua tumpukan terbuka, latar putih polos, tanpa bilah dan kotak lain
+    rapi = true; root.dataset.tema = 'terang'; root.classList.add('foto');
+    window.scrollTo(0, 0); render();
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); await tunggu(250);
+    // batas isi: gabungan semua kartu dan balasan
+    let l = 1e9, t = 1e9, r = -1e9, b = -1e9;
+    document.querySelectorAll('#dek .kartu:not(.lapis), #dek .balas').forEach(el => {
+      const q = el.getBoundingClientRect(); if (!q.width) return;
+      l = Math.min(l, q.left + scrollX); t = Math.min(t, q.top + scrollY); r = Math.max(r, q.right + scrollX); b = Math.max(b, q.bottom + scrollY);
+    });
+    if (l > r) throw new Error('kosong');
+    const P = 32; l = Math.max(0, l - P); t = Math.max(0, t - P); r += P; b += P;
+    const lebar = Math.ceil(r - l), tinggi = Math.ceil(b - t);
+    const pr = Math.max(.5, Math.min(2, window.devicePixelRatio || 1, 4000 / Math.max(lebar, tinggi)));
+    const docW = Math.max(root.scrollWidth, Math.ceil(r)), docH = Math.max(root.scrollHeight, Math.ceil(b));
+    const penuh = await htmlToImage.toCanvas(document.body, { pixelRatio: pr, width: docW, height: docH, cacheBust: false });
+    const out = document.createElement('canvas'); out.width = Math.round(lebar * pr); out.height = Math.round(tinggi * pr);
+    const g = out.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, out.width, out.height);
+    g.drawImage(penuh, Math.round(l * pr), Math.round(t * pr), out.width, out.height, 0, 0, out.width, out.height);
+    return await new Promise((ok, gagal) => out.toBlob(x => x ? ok(x) : gagal(new Error('blob')), 'image/png'));
+  } finally {
+    rapi = rapiLama; root.dataset.tema = temaLama; root.classList.remove('foto');
+    render(); window.scrollTo(gulirX, gulirY);
+  }
+}
+(function fotoMulai() {
+  const tb = document.getElementById('btn-foto');
+  tb.addEventListener('click', async () => {
+    if (tb.disabled) return;
+    tb.disabled = true; toast('Memotret semua kartu…');
+    try {
+      const janji = buatFotoKartu();
+      let tersalin = false;
+      try {
+        if (navigator.clipboard && window.ClipboardItem) { await navigator.clipboard.write([new ClipboardItem({ 'image/png': janji })]); tersalin = true; }
+      } catch (e) { /* diteruskan ke unduhan */ }
+      const blob = await janji;
+      if (tersalin) toast('Foto disalin ke clipboard ✓');
+      else {
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dekken-kartu.png';
+        document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        toast('Clipboard tidak tersedia, foto diunduh.');
+      }
+    } catch (e) { toast(e && e.message === 'lib' ? 'Pustaka foto gagal dimuat (perlu internet).' : 'Gagal membuat foto.'); }
+    tb.disabled = false;
+  });
+})();
+
+/* ================== SUARA "dek dek" ================== */
+// satu nada rendah yang berdetak dua kali; dibuat langsung oleh browser (tanpa file audio)
+const SUARA = { nada: 360, jeda: .16, susut: 38, panjang: .1, volume: .5 };
+const suaraKead = { ctx: null, hidup: true, dikenal: null };
+function suaraSiap() {
+  if (suaraKead.ctx) { if (suaraKead.ctx.state === 'suspended') suaraKead.ctx.resume().catch(() => {}); return suaraKead.ctx; }
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+  try { suaraKead.ctx = new AC(); } catch (e) { return null; }
+  return suaraKead.ctx;
+}
+function bunyiDekdek() {
+  if (!suaraKead.hidup) return;
+  const c = suaraKead.ctx; if (!c || c.state !== 'running') return;   // browser memblokir suara sebelum ada interaksi
+  const t0 = c.currentTime + .02;
+  [0, SUARA.jeda].forEach(d => {
+    const t = t0 + d, g = c.createGain(), o1 = c.createOscillator(), o2 = c.createOscillator(), g2 = c.createGain();
+    o1.frequency.value = SUARA.nada; o2.frequency.value = SUARA.nada * 2; g2.gain.value = .3;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(SUARA.volume, t + .002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + SUARA.panjang);
+    o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(c.destination);
+    o1.start(t); o2.start(t); o1.stop(t + SUARA.panjang + .02); o2.stop(t + SUARA.panjang + .02);
+  });
+}
+// satu nada rendah pendek untuk klik objek (kartu, tombol, menu)
+function bunyiKlik() {
+  if (!suaraKead.hidup) return;
+  const c = suaraKead.ctx; if (!c || c.state !== 'running') return;
+  const t = c.currentTime + .005, g = c.createGain(), o = c.createOscillator();
+  o.type = 'sine'; o.frequency.setValueAtTime(260, t); o.frequency.exponentialRampToValueAtTime(200, t + .09);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(.3, t + .003); g.gain.exponentialRampToValueAtTime(0.0001, t + .09);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + .1);
+}
+// sambungan antar kartu: dua nada naik (tersambung) atau satu nada turun (dilepas)
+function nadaTunggal(c, t, f1, f2, dur, vol) {
+  const g = c.createGain(), o = c.createOscillator();
+  o.type = 'sine'; o.frequency.setValueAtTime(f1, t); if (f2 !== f1) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + .004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + .02);
+}
+function bunyiSambung(tersambung) {
+  if (!suaraKead.hidup) return;
+  const c = suaraKead.ctx; if (!c || c.state !== 'running') return;
+  const t = c.currentTime + .01;
+  if (tersambung) { nadaTunggal(c, t, 330, 330, .13, .3); nadaTunggal(c, t + .09, 495, 495, .2, .28); }
+  else nadaTunggal(c, t, 250, 170, .16, .3);
+}
+// tampilan Acak: kartu "menyebar" (desir naik + ketukan acak); tampilan Rapi: kartu "berkumpul" (desir turun + ketukan merapat + dug lembut)
+function derau(c, durasi) {
+  const n = Math.max(1, Math.floor(c.sampleRate * durasi)), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = buf; return src;
+}
+function desir(c, t, dur, f1, f2, vol) {
+  const src = derau(c, dur + .05), bp = c.createBiquadFilter(), g = c.createGain();
+  bp.type = 'bandpass'; bp.Q.value = .9; bp.frequency.setValueAtTime(f1, t); bp.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + dur * .35); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(bp); bp.connect(g); g.connect(c.destination); src.start(t); src.stop(t + dur + .05);
+}
+function ketuk(c, t, f, vol) {
+  const src = derau(c, .04), bp = c.createBiquadFilter(), g = c.createGain();
+  bp.type = 'bandpass'; bp.Q.value = 3; bp.frequency.value = f;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + .035);
+  src.connect(bp); bp.connect(g); g.connect(c.destination); src.start(t); src.stop(t + .04);
+}
+function bunyiSebar(berkumpul) {
+  if (!suaraKead.hidup) return;
+  const c = suaraKead.ctx; if (!c || c.state !== 'running') return;
+  const t = c.currentTime + .01, T = .34, K = .4;   // K: pengali volume (makin kecil makin pelan)
+  if (!berkumpul) {   // menyebar
+    desir(c, t, T, 400, 2600, .22 * K);
+    for (let i = 0; i < 9; i++) ketuk(c, t + Math.pow(Math.random(), .8) * T, 900 + Math.random() * 2200, (.5 - i * .03) * K);
+  } else {            // berkumpul
+    desir(c, t, T, 2400, 380, .2 * K);
+    for (let i = 0; i < 7; i++) ketuk(c, t + T * (1 - Math.pow(1 - i / 6, 1.6)) * .95, 700 + Math.random() * 1200, (.35 + i * .04) * K);
+    nadaTunggal(c, t + T, 130, 90, .12, .32 * K);
+  }
+}
+(function suaraMulai() {
+  const tb = document.getElementById('btn-suara');
+  try { if (localStorage.getItem('deck-suara') === '0') suaraKead.hidup = false; } catch (e) {}
+  const pasang = () => {
+    tb.classList.toggle('mati', !suaraKead.hidup); tb.setAttribute('aria-pressed', suaraKead.hidup ? 'true' : 'false');
+    tb.title = 'Suara kartu baru: ' + (suaraKead.hidup ? 'menyala' : 'mati');
+  };
+  const buka = () => { suaraSiap(); };
+  document.addEventListener('click', e => {
+    const x = e.target.closest && e.target.closest('button, a, select, summary, [role="menuitem"], article.kartu, .balas, .tt');
+    if (x && !x.closest('#btn-suara, #btn-rapi, #peta') && !x.disabled) bunyiKlik();
+  }, true);
+  addEventListener('pointerdown', buka, { passive: true }); addEventListener('keydown', buka);
+  tb.addEventListener('click', () => {
+    suaraKead.hidup = !suaraKead.hidup; try { localStorage.setItem('deck-suara', suaraKead.hidup ? '1' : '0'); } catch (e) {}
+    pasang(); suaraSiap(); if (suaraKead.hidup) bunyiDekdek();   // contoh bunyi saat dinyalakan
+  });
+  pasang();
+})();
+
+/* ================== TOMBOL BENTUK DI ATAS ================== */
+function pilihBentukBaru(b) {
+  const d = ambilDraft('baru');
+  if (komposBuka && d.b === b) komposBuka = false;      // klik bentuk yang sama = tutup kartu penulis
+  else { komposBuka = true; pollBuka = false; ubahBentuk(d, b); }
+  renderAlat(); render();
+  if (komposBuka) requestAnimationFrame(() => { const k = document.querySelector('#dek .kompos'); if (k) k.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
+}
+async function daftarAkun(btn) {
+  if (!butuhLogin()) return;
+  btn.disabled = true;
+  try {
+    const j = await panggil({ aksi: 'daftar' }); statusAkun = j.status || 'aktif';
+    const sy = await panggil({ aksi: 'saya' });   // muat suara, kartu milik, dan peran dosen yang tadi belum terbaca
+    sayaVote = sy.votes || {}; milikSaya = new Set(sy.milik || []); sayaPilih = sy.pilihan || {}; segelSaya = sy.segel || {}; dosenSaya = !!sy.dosen;
+    renderLogin(); toast('Terdaftar. Silakan menulis kartu.');
+  }
+  catch (e) { toast(e.message); }
+  renderAlat(); render();
+}
+function renderAlat() {
+  const el = document.getElementById('bentuk-baris');
+  const belum = tokenHidup() && statusAkun !== 'aktif';
+  el.classList.toggle('belum', belum);
+  const kd = el.querySelector('.daftar-kotak'); if (kd) kd.remove();
+  if (belum) {
+    komposBuka = false; pollBuka = false;
+    el.append(statusAkun === 'blokir'
+      ? h('div', { class: 'daftar-kotak' }, 'Akun ini diblokir dan tidak bisa menulis. Hubungi administrator.')
+      : h('div', { class: 'daftar-kotak' }, 'Akunmu belum terdaftar.', h('button', { type: 'button', class: 'btn', onclick: e => daftarAkun(e.currentTarget) }, 'Daftar')));
+    return;
+  }
+  const aktif = komposBuka ? ambilDraft('baru').b : null;   // (tombol polling dikelola di bawah)
+  // tombol dibuat sekali lalu hanya diubah kelasnya, supaya perubahan ukuran teranimasi
+  if (!el.querySelector('.ikon')) {
+    el.append(...Object.keys(BENTUK).map(b => h('button', {
+      type: 'button', class: 'ikon b-' + b, 'data-bentuk': b,
+      title: `${BENTUK[b].label} · maks ${BENTUK[b].maks} huruf`, 'aria-label': BENTUK[b].label,
+      onclick: () => pilihBentukBaru(b)
+    })));
+  }
+  // tombol polling (merah) hanya untuk dosen
+  const tp = el.querySelector('.ikon.poll');
+  if (dosenSaya && !tp) el.append(h('button', { type: 'button', class: 'ikon poll', title: 'Polling (khusus dosen)', 'aria-label': 'Buat polling',
+    onclick: () => {
+      pollBuka = !pollBuka; if (pollBuka) komposBuka = false;
+      renderAlat(); render();
+      if (pollBuka) requestAnimationFrame(() => { const k = document.querySelector('#dek .poll.tulis'); if (k) k.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
+    } }));
+  else if (!dosenSaya && tp) { tp.remove(); pollBuka = false; }
+  el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.dataset.bentuk === aktif));
+  const lama = el.querySelector('.petunjuk'); if (lama) lama.remove();
+  if (aktif) el.append(h('span', { class: 'petunjuk' }, `${BENTUK[aktif].label} \u00b7 maks ${BENTUK[aktif].maks} huruf`));
+}
+
+/* ================== RENDER ================== */
+function kompos(kunci, parent, ke) {
+  const d = ambilDraft(kunci);
+  if (parent && d.b === 'waktu') ubahBentuk(d, 'persegi');   // balasan tidak bisa berupa kartu timer
+  const timer = d.b === 'waktu';
+  const bt = BENTUK[d.b], maks = bt.maks;
+  const hitung = h('span', {}, `${d.t.length}/${maks}`);
+  const u = h('input', { type: 'text', class: 'in-nama', placeholder: 'username', maxlength: CONFIG.MAKS_USERNAME, value: d.u,
+                         oninput: e => { d.u = e.target.value; } });
+  const t = h('textarea', { class: 'in-teks', rows: bt.baris, maxlength: maks, placeholder: parent ? 'Tulis balasan…' : 'Tulis di sini…',
+                            oninput: e => { d.t = e.target.value; hitung.textContent = `${d.t.length}/${maks}`; } });
+  t.value = d.t; t.style.color = d.w;
+  const kartu = h('div', { class: 'kartu tulis b-' + d.b + (timer ? ' tmr' : d.b === 'persegi' ? '' : ' lain') }, timer ? h('span', { class: 'label-tmr' }, ikonJam(), 'TIMER') : null, u, t);
+  if (!timer) kartu.style.background = KARTU[d.k];
+
+  const pilihanTeks = h('div', { class: 'warna' });
+  const gambarTeks = () => {
+    const ada = warnaTersedia(KARTU[d.k]);
+    if (!ada.includes(d.w) || kontras(d.w, KARTU[d.k]) < 3) d.w = kontras('#000000', KARTU[d.k]) >= kontras('#ffffff', KARTU[d.k]) ? '#000000' : '#ffffff';
+    t.style.color = d.w;
+    pilihanTeks.replaceChildren(h('span', {}, 'Warna teks:'), ...ada.map(w => h('button', { type: 'button', title: w, class: (w === d.w ? 'pilih' : '') + (w === '#ffffff' ? ' putih' : ''), style: 'background:' + w,
+      onclick: () => { d.w = w; t.style.color = w; gambarTeks(); } })));
+  };
+  gambarTeks();
+  const pilihanKartu = h('div', { class: 'warna' }, h('span', {}, 'Warna kartu:'),
+    Object.keys(KARTU).map(k => {
+      const b = h('button', { type: 'button', title: k, class: k === d.k ? 'pilih' : '', style: 'background:' + KARTU[k],
+        onclick: () => { d.k = k; kartu.style.background = KARTU[k]; gambarTeks(); pilihanKartu.querySelectorAll('button').forEach(x => x.classList.toggle('pilih', x === b)); } });
+      return b;
+    }));
+  // balasan boleh memilih bentuknya sendiri (postingan baru memilih lewat tombol di atas halaman)
+  const pilihanBentuk = parent ? h('div', { class: 'bentuk-baris' }, h('span', {}, 'Bentuk:'),
+    Object.keys(BENTUK).filter(b => b !== 'waktu').map(b => h('button', {
+      type: 'button', class: 'ikon kecil b-' + b + (b === d.b ? ' pilih' : ''),
+      title: `${BENTUK[b].label} · maks ${BENTUK[b].maks} huruf`, 'aria-label': BENTUK[b].label,
+      onclick: () => { ubahBentuk(d, b); render(); }
+    }))) : null;
+
+  const bisaGame = !!(parent && !ke && gameBisa(parent));
+  const kirimBtn = h('button', { class: 'btn', type: 'button', onclick: () => kirim(kunci, parent, kirimBtn, ke) }, 'Kirim');
+  const batal = h('button', { class: 'btn garis', type: 'button',
+    onclick: () => { if (parent) { balasTerbuka = null; balasKe = null; } else komposBuka = false; renderAlat(); render(); } }, 'Batal');
+  const infoGame = !bisaGame ? null : h('div', { class: 'game-toggle' }, h('span', {}, 'Kartu game: jawabanmu tersegel, hanya kamu yang melihat sampai pembuat kartu menekan ikon mata. Satu jawaban per akun.'));
+  const kontrol = h('div', { class: 'kontrol' }, infoGame, pilihanBentuk, pilihanTeks, pilihanKartu,
+    h('div', { class: 'baris' }, hitung, h('span', { class: 'tombol' }, batal, kirimBtn)));
+  if (timer) {
+    const pil = h('select', { 'aria-label': 'Umur kartu', onchange: e => { d.j = Number(e.target.value); } }, DURASI_TIMER.map(([n, tx]) => h('option', { value: n }, tx)));
+    pil.value = String(d.j);
+    kontrol.replaceChildren(h('div', { class: 'tmr-pilih' }, h('span', {}, 'Kartu hilang setelah:'), pil), h('div', { class: 'baris' }, hitung, h('span', { class: 'tombol' }, batal, kirimBtn)));
+  }
+  return h('div', { class: 'kompos' + (parent ? ' popup' : '') }, ke ? h('div', { class: 'ke' }, '↳ membalas @' + ke.username) : null, kartu, kontrol);
+}
+// ikon tombol (SVG garis) untuk Balas dan Hapus
+const IKON_BALAS = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v3"/></svg>';
+const IKON_HAPUS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>';
+function tombolIkon(ikon, tip, klik) {
+  const b = h('button', { type: 'button', class: 'btn ikon-btn', 'data-tip': tip, 'aria-label': tip, onclick: klik });
+  b.innerHTML = ikon; return b;
+}
+// tombol Hapus (✕): untuk pembuat kartu, dan untuk dosen (semua kartu). Klik pertama meminta konfirmasi di tempat.
+function tombolHapus(p, nBalasan) {
+  if (!(milikSaya.has(p.id) || dosenSaya)) return null;
+  if (hapusKonfirm === p.id) {
+    const ya = h('button', { type: 'button', class: 'btn kecil-teks', onclick: e => { e.stopPropagation(); hapusKartu(p.id, ya); } }, 'Ya');
+    const tidak = h('button', { type: 'button', class: 'btn kecil-teks', onclick: e => { e.stopPropagation(); hapusKonfirm = null; render(); } }, 'Batal');
+    return h('span', { class: 'hapus-konfirm' }, nBalasan ? `Hapus + ${nBalasan} balasan?` : 'Hapus?', ya, tidak);
+  }
+  return tombolIkon(IKON_HAPUS, nBalasan ? 'Hapus kartu beserta semua balasannya' : 'Hapus', e => { e.stopPropagation(); hapusKonfirm = p.id; render(); });
+}
+function komposPoll() {
+  const d = pollDraft; if (!d.u) d.u = getUser();
+  const u = h('input', { type: 'text', placeholder: 'username', maxlength: CONFIG.MAKS_USERNAME, value: d.u, 'aria-label': 'Username', oninput: e => { d.u = e.target.value; } });
+  const hitung = h('span', {}, `${d.q.length}/${MAKS_TANYA}`);
+  const q = h('textarea', { rows: 3, maxlength: MAKS_TANYA, placeholder: 'Tulis pertanyaan polling…', 'aria-label': 'Pertanyaan',
+    oninput: e => { d.q = e.target.value; hitung.textContent = `${d.q.length}/${MAKS_TANYA}`; } });
+  q.value = d.q;
+  const daftar = h('div', {});
+  const gambar = () => daftar.replaceChildren(
+    ...d.o.map((v, i) => h('div', { class: 'poll-baris' },
+      h('input', { type: 'text', maxlength: MAKS_OPSI, placeholder: 'Pilihan ' + (i + 1), value: v, 'aria-label': 'Pilihan ' + (i + 1), oninput: e => { d.o[i] = e.target.value; } }),
+      d.o.length > 2 ? h('button', { type: 'button', title: 'Hapus pilihan', 'aria-label': 'Hapus pilihan ' + (i + 1), onclick: () => { d.o.splice(i, 1); gambar(); } }, '×') : null)),
+    d.o.length < MAKS_OPSI_N ? h('button', { type: 'button', class: 'poll-tambah', style: 'font:inherit;font-size:14px;color:#fff;background:transparent;border:2px dashed #fff;padding:5px 12px;margin-top:8px;cursor:pointer', onclick: () => { d.o.push(''); gambar(); } }, '+ pilihan') : null);
+  gambar();
+  const jam = h('select', { 'aria-label': 'Lama polling', onchange: e => { d.menit = Number(e.target.value); } },
+    DURASI.map(([n, t]) => h('option', { value: n }, t)));
+  jam.value = String(d.menit);
+  const kirimBtn = h('button', { type: 'button', class: 'utama', onclick: () => kirimPolling(kirimBtn) }, 'Kirim');
+  const batal = h('button', { type: 'button', onclick: () => { pollBuka = false; renderAlat(); render(); } }, 'Batal');
+  return h('article', { class: 'kartu poll tulis' }, h('span', { class: 'label-poll' }, 'POLLING'), u, q, daftar,
+    h('div', { class: 'poll-lama' }, h('span', {}, 'Lama:'), jam),
+    h('div', { class: 'poll-aksi' }, hitung, h('span', {}, batal, ' ', kirimBtn)));
+}
+function sisaPoll(akhir) {
+  const ms = akhir - Date.now();
+  return ms > 0 ? 'sisa ' + teksTimer(ms) : 'Selesai';
+}
+function kartuPolling(p) {
+  const pl = p.poll, aktif = pl.akhir > Date.now();
+  const total = pl.h.reduce((a, b) => a + b, 0), saya = sayaPilih[p.id], tertinggi = Math.max(...pl.h);
+  const item = h('div', { class: 'item' });
+  item.style.setProperty('--dx', ((acak(p.id, 'x') - .5) * 20).toFixed(1) + 'px');
+  item.style.setProperty('--rot', ((acak(p.id, 'r') - .5) * 2.4).toFixed(2) + 'deg');
+  item.style.setProperty('--dy', (acak(p.id, 'y') * 16).toFixed(1) + 'px');
+  const opsi = pl.o.map((t, i) => {
+    const n = pl.h[i], pc = total ? Math.round(n * 100 / total) : 0;
+    const b = h('button', { type: 'button', class: 'poll-o' + (saya === i ? ' saya' : '') + (!aktif && n === tertinggi && n > 0 ? ' menang' : ''),
+      disabled: !aktif, 'aria-pressed': saya === i ? 'true' : 'false', title: aktif ? (saya === i ? 'Klik lagi untuk membatalkan' : 'Pilih ini') : 'Polling sudah selesai',
+      onclick: e => { e.stopPropagation(); pilihOpsi(p.id, i, b); } },
+      h('i', { style: 'width:' + pc + '%' }), h('span', {}, (saya === i ? '● ' : '') + t), h('span', {}, pc + '% · ' + n));
+    return b;
+  });
+  const sisa = h('span', { class: 'poll-sisa', 'data-akhir': pl.akhir, 'data-aktif': aktif ? '1' : '' }, sisaPoll(pl.akhir));
+  const kartu = h('article', { class: 'kartu poll b-persegi' },
+    h('span', { class: 'label-poll' }, 'POLLING'),
+    h('div', { class: 'kepala' }, h('div', {}, h('div', { class: 'nama' }, p.username, p.dosen ? h('span', { class: 'lencana', title: 'Dosen terverifikasi', 'aria-label': 'Dosen terverifikasi' }, '✓') : null), h('div', { class: 'waktu' }, fmt(p.waktu)))),
+    h('p', { class: 'poll-q' }, p.teks), ...opsi,
+    h('div', { class: 'poll-foot' }, h('span', {}, total + ' suara · ', sisa), h('span', { class: 'poll-kanan' }, tombolHapus(p, 0), titikTaut(p))),
+    labelTaut(p));
+  kartu.dataset.id = p.id;
+  item.append(h('div', { class: 'deck' }, kartu));
+  return item;
+}
+function tombolVote(p) {
+  const s = sayaVote[p.id] || 0;
+  const klik = n => e => { e.stopPropagation(); vote(p.id, n, e.currentTarget); };
+  return h('div', { class: 'aksi' },
+    h('button', { class: 'btn garis' + (s === 1 ? ' aktif' : ''), onclick: klik(1), title: 'Naikkan', 'aria-label': 'Naikkan, ' + p.up + ' suara' }, '↑ ' + p.up),
+    h('button', { class: 'btn garis' + (s === -1 ? ' aktif' : ''), onclick: klik(-1), title: 'Turunkan', 'aria-label': 'Turunkan, ' + p.down + ' suara' }, '↓ ' + p.down));
+}
+function blokSegel(p) {
+  const saya = milikSaya.has(p.id) && segelSaya[p.id];
+  return h('div', { class: 'segel' },
+    h('span', { class: 'label-segel' }, TANDA_SEGEL + ' TERSEGEL' + (saya ? ' \u00b7 hanya kamu yang melihat' : ' \u00b7 terbuka saat penanya menekan ikon mata')),
+    saya ? h('p', { class: 'teks', style: 'color:' + p.warna }, segelSaya[p.id])
+         : [70, 95, 55].map((w, i) => h('div', { class: 'garis-semu', style: 'width:' + Math.round(w * (.8 + acak(p.id, 'sg' + i) * .2)) + '%' })));
+}
+const isiKartu = p => [
+  h('div', { class: 'kepala' },
+    h('div', {}, h('div', { class: 'nama' }, p.username, p.dosen ? h('span', { class: 'lencana', title: 'Dosen terverifikasi', 'aria-label': 'Dosen terverifikasi' }, '✓') : null), h('div', { class: 'waktu' }, fmt(p.waktu))),
+    tersegel(p) ? null : tombolVote(p)),
+  p.membalas ? h('div', { class: 'membalas' }, '↳ membalas @' + p.membalas) : null,
+  tersegel(p) ? blokSegel(p) : h('p', { class: 'teks', style: 'color:' + p.warna }, p.teks === TANDA_SEGEL && p.parent && p.game === 2 ? 'Membuka\u2026' : p.teks)
+];
+function gulirKompos() {
+  requestAnimationFrame(() => { const k = document.querySelector('.kompos'); if (k) k.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
+}
+function bukaDek(id) {
+  dekBuka = id;
+  if (balasTerbuka && balasTerbuka !== id) { balasTerbuka = null; balasKe = null; }   // kotak tulis ikut tertutup bila tumpukannya tertutup
+}
+function kartuBalasan(p, i, n, prev, setelahKompos) {
+  const lain = p.bentuk !== 'persegi';
+  const langkah = n > 1 ? Math.min(14, 56 / (n - 1)) : 0;   // geser kanan per tingkat
+  const geser = ((n - 1) * langkah).toFixed(1);
+  const balasBtn = h('div', { class: 'bawah' }, tombolHapus(p, 0), tersegel(p) ? null : tombolIkon(IKON_BALAS, 'Balas', e => {
+    e.stopPropagation();
+    if (balasTerbuka === p.parent && balasKe === p.id) { balasTerbuka = null; balasKe = null; }
+    else { bukaDek(p.parent); balasTerbuka = p.parent; balasKe = p.id; }
+    render(); gulirKompos();
+  }));
+  const el = h('div', { class: 'balas' + (lain ? ' kartu lain b-' + p.bentuk : '') }, isiKartu(p), balasBtn);
+  el.dataset.pid = p.id;
+  // bentuk selain persegi punya sudut kosong, jadi digeser lebih ke samping agar tumpukan terlihat jelas
+  const ekstra = lain ? 22 : 0;
+  el.style.marginLeft = (i * langkah + (i > 0 ? ekstra : 0)).toFixed(1) + 'px';
+  el.style.width = lain ? `min(280px, calc(100% - ${geser}px - ${ekstra}px))` : `calc(100% - ${geser}px)`;
+  // jarak antar balasan: kartu depan menutupi sebagian kartu belakang
+  let mt = 0;
+  if (i > 0) {
+    const prevLain = prev.bentuk !== 'persegi';
+    if (lain) mt = prev.bentuk === 'persegi' ? -40 : -64;   // bentuk lain naik lebih tinggi, menutupi sudut kosong kartu di bawahnya
+    else mt = prevLain ? -14 : 6;
+  }
+  if (setelahKompos) mt = 12;   // kotak tulis ada di atasnya, jangan saling menutupi
+  el.style.marginTop = mt + 'px';
+  // tiap balasan memakai warna pilihan pengirimnya; makin ke depan makin terang agar tumpukan terlihat berlapis
+  el.style.background = `color-mix(in srgb, ${KARTU[p.kartu]}, #fff ${((i + 1) * Math.min(10, 40 / n)).toFixed(1)}%)`;
+  // tempelan acak (tetap sama untuk balasan yang sama): sedikit miring dan bergeser
+  const rot = (acak(p.id, 'rr') - .5) * 5;     // sekitar ±2.5 derajat
+  const dx = (acak(p.id, 'rx') - .5) * 10;     // sekitar ±5px
+  const dy = (acak(p.id, 'ry') - .5) * 6;      // sekitar ±3px
+  el.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
+  return el;
+}
+// urutan tumpukan: balasan utama menurut skor/waktu; balasan atas balasan menempel tepat di bawah tujuannya (lama ke baru)
+function susunBalasan(daftar) {
+  const ada = new Set(daftar.map(b => b.id));
+  const tujuan = b => {
+    if (b.ke && ada.has(b.ke)) return b.ke;
+    if (!b.membalas) return '';
+    // data lama tanpa id tujuan: cari balasan terbaru sebelumnya dengan username itu
+    const c = daftar.filter(x => x.id !== b.id && x.username === b.membalas && String(x.waktu) <= String(b.waktu))
+                    .sort((x, y) => String(y.waktu).localeCompare(String(x.waktu)))[0];
+    return c ? c.id : '';
+  };
+  const anak = {}, atas = [];
+  daftar.forEach(b => { const t = tujuan(b); if (t) (anak[t] = anak[t] || []).push(b); else atas.push(b); });
+  Object.values(anak).forEach(a => a.sort((x, y) => String(x.waktu).localeCompare(String(y.waktu))));
+  const hasil = [], terpakai = new Set();
+  const taruh = b => { if (terpakai.has(b.id)) return; terpakai.add(b.id); hasil.push(b); (anak[b.id] || []).forEach(taruh); };
+  atas.forEach(taruh);
+  daftar.forEach(taruh);   // pengaman bila ada rantai melingkar
+  return hasil;
+}
+const IKON_GAME = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.42.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg>';
+const IKON_MATA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const tersegel = p => !!(p.parent && p.game === 1);
+// game berjalan di kartu ini dan akun ini boleh mengirim kartu game (bukan penanya, belum mengirim jawaban)
+function gameBisa(idKartu) {
+  const q = semua().find(x => x.id === idKartu);
+  return !!(q && q.game === 1 && !milikSaya.has(q.id) && !semua().some(x => x.parent === q.id && x.game && milikSaya.has(x.id)));
+}
+async function mulaiRonde(id) {
+  if (!butuhLogin()) return;
+  try {
+    await panggil({ aksi: 'ronde', id });
+    ovGame[id] = 1; toast('Game dimulai \u2713'); bunyiDekdek();
+  } catch (e) { toast(e.message); }
+  render();
+}
+// penanya menekan ikon mata: semua jawaban di bawah kartunya terlihat oleh semua orang
+async function tampilkan(id, btn) {
+  if (!butuhLogin()) return;
+  if (btn) btn.disabled = true;
+  try {
+    const j = await panggil({ aksi: 'tampil', id });
+    (j.balasan || []).forEach(b => { ovBuka[b.id] = b.teks; });
+    ovGame[id] = 2; dekBuka = id; toast('Jawaban ditampilkan \u2713');
+  } catch (e) { toast(e.message); }
+  render();
+}
+// ambil isi jawaban yang sudah ditampilkan penanya (membaca langsung, tanpa jeda cache CSV)
+async function bukaRonde(id) {   // jawaban yang sudah ditampilkan penanya ikut terbaca lewat muat (data selalu terbaru)
+  muat(true);
+}
+// selama ada jawaban tersegel di layar, tanyakan tiap 20 detik apakah penanya sudah menekan ikon mata
+function gameCek() {
+  const now = Date.now(), perlu = new Set();
+  semua().forEach(p => { if (p.parent && p.game === 1) { const q = semua().find(x => x.id === p.parent); if (q && q.game === 1) perlu.add(q.id); } });
+  perlu.forEach(id => { if (now - (bukaCoba.get(id) || 0) > 20000) { bukaCoba.set(id, now); setTimeout(() => bukaRonde(id), Math.random() * 3000); } });
+}
+const IKON_JAM = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>';
+function ikonSvg(svg) { const e = document.createElement('span'); e.style.display = 'inline-flex'; e.innerHTML = svg; return e; }
+function ikonJam() { const e = document.createElement('span'); e.style.display = 'inline-flex'; e.innerHTML = IKON_JAM; return e; }
+const sisaKartu = habis => {
+  const ms = habis - waktuServer(); if (ms <= 0) return 'waktu habis';
+  const d = Math.ceil(ms / 1000), m = Math.floor(d / 60);
+  return 'sisa ' + (m ? m + ':' + String(d % 60).padStart(2, '0') : d + '"');
+};
+function kartuUtama(p, balasan) {
+  balasan = susunBalasan(balasan);
+  const lain = p.bentuk !== 'persegi' && p.bentuk !== 'waktu';
+  const n = balasan.length;
+  const buka = rapi || dekBuka === p.id;
+  const lapisan = n && !buka ? Math.min(n, 3) : 0;
+  const item = h('div', { class: 'item' });
+  item.style.setProperty('--dx', ((acak(p.id, 'x') - .5) * 20).toFixed(1) + 'px');
+  item.style.setProperty('--rot', ((acak(p.id, 'r') - .5) * 2.4).toFixed(2) + 'deg');
+  item.style.setProperty('--dy', (acak(p.id, 'y') * 16).toFixed(1) + 'px');
+  const bawah = h('div', { class: 'bawah' },
+    tombolHapus(p, n),
+    tombolIkon(IKON_BALAS, 'Balas', e => {
+      e.stopPropagation();
+      if (balasTerbuka === p.id && !balasKe) { balasTerbuka = null; }
+      else { bukaDek(p.id); balasTerbuka = p.id; balasKe = null; }
+      render(); gulirKompos();
+    }),
+    (milikSaya.has(p.id) && !p.game && !p.poll && !p.tmr && tokenHidup()) ? tombolIkon(IKON_GAME, 'Jadikan kartu game (jawaban orang lain tersegel)', e => { e.stopPropagation(); mulaiRonde(p.id); }) : null,
+    (milikSaya.has(p.id) && p.game === 1 && tokenHidup()) ? (() => { const b = tombolIkon(IKON_MATA, 'Tampilkan semua jawaban', e => { e.stopPropagation(); tampilkan(p.id, e.currentTarget); }); b.classList.add('tampil'); return b; })() : null,
+    titikTaut(p),
+    n ? h('span', {}, n + ' balasan ', h('span', { class: 'panah' }, buka ? '▴' : '▾')) : null);
+  const labelJam = p.habis ? h('span', { class: 'label-tmr' }, ikonJam(), h('span', { class: 'tmr-sisa', 'data-habis': p.habis }, sisaKartu(p.habis))) : null;
+  const kartu = h('article', { class: 'kartu b-' + p.bentuk + (lain ? ' lain' : '') + (p.tmr ? ' tmr' : '') }, labelJam, (p.game) ? h('span', { class: 'label-game' }, ikonSvg(IKON_GAME), h('span', {}, p.game === 1 ? 'GAME' : 'GAME \u00b7 terbuka')) : null, isiKartu(p), bawah, labelTaut(p));
+  kartu.dataset.id = p.id;
+  kartu.style.background = `color-mix(in srgb, ${KARTU[p.kartu]} 92%, #000)`;   // lapisan paling depan dalam deck
+  const dek = h('div', { class: 'deck' + (n ? ' berbalas' : '') });
+  if (n) {
+    if (!rapi) kartu.title = buka ? 'Klik untuk menutup tumpukan' : 'Klik untuk membuka tumpukan';
+    kartu.onclick = () => {
+      if (rapi) return;
+      if (buka) { dekBuka = null; if (balasTerbuka === p.id) { balasTerbuka = null; balasKe = null; } } else bukaDek(p.id);
+      render();
+    };
+  }
+  // tumpukan tertutup: balasan mengintip di belakang kartu utama
+  for (let i = lapisan - 1; i >= 0; i--) {
+    const b = balasan[i];
+    const l = h('div', { class: 'lapis kartu b-' + p.bentuk + (lain ? ' lain' : '') + (p.tmr ? ' tmr' : '') });
+    l.style.background = `color-mix(in srgb, ${KARTU[b.kartu]}, #000 ${12 + i * 7}%)`;
+    const rot = (acak(b.id, 'lr') - .5) * 3;
+    const gx = lain ? 7 * (i + 1) : (acak(b.id, 'lx') - .5) * 10;
+    const gy = lain ? 7 * (i + 1) : 7 * (i + 1);
+    l.style.transform = `translate(${gx.toFixed(1)}px, ${gy}px) rotate(${rot.toFixed(2)}deg)`;
+    dek.append(l);
+  }
+  dek.append(kartu);
+  item.append(dek);
+  if (lapisan) item.style.marginBottom = (lapisan * 7 + 8) + 'px';
+  // kotak tulis muncul langsung di bawah kartu yang dibalas
+  const ke = balasTerbuka === p.id && balasKe ? balasan.find(b => b.id === balasKe) : null;
+  const kotakTulis = () => kompos(ke ? ke.id : p.id, p.id, ke);
+  if (balasTerbuka === p.id && !ke) item.append(kotakTulis());
+  if (buka && n) {
+    item.classList.add('terbuka');   // garis putus-putus gabungan di sekeliling tumpukan yang terbuka
+    item.dataset.bentuk = p.bentuk;
+    item.style.setProperty('--pad', '22px');
+    const isi = [];
+    balasan.forEach((b, i) => {
+      isi.push(kartuBalasan(b, i, n, balasan[i - 1], i > 0 && !!ke && balasan[i - 1].id === ke.id));
+      if (ke && b.id === ke.id) isi.push(kotakTulis());
+    });
+    item.append(h('div', { class: 'tumpukan' }, isi));
+  }
+  return item;
+}
+
+/* ---------- Bantuan (tombol ?) ---------- */
+function isiBantuan() {
+  const batas = Object.keys(BENTUK).map(b => `${BENTUK[b].label} ${BENTUK[b].maks}`).join(', ');
+  const bagian = (judul, teks) => [h('h3', {}, judul), h('p', {}, teks)];
+  return h('div', { class: 'lembar', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Cara memakai Dekken' },
+    h('h2', {}, 'Cara memakai Dekken'),
+    h('p', {}, 'Dekken adalah papan catatan tempel untuk kelas: tanya, beri info, dan tanggapi. Tumpuk, balas, dan naikkan yang penting.'),
+    ...bagian('Membaca', 'Semua orang bisa membaca papan tanpa login.'),
+    ...bagian('Suara', 'Tombol ♪ di kanan atas menyalakan atau mematikan bunyi "dek dek" saat kartu baru muncul atau saat kartumu terkirim, satu nada rendah pendek saat kamu mengklik kartu atau tombol, serta dua nada naik saat dua kartu tersambung (satu nada turun saat sambungan dilepas), dan bunyi desir saat susunan berganti: menyebar untuk Acak, berkumpul untuk Rapi. Browser baru mengizinkan suara setelah kamu mengklik atau mengetuk halaman sekali. Pilihanmu diingat di browser ini.'),
+    ...bagian('Foto semua kartu', 'Tombol kamera di kanan atas (di sebelah ♪) memotret semua kartu sekaligus: semua tumpukan dibuka sementara, garis koneksi ikut tergambar dengan warnanya, dan latarnya putih polos. Hasilnya disalin ke clipboard, jadi bisa langsung ditempel (Ctrl/Cmd+V) ke dokumen, chat, atau slide. Kalau clipboard tidak tersedia di browsermu, fotonya diunduh sebagai dekken-kartu.png. Butuh koneksi internet saat dipakai pertama kali. Fotonya tidak dikirim ke mana pun dan tampilanmu kembali seperti semula. Di layar sempit (HP), garis koneksi tidak ikut tergambar.'),
+    ...bagian('Akun dan keluar', 'Setelah masuk, namamu tampil di kanan atas. Klik nama itu untuk membuka pilihan Keluar.'),
+    ...bagian('Menulis kartu', 'Masuk dengan akun Google. Bila akunmu belum terdaftar, muncul tombol Daftar di bawah layar: klik sekali saja, tanpa mengisi apa pun, dan emailmu otomatis tercatat. Administrator dapat memblokir akun yang janggal. Setelah terdaftar, pilih bentuk kartu di bilah bawah layar. Isi username (bebas, boleh nama samaran), tulis pesan, pilih warna teks dan warna kartu, lalu Kirim. Batas huruf tergantung bentuk: ' + batas + '. Pilihan warna teks menyesuaikan warna kartu agar tetap terbaca.'),
+    ...bagian('Membalas dan tumpukan', 'Kartu yang punya balasan tampil sebagai tumpukan. Klik kartu utama untuk membuka atau menutup tumpukan. Klik tombol hitam berikon panah ↩ (Balas) di kartu utama untuk membalas postingan, atau di sebuah balasan untuk menanggapi balasan itu (muncul keterangan "membalas @nama"). Kotak tulis muncul tepat di bawah kartu yang dibalas.'),
+    ...bagian('↑ dan ↓', 'Beri suara naik atau turun. Satu akun satu suara per kartu; klik lagi untuk membatalkan, atau klik arah sebaliknya untuk mengganti. Kartu diurutkan menurut skor (↑ dikurangi ↓), lalu yang terbaru.'),
+    ...bagian('Menyambungkan kartu', 'Setiap kartu utama punya satu titik bulat di kanan tombol Balas. Pembuat kartu bisa menyambungkan kartunya ke kartu lain dengan garis (titik di kartu orang lain tampak pudar). Di komputer: tekan titik lalu seret ke kartu tujuan, lepas di atas kartu itu. Di HP: ketuk titik, lalu ketuk kartu tujuan. Ketuk titik lagi atau tekan Esc untuk membatalkan. Satu kartu maksimal 5 sambungan; ulangi cara yang sama ke kartu yang sama untuk menghapusnya. Sambungan hanya untuk kartu utama. Arahkan kursor ke sebuah kartu untuk menebalkan garisnya. Di HP garis tidak digambar; sambungan tampil sebagai label "↔ @nama" di kartu, ketuk untuk melompat ke kartu itu. Warna garis: garis yang kamu buat berwarna sama dengan kartu asalnya (kuning, pink, biru, hijau, atau ungu) dengan tepi gelap tipis agar tetap terbaca, termasuk garis yang sedang kamu seret. Garis buatan orang lain berwarna putih di mode gelap dan hitam di mode terang.'),
+    ...bagian('Menggeser dan zoom', 'Di mode Acak, papan selebar minimal 6 kolom (layar yang lebih lebar menampilkan lebih banyak kolom) dan dibuka dari tengah. Geser ke samping dengan menyeret latar kosong memakai mouse, Shift + gulir, atau dua jari di trackpad; di HP cukup geser dengan jari. Zoom lewat tombol − dan + di panel Peta kartu, atau Ctrl + gulir (cubit di trackpad), dari 40% sampai 160%; klik angka persennya untuk kembali ke 100%. Memperkecil zoom membantu melihat banyak kartu dan garis koneksi sekaligus. Mode Rapi selalu mengikuti lebar layar. Zoom tidak diingat saat halaman dimuat ulang.'),
+    ...bagian('Peta kartu', 'Panel kecil di kiri bawah berisi miniatur seluruh papan (blok abu-abu), dengan kotak berbingkai yang menunjukkan area yang sedang tampak di layar. Klik atau seret di peta untuk berpindah. Klik judulnya untuk melipat panel. Panel hilang otomatis bila seluruh papan sudah muat di satu layar, dan tidak tampil di layar HP.'),
+    ...bagian('Menghapus kartu', 'Pembuat kartu atau balasan melihat tombol hitam ✕ (Hapus) di sebelah kiri tombol Balas pada kartunya sendiri; dosen melihatnya di semua kartu, balasan, dan polling. Arahkan kursor ke tombol untuk melihat keterangannya. Klik ✕, lalu klik Ya untuk memastikan (Batal untuk membatalkan). Bila kartu utama dihapus, semua balasan di dalamnya, termasuk balasan orang lain, ikut terhapus, begitu pula suara, pilihan polling, dan garis sambungan ke kartu itu. Polling juga bisa dihapus oleh pembuatnya. Kartu bisa dihapus kapan saja. Kartu yang dihapus tidak bisa dikembalikan dari tampilan ini; salinannya disimpan pengelola di sheet Arsip.'),
+    ...bagian('Kartu timer', 'Tombol di ujung kanan deretan bentuk (kotak dengan ikon stopwatch) membuat kartu timer: kartu persegi panjang merah berlabel TIMER. Pilih umur kartu 5, 15, atau 30 menit. Hitung mundur tampil di kartu; saat habis, kartu dan semua balasannya hilang sendiri. Pembuat juga bisa menghapusnya kapan saja dengan \u2715. Kartu timer bisa dibalas, divote, dan disambungkan seperti kartu biasa.'),
+    ...bagian('Kartu game', 'Di kartu biasa milikmu (selain polling dan timer) ada tombol berikon kontroler game di dekat tombol Balas. Klik untuk menjadikannya kartu game: label GAME muncul, dan semua jawaban dari orang lain tersegel (bergembok), isinya hanya terlihat pengirimnya sendiri. Satu akun satu jawaban, dan pembuat kartu tidak ikut menjawab. Ketika siap, pembuat menekan ikon mata di baris tombol kartunya: semua jawaban terbuka untuk semua orang dan menjadi balasan biasa. Kartu game dihapus dengan \u2715 seperti kartu lain; balasannya ikut terhapus.'),
+    ...bagian('Polling', 'Kartu oranye bertanda POLLING berisi satu pertanyaan dengan 2 sampai 5 pilihan. Semua akun terdaftar yang sudah masuk boleh memilih: klik satu pilihan (satu akun satu pilihan), klik pilihan lain untuk mengganti, atau klik pilihan yang sama lagi untuk membatalkan. Hasil berupa persentase dan jumlah suara langsung terlihat oleh semua orang, juga oleh yang belum masuk. Tiap polling punya hitung mundur sendiri di bagian bawah kartu; setelah selesai pilihan terkunci dan pilihan terbanyak diberi bingkai. Polling yang sedang berjalan selalu di posisi pertama, hanya satu polling berjalan pada satu waktu, warnanya oranye di semua tampilan (juga monokrom), tidak bisa dibalas, dan bisa disambungkan seperti kartu biasa. Polling hanya bisa dibuat oleh dosen: setelah masuk, tombol polling di ujung kanan deretan bentuk di bawah layar membuka kartu pembuat polling (pertanyaan, pilihan, dan lama polling: 15 menit, 30 menit, 1 jam, 2 jam, 4 jam, atau 8 jam). Polling ikut dikosongkan oleh reset harian.'),
+    ...bagian('Urut dan Rapi/Acak', 'Di kanan atas, pilihan "Urut" mengurutkan kartu menurut suara, yang terbaru, atau nama username A–Z. Tombol di sebelahnya menunjukkan kondisi tampilan: "Acak" (kartu tertempel miring seperti biasa) atau "Rapi" (semua kartu tersusun dalam kolom rapi dan semua balasan terbuka); klik untuk berganti. Keduanya hanya mengubah tampilanmu sendiri dan diingat di browser ini; orang lain tidak terpengaruh dan isi papan tidak berubah.'),
+    ...bagian('Statistik', 'Kotak "Statistik" di kanan bawah menampilkan jumlah pengguna aktif, kartu, balasan, dan koneksi, serta username yang sedang aktif. Klik judulnya untuk menyembunyikan atau menampilkannya. Yang tampil hanya username, bukan email; pengunjung yang belum masuk hanya terhitung di angka.'),
+    ...bagian('Tampilan', 'Tombol ikon di kanan atas (di samping tombol ?) membuka pilihan: ☀ terang, ☾ gelap, ○ monokrom terang, ● monokrom gelap, dan ⊘ untuk mematikan atau menyalakan latar tanda ^ (lihat "Latar tanda ^"). Mode monokrom hanya memakai hitam dan putih (kontras penuh): kartu dan balasan saling berlawanan warna. Pilihan pertama mengikuti pengaturan perangkatmu, lalu diingat di browser ini dan tidak mengubah isi kartu.'),
+    ...bagian('Latar spektrum', 'Tombol ≋ di menu tampilan mengganti latar tanda ^ dengan latar spektrum: pendar warna pelangi yang mengalir pelan, tertarik ke arah pointer dan ke kartu yang sedang digeser, dan warnanya bergeser sedikit mengikuti posisi pointer. Di mode monokrom pendarnya abu-abu. Klik ≋ lagi untuk kembali ke tanda ^, atau pakai ⊘ untuk mematikan latar. Di pengaturan "kurangi gerakan" latar ini tidak bergerak. Pilihanmu diingat di browser ini dan tidak ikut terfoto.'),
+    ...bagian('Latar tanda ^', 'Tanda ^ kecil di latar menghadap atas; di dekat kursor (atau titik sentuhan di HP) tanda tertarik seperti magnet dan berputar menghadap kursor (atau titik sentuhan di HP). Kartu yang sedang bergerak juga menarik tanda di sekitarnya. Ini hanya hiasan. Kalau terasa mengganggu atau perangkatmu terasa berat, matikan lewat tombol ⊘ di pilihan tampilan (tombol ikon di samping tombol ?); klik ⊘ lagi untuk menyalakannya kembali. Pilihan ini terpisah dari tema terang, gelap, dan monokrom, dan diingat di browser ini.'),
+    ...bagian('Ringan di perangkat lemah', 'Di perangkat dengan prosesor 4 inti atau kurang, memori 4 GB atau kurang, atau mode hemat data, latar dimatikan sejak awal agar halaman lancar; nyalakan lewat menu tampilan (\u2299 mati/nyala, \u224b spektrum). Bila di perangkat lain halaman terasa patah-patah, latar dimatikan otomatis dan muncul pemberitahuan. Latar spektrum memakai resolusi rendah dan sekitar 33 bingkai per detik, jadi paling ringan di antara pilihan yang menyala.'),
+    ...bagian('Ikon sinkron', 'Tiga tanda ^ yang bergerak naik di kiri tombol Urut menandakan halaman sedang menyinkronkan data dengan server (memuat kartu atau menyimpan tindakanmu). Ikon hilang sendiri setelah selesai.'),
+    ...bagian('Centang biru', 'Tanda akun dosen yang terverifikasi.'),
+    ...bagian('Reset harian', 'Papan di-reset setiap hari pukul 07.00 WIB (bisa meleset sampai sekitar 15 menit); isinya diarsipkan oleh pengelola. Hitung mundur di samping judul, misalnya [03 jam : 05 menit : 12 detik], menunjukkan sisa waktu sampai papan dikosongkan. Kartu timer dan game ikut dikosongkan saat reset.'),
+    ...bagian('Privasi', 'Email akunmu tidak ditampilkan di papan. Email tetap dicatat di sistem (hanya terlihat oleh pengelola) untuk mencegah suara ganda dan penyalahgunaan.'),
+    h('button', { type: 'button', class: 'btn tutup-bantuan', onclick: () => tutupBantuan() }, 'Tutup'));
+}
+function bukaBantuan() {
+  const lapis = document.getElementById('bantuan');
+  lapis.innerHTML = ''; lapis.append(isiBantuan()); lapis.classList.add('buka');
+  lapis.querySelector('.tutup-bantuan').focus({ preventScroll: true });
+}
+function tutupBantuan() {
+  document.getElementById('bantuan').classList.remove('buka');
+  if (location.hash === '#help') history.replaceState(null, '', location.pathname + location.search);
+}
+function bantuanMulai() {
+  document.getElementById('btn-help').addEventListener('click', bukaBantuan);
+  document.getElementById('bantuan').addEventListener('click', e => { if (e.target.id === 'bantuan') tutupBantuan(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape') tutupBantuan(); });
+  if (location.hash === '#help') bukaBantuan();   // tautan langsung: .../#help
+}
+/* ---------- Garis putus-putus gabungan di sekeliling tumpukan terbuka ----------
+   Semua kartu (utama, balasan, kotak tulis) digambar ke kanvas tersembunyi, dibesarkan 10px, lalu tepi luarnya
+   ditelusuri menjadi satu jalur SVG. */
+const OFFSET_BINGKAI = 10, SKALA_B = 2, MARGIN_B = 40;
+function lukisBentuk(c, bentuk, w, h) {
+  const poli = pts => { c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); };
+  if (bentuk === 'lingkaran') { c.beginPath(); c.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, Math.PI * 2); return; }
+  if (bentuk === 'tumpul') { c.beginPath(); c.roundRect(0, 0, w, h, 22); return; }
+  if (bentuk === 'enam') return poli([[.25, 0], [.75, 0], [1, .5], [.75, 1], [.25, 1], [0, .5]].map(p => [p[0] * w, p[1] * h]));
+  if (bentuk === 'lima') return poli([[.5, 0], [1, .38], [.82, 1], [.18, 1], [0, .38]].map(p => [p[0] * w, p[1] * h]));
+  if (bentuk === 'ledak') {
+    const m = document.documentElement.style.getPropertyValue('--c-ledak').match(/-?[\d.]+(?=%)/g) || [];
+    const pts = []; for (let i = 0; i + 1 < m.length; i += 2) pts.push([m[i] / 100 * w, m[i + 1] / 100 * h]);
+    if (pts.length > 2) return poli(pts);
+  }
+  c.beginPath(); c.rect(0, 0, w, h);   // persegi
+}
+function telusuriTepi(g, W, H) {   // Moore neighbour tracing: tepi luar bidang terisi
+  const at = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] === 1;
+  let sx = -1, sy = -1;
+  for (let y = 0; y < H && sx < 0; y++) for (let x = 0; x < W; x++) if (at(x, y)) { sx = x; sy = y; break; }
+  if (sx < 0) return [];
+  const D = [[-1, 0], [-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1]];
+  const out = [[sx, sy]]; let px = sx, py = sy, back = 0;
+  for (let n = 0; n < W * H; n++) {
+    let ketemu = false;
+    for (let k = 1; k <= 8; k++) {
+      const i = (back + k) % 8, qx = px + D[i][0], qy = py + D[i][1];
+      if (at(qx, qy)) {
+        const j = (i + 7) % 8, vx = px + D[j][0] - qx, vy = py + D[j][1] - qy;
+        back = D.findIndex(d => d[0] === vx && d[1] === vy);
+        px = qx; py = qy; ketemu = true; break;
+      }
+    }
+    if (!ketemu || (px === sx && py === sy)) break;
+    out.push([px, py]);
+  }
+  return out;
+}
+function sederhanakan(pts, eps) {   // Ramer–Douglas–Peucker (tertutup: dipecah di dua titik terjauh)
+  const rdp = (a) => {
+    if (a.length < 3) return a;
+    const [x1, y1] = a[0], [x2, y2] = a[a.length - 1], dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1;
+    let mx = 0, mi = 0;
+    for (let i = 1; i < a.length - 1; i++) { const d = Math.abs(dy * (a[i][0] - x1) - dx * (a[i][1] - y1)) / L; if (d > mx) { mx = d; mi = i; } }
+    if (mx <= eps) return [a[0], a[a.length - 1]];
+    return rdp(a.slice(0, mi + 1)).slice(0, -1).concat(rdp(a.slice(mi)));
+  };
+  const n = pts.length; if (n < 8) return pts;
+  let j = 0, best = -1;
+  for (let i = 0; i < n; i++) { const d = Math.hypot(pts[i][0] - pts[0][0], pts[i][1] - pts[0][1]); if (d > best) { best = d; j = i; } }
+  const A = rdp(pts.slice(0, j + 1)), B = rdp(pts.slice(j).concat([pts[0]]));
+  return A.slice(0, -1).concat(B.slice(0, -1));
+}
+function gambarSatuBingkai(item) {
+  const iw = item.offsetWidth, ih = item.offsetHeight;
+  const S = SKALA_B, M = MARGIN_B, W = Math.ceil((iw + 2 * M) * S), H = Math.ceil((ih + 2 * M) * S);
+  const kv = document.createElement('canvas'); kv.width = W; kv.height = H;
+  const c = kv.getContext('2d', { willReadFrequently: true });
+  c.fillStyle = c.strokeStyle = '#000'; c.lineWidth = OFFSET_BINGKAI * 2 * S; c.lineJoin = 'round';
+  item.querySelectorAll('.kartu, .balas, .kompos').forEach(el => {
+    const w = el.offsetWidth, hh = el.offsetHeight; if (!w || !hh) return;
+    let x = w / 2, y = hh / 2, o = el;   // pusat kartu dalam koordinat item (tata letak, tanpa transform)
+    while (o && o !== item) { x += o.offsetLeft; y += o.offsetTop; o = o.offsetParent; }
+    if (o !== item) return;
+    const tf = getComputedStyle(el).transform, m = tf && tf !== 'none' ? new DOMMatrix(tf) : new DOMMatrix();
+    const mm = (/b-(\w+)/.exec(el.className) || [])[1] || 'persegi';
+    c.setTransform(S, 0, 0, S, 0, 0);
+    c.translate(M + x + m.e, M + y + m.f); c.transform(m.a, m.b, m.c, m.d, 0, 0); c.translate(-w / 2, -hh / 2);
+    lukisBentuk(c, mm, w, hh); c.fill(); c.stroke();
+  });
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  const data = c.getImageData(0, 0, W, H).data, g = new Uint8Array(W * H);
+  for (let i = 0; i < g.length; i++) g[i] = data[i * 4 + 3] > 127 ? 1 : 0;
+  let tepi = telusuriTepi(g, W, H);
+  // haluskan sedikit (hilangkan tangga piksel), lalu sederhanakan
+  const n = tepi.length, k = 8;
+  if (n > 2 * k + 2) tepi = tepi.map((_, i) => { let sx = 0, sy = 0; for (let d = -k; d <= k; d++) { const q = tepi[(i + d + n) % n]; sx += q[0]; sy += q[1]; } return [sx / (2 * k + 1), sy / (2 * k + 1)]; });
+  const pts = sederhanakan(tepi, .25 * S).map(p => [p[0] / S - M + .5 / S, p[1] / S - M + .5 / S]);
+  let svg = item.querySelector(':scope > .bingkai');
+  if (!svg) {
+    svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'bingkai'); svg.setAttribute('aria-hidden', 'true');
+    svg.append(document.createElementNS('http://www.w3.org/2000/svg', 'path'));
+    item.prepend(svg);
+  }
+  svg.firstChild.setAttribute('d', pts.length ? 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L') + ' Z' : '');
+}
+function gambarBingkai() {
+  document.querySelectorAll('.item.terbuka').forEach(item => {
+    gambarSatuBingkai(item);
+    if (!item._ro && window.ResizeObserver) {   // kotak tulis tumbuh / ukuran berubah: gambar ulang
+      let t = 0;
+      item._ro = new ResizeObserver(() => { cancelAnimationFrame(t); t = requestAnimationFrame(() => gambarSatuBingkai(item)); });
+      item._ro.observe(item);
+    }
+  });
+}
+
+/* ---------- Latar tanda ^ : semua menghadap atas; di dekat kursor tertarik seperti magnet dan berputar menghadap kursor ---------- */
+const TITIK = { jarak: 17, warna: '#9a9a9a', radiusDorong: 250, dorong: 24, radius: 420, kecepatan: .24, tinggi: 1.8, sayap: 2.4, tebal: 1.1 };   // ^ diperkecil 25%, jarak dirapatkan sebanding
+const PUSAT = { jangkauan: 120, kuat: 48, peka: 1.5, susut: .9 };   // caret menjauhi kartu yang sedang bergerak
+// perangkat lemah: prosesor 4 inti atau kurang, memori 4 GB atau kurang, atau mode hemat data
+const PERANGKAT_LEMAH = (() => { try { const n = navigator; return !!((n.hardwareConcurrency && n.hardwareConcurrency <= 4) || (n.deviceMemory && n.deviceMemory <= 4) || (n.connection && n.connection.saveData)); } catch (e) { return false; } })();
+const titik = { push: new Map(), act: [], lacak: 0, lintas: 0, kanvas: null, ctx: null, mx: -9999, my: -9999, geser: new Map(), jalan: false, kurang: false, t0: 0, mode: 'caret', gelap: false, mono: false };
+function titikUkuran() {
+  // resolusi kanvas latar: tanda ^ maks 1,5x; spektrum (gradien lembut) cukup separuh resolusi, perangkat lemah lebih rendah lagi
+  const k = titik.kanvas, d = titik.mode === 'spektrum' ? (PERANGKAT_LEMAH ? .3 : .5) : Math.min(window.devicePixelRatio || 1, PERANGKAT_LEMAH ? 1 : 1.5);
+  if (!d || titik.mati) { k.width = k.height = 0; titik.ctx = null; return; }
+  k.width = Math.round(innerWidth * d); k.height = Math.round(innerHeight * d);
+  titik.ctx = k.getContext('2d'); titik.ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+// target satu jarum: [geser x, geser y, sudut dari arah atas]. Tertarik ke kursor seperti magnet, putar menghadap kursor.
+function titikTarget(x, y) {
+  let gx = 0, gy = 0, sudut = 0;
+  const dx = x - titik.mx, dy = y - titik.my, d2 = dx * dx + dy * dy, R = TITIK.radius, RD = TITIK.radiusDorong;
+  if (d2 < R * R) {
+    const d = Math.sqrt(d2) || 1;
+    if (d < RD) { const kuat = Math.min(d * .5, Math.pow(1 - d / RD, 1.2) * TITIK.dorong); gx = -dx / d * kuat; gy = -dy / d * kuat; }   // magnet: tertarik ke kursor
+    const t = 1 - d / R, w = t * t * (3 - 2 * t);
+    const menuju = Math.atan2(titik.my - (y + gy), titik.mx - (x + gx)) + Math.PI / 2;   // dari arah atas ke arah kursor
+    sudut = Math.atan2(Math.sin(menuju), Math.cos(menuju)) * Math.min(1, w * 1.4);
+  }
+  // kartu yang sedang bergerak ikut menarik caret di sekitarnya seperti magnet
+  const M = PUSAT.jangkauan;
+  for (const p of titik.act) {
+    const cx = Math.max(p.l, Math.min(x, p.r)), cy = Math.max(p.t, Math.min(y, p.b));
+    let ex = x - cx, ey = y - cy, e = Math.sqrt(ex * ex + ey * ey);
+    if (e >= M) continue;
+    if (e < .5) { ex = x - (p.l + p.r) / 2; ey = y - (p.t + p.b) / 2; e = Math.sqrt(ex * ex + ey * ey) || 1; }
+    const kuat = Math.min(e * .7, Math.pow(1 - Math.min(e, M) / M, 1.2) * PUSAT.kuat * p.k);
+    gx -= ex / e * kuat; gy -= ey / e * kuat;
+  }
+  return [gx, gy, sudut];
+}
+// lacak kartu yang bergerak: bandingkan sisi-sisi kartu antar frame (koordinat halaman, jadi gulir tidak dihitung)
+function titikLacak(ms) { if (titik.kurang || !titik.ctx) return; titik.lacak = Math.max(titik.lacak, performance.now() + (ms || 900)); titikMinta(); }
+function titikKunci(el) { return el.dataset.id ? 'k' + el.dataset.id : el.dataset.pid ? 'b' + el.dataset.pid : null; }
+function titikRect(el, sx, sy) { const r = el.getBoundingClientRect(); return { l: r.left + sx, t: r.top + sy, r: r.right + sx, b: r.bottom + sy, ata: r.bottom < -150 || r.top > innerHeight + 150 }; }
+// dipanggil sebelum render() membangun ulang kartu: simpan posisi lama supaya lompatan tata letak juga terbaca
+function titikFoto() {
+  if (titik.kurang || titik.mati) return;
+  titik.foto = new Map();
+  document.querySelectorAll('.kartu:not(.lapis), .balas').forEach(el => { const k = titikKunci(el); if (k) titik.foto.set(k, titikRect(el, scrollX, scrollY)); });
+}
+function titikPelacak(now) {
+  const sx = scrollX, sy = scrollY, aktif = [], ukur = now < titik.lacak, lintas = ++titik.lintas, foto = titik.foto;
+  titik.foto = null;
+  if (ukur) {
+    document.querySelectorAll('.kartu:not(.lapis), .balas').forEach(el => {
+      const key = titikKunci(el); if (!key) return;
+      const c = titikRect(el, sx, sy); if (c.ata) return;
+      let p = titik.push.get(key), prev = p || (foto && foto.get(key));
+      if (!p) { p = Object.assign({}, c, { k: 0 }); titik.push.set(key, p); }
+      p.lintas = lintas;
+      if (prev) {
+        const v = Math.max(Math.abs(c.l - prev.l), Math.abs(c.r - prev.r), Math.abs(c.t - prev.t), Math.abs(c.b - prev.b));
+        p.k = Math.max(p.k * PUSAT.susut, v < .15 ? 0 : Math.min(1, v / PUSAT.peka));
+      }
+      p.l = c.l; p.t = c.t; p.r = c.r; p.b = c.b;
+    });
+  }
+  for (const [key, p] of titik.push) {
+    if (ukur && p.lintas !== lintas) { titik.push.delete(key); continue; }
+    if (!ukur) p.k *= PUSAT.susut;
+    if (p.k > .03) aktif.push({ l: p.l - sx, t: p.t - sy, r: p.r - sx, b: p.b - sy, k: p.k });
+    else if (!ukur) titik.push.delete(key);
+  }
+  titik.act = aktif;
+}
+/* ---------- Latar spektrum: pendar warna pelangi yang mengalir pelan, tertarik ke pointer dan kartu yang bergerak ---------- */
+const SPEK = { n: 8, ikut: .2, tarikKartu: .3, lembam: .02, laju: 4, geserHue: 60 };
+const spek = { t: 0, sp: null, blob: [] };
+function spektrumGambar(now, dt) {
+  const c = titik.ctx, W = innerWidth, H = innerHeight;
+  if (!titik.kurang) spek.t += dt / 1000;
+  const t = spek.t, f = 1 - Math.pow(1 - SPEK.lembam, dt / 16.7);
+  const ada = titik.mx > -9000;
+  // pointer dihaluskan supaya pendar tidak melompat
+  if (ada) { if (!spek.sp) spek.sp = { x: titik.mx, y: titik.my }; else { spek.sp.x += (titik.mx - spek.sp.x) * f * 2; spek.sp.y += (titik.my - spek.sp.y) * f * 2; } }
+  c.clearRect(0, 0, W, H);
+  const R = Math.max(W, H) * .3, S = titik.mono ? 0 : 78;
+  const huePtr = spek.sp ? (spek.sp.x / W) * SPEK.geserHue : 0;
+  for (let i = 0; i < SPEK.n; i++) {
+    const w1 = 6.283 / (50 + i * 7), w2 = 6.283 / (63 + i * 5), ph = i * 2.4;
+    const hx = W * (.5 + .4 * Math.sin(t * w1 + ph)), hy = H * (.5 + .4 * Math.cos(t * w2 + ph * 1.7));
+    let tx = hx, ty = hy;
+    if (ada && spek.sp) { tx += (spek.sp.x - hx) * SPEK.ikut; ty += (spek.sp.y - hy) * SPEK.ikut; }
+    for (const p of titik.act) { const cx = (p.l + p.r) / 2, cy = (p.t + p.b) / 2, k = SPEK.tarikKartu * Math.min(1, p.k); tx += (cx - tx) * k; ty += (cy - ty) * k; }
+    let b = spek.blob[i]; if (!b) b = spek.blob[i] = { x: tx, y: ty };
+    if (titik.kurang) { b.x = tx; b.y = ty; } else { b.x += (tx - b.x) * f; b.y += (ty - b.y) * f; }
+    const hue = ((i / SPEK.n) * 360 + t * SPEK.laju + huePtr) % 360;
+    const r = R * (.85 + .25 * Math.sin(t * w1 * 2 + ph));
+    const g = c.createRadialGradient(b.x, b.y, 0, b.x, b.y, r);
+    const L = titik.gelap ? 48 : 70, A = titik.gelap ? .3 : .42;
+    g.addColorStop(0, 'hsla(' + hue.toFixed(1) + ',' + S + '%,' + L + '%,' + A + ')');
+    g.addColorStop(1, 'hsla(' + hue.toFixed(1) + ',' + S + '%,' + L + '%,0)');
+    c.fillStyle = g; c.fillRect(b.x - r, b.y - r, r * 2, r * 2);
+  }
+  titik.jalan = !titik.kurang;
+  if (titik.jalan) requestAnimationFrame(titikGambar);
+}
+function titikGambar(now) {
+  if (titik.mati || !titik.ctx) { titik.jalan = false; return; }
+  // batasi bingkai: spektrum bergerak pelan jadi ~33 fps cukup; tanda ^ di perangkat lemah juga ~33 fps
+  const jeda = titik.mode === 'spektrum' ? 30 : (PERANGKAT_LEMAH ? 31 : 0);
+  if (jeda && titik.t0 && now - titik.t0 < jeda - 2) { requestAnimationFrame(titikGambar); return; }
+  // pengawas: bila banyak bingkai lambat berturut-turut, latar dimatikan otomatis
+  const raw = titik.tPrev ? now - titik.tPrev : 0; titik.tPrev = now;
+  if (raw > 55 && raw < 400) titik.lambatN = (titik.lambatN || 0) + 1; else if (raw && raw < 40) titik.lambatN = Math.max(0, (titik.lambatN || 0) - 1);
+  if ((titik.lambatN || 0) >= 25 && now > 4000 && titik.lambat) { titik.lambatN = 0; titik.jalan = false; titik.lambat(); return; }
+  const c = titik.ctx, J = TITIK.jarak, H = TITIK.tinggi, S = TITIK.sayap;
+  // kecepatan gerak tidak bergantung pada frame rate
+  const dt = Math.max(8, Math.min(50, now - (titik.t0 || now - 16.7))); titik.t0 = now;
+  const f = 1 - Math.pow(1 - TITIK.kecepatan, dt / 16.7);
+  titikPelacak(now);
+  if (titik.mode === 'spektrum') { titik.geser.clear(); return spektrumGambar(now, dt); }
+  c.clearRect(0, 0, innerWidth, innerHeight);
+  c.strokeStyle = TITIK.warna; c.lineWidth = TITIK.tebal; c.lineCap = 'butt'; c.lineJoin = 'miter';   // ujung bulat jauh lebih berat digambar dan tidak terlihat di ukuran sekecil ini
+  const k0 = Math.floor(scrollY / J) - 1, k1 = Math.ceil((scrollY + innerHeight) / J) + 1;
+  const i1 = Math.ceil(innerWidth / J) + 1;
+  let bergerak = false;
+  c.beginPath();
+  for (let k = k0; k <= k1; k++) {
+    for (let i = 0; i <= i1; i++) {
+      const x = i * J + J / 2, y = k * J + J / 2 - scrollY;   // y = posisi di layar
+      const [tx, ty, ta] = titikTarget(x, y);
+      const kunci = (k + 1000) * 4096 + i;
+      let g = titik.geser.get(kunci), px = x, py = y, a = 0;
+      if (!g && (tx || ty || ta)) { g = { x: 0, y: 0, a: 0 }; titik.geser.set(kunci, g); }
+      if (g) {
+        if (titik.kurang) { g.x = tx; g.y = ty; g.a = ta; }
+        else {
+          const sel = Math.atan2(Math.sin(ta - g.a), Math.cos(ta - g.a));   // selisih sudut terpendek
+          g.x += (tx - g.x) * f; g.y += (ty - g.y) * f; g.a += sel * f;
+          if (Math.abs(tx - g.x) > .05 || Math.abs(ty - g.y) > .05 || Math.abs(sel) > .005) bergerak = true;
+          else { g.x = tx; g.y = ty; g.a = ta; }
+        }
+        if (!tx && !ty && !ta && !g.x && !g.y && !g.a) titik.geser.delete(kunci);
+        px += g.x; py += g.y; a = g.a;
+      }
+      const co = Math.cos(a), si = Math.sin(a);
+      // ^ : (-S, H) -> (0, -H) -> (S, H), diputar sebesar a di sekitar pusatnya
+      c.moveTo(px - S * co - H * si, py - S * si + H * co);
+      c.lineTo(px + H * si, py - H * co);
+      c.lineTo(px + S * co - H * si, py + S * si + H * co);
+    }
+  }
+  c.stroke();
+  bergerak = bergerak || titik.act.length > 0 || now < titik.lacak;
+  titik.jalan = bergerak;
+  if (bergerak) requestAnimationFrame(titikGambar);
+}
+function titikMinta() { if (titik.mati) return; if (!titik.jalan) { titik.jalan = true; titik.t0 = 0; titik.tPrev = 0; requestAnimationFrame(titikGambar); } }
+function titikMulai() {
+  titik.kanvas = document.getElementById('titik');
+  titik.kurang = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  titikUkuran(); titikMinta();
+  const arah = e => { if (titik.mati) return; titik.mx = e.clientX; titik.my = e.clientY; titikMinta(); };
+  const pergi = () => { titik.mx = titik.my = -9999; titikMinta(); };
+  addEventListener('pointermove', arah, { passive: true });
+  addEventListener('pointerdown', arah, { passive: true });
+  addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') pergi(); });
+  document.documentElement.addEventListener('mouseleave', pergi);
+  addEventListener('blur', pergi);
+  addEventListener('resize', () => { titikUkuran(); titikMinta(); });
+  addEventListener('scroll', titikMinta, { passive: true });
+  document.addEventListener('transitionrun', () => titikLacak(900), true);
+  document.addEventListener('animationstart', () => titikLacak(900), true);
+  document.addEventListener('click', () => titikLacak(900), true);
+}
+/* ---------- Sambungan antar kartu ---------- */
+const KUNING_GARIS = '#FEE440';
+let garisData = [];   // [[idAsal, idTujuan], ...]
+function titikTaut(p) {
+  const milik = milikSaya.has(p.id);
+  const t = h('span', { class: 'tt' + (milik ? ' milik' : '') + (seret && seret.id === p.id ? ' aktif' : ''), 'data-id': p.id,
+    title: milik ? 'Seret ke kartu lain untuk menyambung (maks ' + MAKS_TAUTAN + ')' : 'Titik sambungan' });
+  t.addEventListener('click', e => { e.stopPropagation(); if (!milik && !seret) toast('Hanya pembuat kartu yang bisa menyambungkannya.'); });
+  return t;
+}
+function labelTaut(p) {
+  const ids = [...(petaTaut[p.id] || [])];
+  if (!ids.length) return null;
+  return h('div', { class: 'terhubung', onclick: e => e.stopPropagation() }, '↔',
+    ids.map(id => h('button', { type: 'button', onclick: () => {
+      const el = document.querySelector('article.kartu[data-id="' + id + '"]');
+      if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    } }, '@' + (namaPost[id] || ''))));
+}
+const kartuDi = (x, y) => { const e = document.elementFromPoint(x, y); return e && e.closest ? e.closest('article.kartu[data-id]') : null; };
+async function sambung(id, ke) {
+  seret = null; gambarGaris();
+  if (!butuhLogin()) return;
+  try {
+    const j = await panggil({ aksi: 'tautan', id, ke });
+    ovTautan[id] = { a: (j.tautan || []).slice(0, MAKS_TAUTAN), t: Date.now() };
+    const ada = (j.tautan || []).includes(ke);
+    toast(ada ? 'Tersambung ✓' : 'Sambungan dihapus.'); bunyiSambung(ada);
+  } catch (e) { toast(e.message); }
+  render();
+}
+function titikPusat(el) { const r = el.getBoundingClientRect(); return { x: r.left + scrollX + r.width / 2, y: r.top + scrollY + r.height / 2 }; }
+function titikTepi(kartu, dari) {   // titik di tepi kartu tujuan yang menghadap asal garis
+  const r = kartu.getBoundingClientRect(), w = r.width, hh = r.height;
+  const cx = r.left + scrollX + w / 2, cy = r.top + scrollY + hh / 2, dx = dari.x - cx, dy = dari.y - cy;
+  let k;
+  if (kartu.classList.contains('b-lingkaran')) k = 1 / Math.hypot(dx / (w / 2), dy / (hh / 2));
+  else k = Math.min((w / 2) / Math.abs(dx || 1e-6), (hh / 2) / Math.abs(dy || 1e-6)) * (/b-(enam|lima|ledak)/.test(kartu.className) ? .86 : .98);
+  return { x: cx + dx * k, y: cy + dy * k };
+}
+function gambarGaris() {
+  let svg = document.getElementById('garis');
+  if (!svg) {
+    svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.id = 'garis'; svg.setAttribute('aria-hidden', 'true'); document.body.append(svg);
+  }
+  const de = document.documentElement;
+  svg.setAttribute('width', 0); svg.setAttribute('height', 0);   // ukur isi tanpa svg lama (agar tidak menahan lebar halaman)
+  svg.setAttribute('width', de.scrollWidth); svg.setAttribute('height', de.scrollHeight);
+  svg.replaceChildren();
+  const hp = matchMedia('(max-width:640px)').matches;
+  if (hp) return;   // di HP sambungan ditampilkan sebagai label "↔ @nama" di kartu
+  const gelap = de.dataset.tema === 'gelap', tinta = gelap ? '#fff' : '#222', halo = gelap ? '#000' : '#fff';
+  const NS = 'http://www.w3.org/2000/svg';
+  const buat = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); svg.append(e); return e; };
+  const lengkung = (p, q) => {
+    const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2, dx = q.x - p.x, dy = q.y - p.y, len = Math.hypot(dx, dy) || 1, bend = len * .16;
+    return `M${p.x.toFixed(1)} ${p.y.toFixed(1)} Q${(mx - dy / len * bend).toFixed(1)} ${(my + dx / len * bend).toFixed(1)} ${q.x.toFixed(1)} ${q.y.toFixed(1)}`;
+  };
+  garisData.forEach(([a, b]) => {
+    const ka = document.querySelector('article.kartu[data-id="' + a + '"]'), kb = document.querySelector('article.kartu[data-id="' + b + '"]');
+    const ta = ka && ka.querySelector('.tt'); if (!ta || !kb) return;
+    const p = titikPusat(ta), q = titikTepi(kb, p);
+    const hidup = sorot === a || sorot === b, redup = sorot && !hidup;
+    const d = lengkung(p, q), lebar = hidup ? 3.6 : 2.2, op = redup ? .22 : 1;
+    const milik = milikSaya.has(a), wr = milik ? (warnaPost[a] || KUNING_GARIS) : tinta, hl = milik ? (gelap ? '#000' : '#222') : halo;   // sambunganmu berwarna kartu asalnya
+    buat('path', { d, fill: 'none', stroke: hl, 'stroke-width': lebar + 3, 'stroke-linecap': 'round', opacity: op * .85 });
+    buat('path', { d, fill: 'none', stroke: wr, 'stroke-width': lebar, 'stroke-linecap': 'round', opacity: op });
+    buat('circle', { cx: q.x, cy: q.y, r: lebar + 2.6, fill: hl, opacity: op });
+    buat('circle', { cx: q.x, cy: q.y, r: lebar + .8, fill: wr, opacity: op });
+  });
+  if (seret && seret.mode === 'tarik' && seret.gerak) {   // garis sementara saat menyeret
+    const ka = document.querySelector('article.kartu[data-id="' + seret.id + '"] .tt');
+    if (ka) {
+      const p = titikPusat(ka), q = { x: seret.x + scrollX, y: seret.y + scrollY };
+      buat('path', { d: `M${p.x} ${p.y} L${q.x} ${q.y}`, fill: 'none', stroke: gelap ? '#000' : '#222', 'stroke-width': 5.2, 'stroke-linecap': 'round', opacity: .85 });
+      buat('path', { d: `M${p.x} ${p.y} L${q.x} ${q.y}`, fill: 'none', stroke: warnaPost[seret.id] || KUNING_GARIS, 'stroke-width': 2.2, 'stroke-dasharray': '6 6', 'stroke-linecap': 'round' });
+    }
+  }
+}
+function tandaiSasaran(kartu) {
+  document.querySelectorAll('article.kartu.sasaran').forEach(e => { if (e !== kartu) e.classList.remove('sasaran'); });
+  if (kartu) kartu.classList.add('sasaran');
+}
+function tautMulai() {
+  document.addEventListener('pointerdown', e => {
+    const t = e.target.closest && e.target.closest('.tt.milik'); if (!t) return;
+    e.preventDefault(); e.stopPropagation();
+    if (!butuhLogin()) return;
+    const id = t.dataset.id;
+    if (seret && seret.mode === 'pilih' && seret.id === id) { seret = null; render(); return; }   // ketuk lagi = batal
+    seret = { id, mode: 'tarik', x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, gerak: false };
+    t.classList.add('aktif');
+  }, true);
+  document.addEventListener('pointermove', e => {
+    if (!seret || seret.mode !== 'tarik') return;
+    seret.x = e.clientX; seret.y = e.clientY;
+    if (!seret.gerak && Math.hypot(seret.x - seret.sx, seret.y - seret.sy) > 8) seret.gerak = true;
+    if (seret.gerak) {
+      const k = kartuDi(e.clientX, e.clientY);
+      tandaiSasaran(k && k.dataset.id !== seret.id ? k : null);
+      gambarGaris();
+    }
+  });
+  document.addEventListener('pointerup', e => {
+    if (!seret || seret.mode !== 'tarik') return;
+    const s = seret;
+    tandaiSasaran(null);
+    if (s.gerak) {
+      const k = kartuDi(e.clientX, e.clientY);
+      if (k && k.dataset.id !== s.id) sambung(s.id, k.dataset.id); else { seret = null; render(); }
+    } else {   // hanya ketuk: masuk mode pilih, lalu ketuk kartu tujuan
+      s.mode = 'pilih'; render();
+      toast('Ketuk kartu tujuan (Esc untuk batal).');
+    }
+  });
+  document.addEventListener('click', e => {
+    if (!seret || seret.mode !== 'pilih') return;
+    if (e.target.closest && e.target.closest('.tt')) return;   // klik yang menyertai ketukan pada titik
+    e.stopPropagation(); e.preventDefault();
+    const k = e.target.closest && e.target.closest('article.kartu[data-id]');
+    if (k && k.dataset.id !== seret.id) sambung(seret.id, k.dataset.id); else { seret = null; render(); }
+  }, true);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && seret) { seret = null; tandaiSasaran(null); render(); } });
+  // sorot garis milik kartu yang sedang ditunjuk kursor
+  document.addEventListener('mouseover', e => {
+    const k = e.target.closest && e.target.closest('article.kartu[data-id]'); const id = k ? k.dataset.id : null;
+    if (id !== sorot) { sorot = id; if (garisData.length) gambarGaris(); }
+  });
+  addEventListener('resize', gambarGaris);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(gambarGaris);
+  if (window.ResizeObserver) new ResizeObserver(() => gambarGaris()).observe(document.getElementById('dek'));
+}
+/* ---------- Statistik (kotak kanan bawah) ---------- */
+const idKlien = (() => {
+  const acak = () => Math.random().toString(36).slice(2, 12) + Date.now().toString(36).slice(-4);
+  try { let v = sessionStorage.getItem('deck_id'); if (!v) { v = acak(); sessionStorage.setItem('deck_id', v); } return v; } catch (e) { return acak(); }
+})();
+function renderStat() {
+  const isi = document.getElementById('stat-isi'); if (!isi) return;
+  const baris = (a, b) => h('div', { class: 'baris-s' }, h('span', {}, a), h('b', {}, String(b)));
+  const nama = hadirData && hadirData.nama.length ? hadirData.nama : [];
+  const tampil = nama.slice(0, 12).join(', ') + (nama.length > 12 ? ' +' + (nama.length - 12) + ' lainnya' : '');
+  isi.replaceChildren(
+    baris('Pengguna aktif', hadirData ? hadirData.aktif : '–'),
+    baris('Kartu', statKartu),
+    baris('Balasan', statBalasan),
+    baris('Koneksi', garisData.length),
+    ...(nama.length ? [h('div', { class: 'nama-s' }, 'Sedang aktif: ' + tampil)] : []));
+}
+/* Pengguna aktif memakai Supabase Realtime Presence (tanpa tabel; hilang otomatis saat tab ditutup) */
+let kanalHadir = null;
+function hadirKirim() {
+  if (!kanalHadir) return;
+  try { kanalHadir.track({ id: idKlien, nama: tokenHidup() ? (getUser() || '') : '' }); } catch (e) {}
+}
+function hadirMulai() {
+  if (!sb) return;
+  kanalHadir = sb.channel('hadir', { config: { presence: { key: idKlien } } });
+  kanalHadir.on('presence', { event: 'sync' }, () => {
+    const st = kanalHadir.presenceState(), nama = [];
+    let aktif = 0;
+    Object.values(st).forEach(arr => { aktif++; const n = String((arr[arr.length - 1] || {}).nama || '').trim(); if (n && !nama.includes(n)) nama.push(n); });
+    hadirData = { aktif, nama }; renderStat();
+  }).subscribe(status => { if (status === 'SUBSCRIBED') hadirKirim(); });
+}
+function hadir() { hadirKirim(); }
+function statMulai() {
+  const kotak = document.getElementById('statistik'), tb = document.getElementById('stat-judul');
+  let buka = !matchMedia('(max-width:640px)').matches;   // bawaan: terbuka di layar lebar, tertutup di HP
+  try { const v = localStorage.getItem('deck-stat'); if (v === 'buka') buka = true; else if (v === 'tutup') buka = false; } catch (e) {}
+  const pasang = () => { kotak.classList.toggle('tutup', !buka); tb.setAttribute('aria-expanded', buka ? 'true' : 'false'); document.getElementById('stat-panah').textContent = buka ? '▾' : '▴'; };
+  tb.addEventListener('click', () => { buka = !buka; try { localStorage.setItem('deck-stat', buka ? 'buka' : 'tutup'); } catch (e) {} pasang(); });
+  pasang(); renderStat();
+  hadirMulai();
+}
+function render() {
+  { const tp = document.getElementById('tip'); if (tp) tp.hidden = true; }
+  titikFoto(); titikLacak(900);
+  const dek = document.getElementById('dek'); dek.innerHTML = '';
+  dek.classList.toggle('rapi', rapi);
+  if (komposBuka) dek.append(h('div', { class: 'item' }, kompos('baru', '')));
+  if (pollBuka && dosenSaya) dek.append(h('div', { class: 'item' }, komposPoll()));
+  const all = semua();
+  const sekarang = Date.now();
+  const polaktif = p => p.poll && p.poll.akhir > sekarang;
+  const utama = all.filter(p => !p.parent).sort(urutKartu());
+  utama.sort((a, b) => (polaktif(b) ? 1 : 0) - (polaktif(a) ? 1 : 0));   // polling yang berjalan selalu di posisi pertama (urutan lain tetap)
+  const anak = {};
+  all.filter(p => p.parent).forEach(p => (anak[p.parent] = anak[p.parent] || []).push(p));
+  petaTaut = {}; namaPost = {}; warnaPost = {};
+  utama.forEach(p => { namaPost[p.id] = p.username; warnaPost[p.id] = p.poll ? '#E8590C' : p.tmr ? '#C81D25' : (KARTU[p.kartu] || KUNING_GARIS); });
+  utama.forEach(p => p.tautan.forEach(t => {
+    if (!namaPost[t]) return;
+    (petaTaut[p.id] = petaTaut[p.id] || new Set()).add(t);
+    (petaTaut[t] = petaTaut[t] || new Set()).add(p.id);
+  }));
+  garisData = utama.flatMap(p => p.tautan.filter(t => namaPost[t]).map(t => [p.id, t]));
+  utama.forEach(p => dek.append(p.poll ? kartuPolling(p) : kartuUtama(p, (anak[p.id] || []).sort(urut))));
+  statKartu = utama.length; statBalasan = all.length - utama.length;
+  gambarBingkai();
+  gambarGaris();
+  renderStat();
+}
+
+/* ================== TIMER RESET HARIAN (tiap hari 07.00 WIB) ================== */
+const JAM_RESET = 7;   // harus sama dengan atHour di pasangTimer (Kode.gs)
+function sisaReset(sekarang) {
+  const WIB = 7 * 3600 * 1000;
+  const s = new Date(sekarang + WIB);                    // jam dinding WIB, dibaca lewat fungsi UTC
+  let akhir = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate(), JAM_RESET) - WIB;
+  if (akhir <= sekarang) akhir += 86400000;              // sudah lewat 07.00 hari ini: reset berikutnya besok
+  return akhir - sekarang;
+}
+function teksReset(ms) {   // sisa waktu reset, selalu sampai detik: 10 jam : 46 menit : 07 detik
+  const dua = n => String(n).padStart(2, '0'), d = Math.max(0, Math.floor(ms / 1000));
+  return dua(Math.floor(d / 3600)) + ' jam : ' + dua(Math.floor(d % 3600 / 60)) + ' menit : ' + dua(d % 60) + ' detik';
+}
+function teksTimer(ms) {
+  const dua = n => String(n).padStart(2, '0');
+  const hari = Math.floor(ms / 86400000), jam = Math.floor(ms % 86400000 / 3600000);
+  const menit = Math.floor(ms % 3600000 / 60000), detik = Math.floor(ms % 60000 / 1000);
+  if (hari > 0) return `${hari} hari : ${dua(jam)} jam`;
+  if (jam > 0) return `${jam} jam : ${dua(menit)} menit`;
+  return `${menit} menit : ${dua(detik)} detik`;
+}
+function tickTimer() {
+  const el = document.getElementById('timer');
+  if (el) el.textContent = '[' + teksReset(sisaReset(waktuServer())) + ']';
+  let habis = false;
+  document.querySelectorAll('.poll-sisa').forEach(s => {
+    const a = Number(s.dataset.akhir), t = sisaPoll(a);
+    if (s.textContent !== t) s.textContent = t;
+    if (s.dataset.aktif === '1' && a <= Date.now()) { s.dataset.aktif = ''; habis = true; }
+  });
+  const kini = waktuServer();
+  let padam = false;
+  document.querySelectorAll('.tmr-sisa').forEach(sp => {
+    const a = Number(sp.dataset.habis), tx = sisaKartu(a);
+    if (sp.textContent !== tx) sp.textContent = tx;
+    if (a <= kini && !sedangMengetik()) { const it = sp.closest('.item'); if (it && !it.classList.contains('padam')) { it.classList.add('padam'); padam = true; } }
+  });
+  gameCek();
+  if (padam) setTimeout(() => { if (!sedangMengetik()) render(); }, 700);
+  if (habis && !sedangMengetik()) render();   // polling baru saja selesai: kunci pilihan
+}
+
+/* ================== KETERANGAN TOMBOL (muncul saat kursor diarahkan) ================== */
+(function tipMulai() {
+  const tip = document.getElementById('tip');
+  let aktif = null;
+  const tutup = () => { aktif = null; tip.hidden = true; };
+  document.addEventListener('pointerover', e => {
+    if (e.pointerType !== 'mouse') return;
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (!el || el === aktif) return;
+    aktif = el; tip.textContent = el.dataset.tip; tip.hidden = false;
+    const r = el.getBoundingClientRect();
+    tip.style.left = Math.max(40, Math.min(innerWidth - 40, r.left + r.width / 2)) + 'px';
+    tip.style.top = (r.top < 40 ? r.bottom + 34 : r.top - 6) + 'px';
+  });
+  document.addEventListener('pointerout', e => { if (aktif && !(e.relatedTarget && aktif.contains(e.relatedTarget))) tutup(); });
+  document.addEventListener('pointerdown', tutup, true);
+  addEventListener('scroll', tutup, { passive: true });
+})();
+
+/* ================== PETA KARTU (MINIMAP) ================== */
+function petaMulai() {
+  const kotakPeta = document.getElementById('peta'), tb = document.getElementById('peta-judul');
+  const kv = document.getElementById('peta-kanvas'), cv = kv.querySelector('canvas'), kt = document.getElementById('peta-kotak');
+  const LEBAR = 190, MAKS_T = 0.4;
+  let skala = 1, ttl = 0, zoom = 1, sudahTengah = false;
+  try { if (localStorage.getItem('deck-peta') === '0') kotakPeta.classList.add('tutup'); } catch (e) {}
+  const lipat = () => tb.setAttribute('aria-expanded', kotakPeta.classList.contains('tutup') ? 'false' : 'true');
+  lipat();
+  tb.addEventListener('click', () => {
+    kotakPeta.classList.toggle('tutup'); lipat();
+    try { localStorage.setItem('deck-peta', kotakPeta.classList.contains('tutup') ? '0' : '1'); } catch (e) {}
+    gambar();
+  });
+
+  /* ----- zoom (tombol, Ctrl + gulir / cubit) dan geser dengan menyeret latar ----- */
+  const root = document.documentElement, dekEl = document.getElementById('dek'), nilai = document.getElementById('pz-nilai');
+  function setZoom(z, cx, cy) {
+    z = Math.max(.4, Math.min(1.6, Math.round(z * 100) / 100));
+    if (z === zoom) return;
+    const r = z / zoom, T = dekEl.getBoundingClientRect().top + scrollY;
+    if (cx == null) { cx = innerWidth / 2; cy = innerHeight / 2; }
+    const x0 = scrollX, y0 = scrollY;
+    zoom = z; root.style.setProperty('--z', z); nilai.textContent = Math.round(z * 100) + '%';
+    void dekEl.offsetHeight;
+    scrollTo((x0 + cx) * r - cx, (y0 + cy - T) * r + T - cy);
+    requestAnimationFrame(() => { gambarBingkai(); gambarGaris(); gambar(); });
+  }
+  document.getElementById('pz-min').addEventListener('click', () => setZoom(zoom / 1.2));
+  document.getElementById('pz-plus').addEventListener('click', () => setZoom(zoom * 1.2));
+  nilai.addEventListener('click', () => setZoom(1));
+  addEventListener('wheel', e => {
+    if (!e.ctrlKey || e.target.closest('textarea, input, #bantuan')) return;
+    e.preventDefault();
+    setZoom(zoom * Math.exp(-Math.max(-40, Math.min(40, e.deltaY)) * .008), e.clientX, e.clientY);
+  }, { passive: false });
+  // menyeret latar kosong menggeser papan (mouse; di layar sentuh geser jari bekerja biasa)
+  let pan = null;
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    if (e.target.closest('article, .item, button, a, input, textarea, select, summary, header, #peta, #statistik, #alat, #bantuan, .kompos, [role=menu]')) return;
+    pan = { x: e.clientX, y: e.clientY, sx: scrollX, sy: scrollY };
+  });
+  document.addEventListener('pointermove', e => {
+    if (!pan) return;
+    if (!root.classList.contains('geser')) { if (Math.hypot(e.clientX - pan.x, e.clientY - pan.y) < 4) return; root.classList.add('geser'); }
+    scrollTo(pan.sx - (e.clientX - pan.x), pan.sy - (e.clientY - pan.y));
+  });
+  const akhirPan = () => { pan = null; root.classList.remove('geser'); };
+  document.addEventListener('pointerup', akhirPan); document.addEventListener('pointercancel', akhirPan);
+  // tinggi header tetap (fixed) disisihkan lewat padding body
+  const hd = document.querySelector('header');
+  const ukurH = () => root.style.setProperty('--hh', hd.offsetHeight + 'px');
+  ukurH(); if (window.ResizeObserver) new ResizeObserver(ukurH).observe(hd); else addEventListener('resize', ukurH);
+  function petaTengah() { scrollTo(Math.max(0, (dokW() - innerWidth) / 2), scrollY); }
+  window.petaTengah = petaTengah;
+  const dokW = () => Math.max(document.documentElement.scrollWidth, innerWidth);
+  const dokH = () => Math.max(document.documentElement.scrollHeight, innerHeight);
+  function gambar() {
+    const dek = document.getElementById('dek');
+    const perlu = dokH() > innerHeight + 4 || dokW() > innerWidth + 4 || zoom !== 1;
+    const ada = dek && dek.querySelector('.item, .kartu');
+    if (ada && !sudahTengah) { sudahTengah = true; if (scrollX === 0) petaTengah(); }
+    kotakPeta.hidden = !(perlu && ada);
+    if (kotakPeta.hidden || kotakPeta.classList.contains('tutup')) return;
+    const W = dokW(), H = dokH();
+    skala = Math.min(LEBAR / W, (innerHeight * MAKS_T) / H);
+    const cw = Math.max(1, Math.round(W * skala)), ch = Math.max(1, Math.round(H * skala));
+    kv.style.width = cw + 'px'; kv.style.height = ch + 'px';
+    const r = devicePixelRatio || 1;
+    cv.width = Math.round(cw * r); cv.height = Math.round(ch * r); cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+    const c = cv.getContext('2d'); c.setTransform(r, 0, 0, r, 0, 0); c.clearRect(0, 0, cw, ch);
+    c.fillStyle = getComputedStyle(kotakPeta).color; c.globalAlpha = .5;
+    let els = [...dek.querySelectorAll('.item')];
+    if (!els.length) els = [...dek.querySelectorAll('article.kartu')];
+    els.forEach(el => {
+      const b = el.getBoundingClientRect();
+      if (b.width < 2 || b.height < 2) return;
+      const x = (b.left + scrollX) * skala, y = (b.top + scrollY) * skala;
+      c.fillRect(x, y, Math.max(2, b.width * skala), Math.max(2, b.height * skala));
+    });
+    c.globalAlpha = 1;
+    kotak();
+  }
+  function kotak() {
+    kt.style.left = scrollX * skala + 'px'; kt.style.top = scrollY * skala + 'px';
+    kt.style.width = Math.min(innerWidth * skala, kv.clientWidth) + 'px'; kt.style.height = innerHeight * skala + 'px';
+  }
+  const tunda = () => { clearTimeout(ttl); ttl = setTimeout(gambar, 120); };
+  function pindah(e) {
+    const b = kv.getBoundingClientRect();
+    const x = (e.clientX - b.left) / skala - innerWidth / 2, y = (e.clientY - b.top) / skala - innerHeight / 2;
+    scrollTo(Math.max(0, x), Math.max(0, y));
+  }
+  let seret = false;
+  kv.addEventListener('pointerdown', e => { seret = true; try { kv.setPointerCapture(e.pointerId); } catch (x) {} pindah(e); e.preventDefault(); });
+  kv.addEventListener('pointermove', e => { if (seret) pindah(e); });
+  const lepas = () => { seret = false; };
+  kv.addEventListener('pointerup', lepas); kv.addEventListener('pointercancel', lepas);
+  addEventListener('scroll', kotak, { passive: true });
+  addEventListener('resize', tunda);
+  const dek = document.getElementById('dek');
+  if (window.ResizeObserver) new ResizeObserver(tunda).observe(dek);
+  new MutationObserver(tunda).observe(dek, { childList: true, subtree: true });
+  new MutationObserver(tunda).observe(document.documentElement, { attributes: true, attributeFilter: ['data-tema', 'data-mono'] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(tunda);
+  gambar();
+}
+
+/* ================== MULAI ================== */
+(function temaMulai() {
+  const root = document.documentElement, tb = document.getElementById('btn-tema'), menu = document.getElementById('menu-tema');
+  const PIL = [['terang', '☀', 'Terang'], ['gelap', '☾', 'Gelap'], ['mono-terang', '○', 'Monokrom terang'], ['mono-gelap', '●', 'Monokrom gelap']];
+  let t = null;
+  try { t = localStorage.getItem('deck-tema'); } catch (e) {}
+  if (!PIL.some(x => x[0] === t)) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'gelap' : 'terang';
+  const tombol = PIL.map(([k, ik, nm]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = ik; b.title = nm; b.setAttribute('aria-label', nm); b.setAttribute('role', 'menuitemradio');
+    b.addEventListener('click', () => { t = k; try { localStorage.setItem('deck-tema', t); } catch (e) {} pasang(); tutup(); });
+    menu.appendChild(b); return b;
+  });
+  // tombol ✕: matikan / nyalakan latar tanda ^ (terpisah dari pilihan tema)
+  const bx = document.createElement('button'); bx.type = 'button'; bx.textContent = '⊘'; bx.setAttribute('role', 'menuitemcheckbox'); menu.appendChild(bx);
+  // tombol ≋: ganti latar tanda ^ dengan latar spektrum
+  const bs = document.createElement('button'); bs.type = 'button'; bs.textContent = '≋'; bs.setAttribute('role', 'menuitemcheckbox'); menu.insertBefore(bs, bx);
+  const modeLatar = m => {
+    titik.mode = m; bs.classList.toggle('aktif', m === 'spektrum'); bs.setAttribute('aria-checked', m === 'spektrum' ? 'true' : 'false');
+    const nm = m === 'spektrum' ? 'Latar spektrum (aktif): klik untuk kembali ke tanda ^' : 'Latar spektrum'; bs.title = nm; bs.setAttribute('aria-label', nm);
+    if (titik.kanvas) { titikUkuran(); if (titik.ctx) { titik.ctx.clearRect(0, 0, innerWidth, innerHeight); titikMinta(); } }
+  };
+  let mode = 'caret';
+  try { if (localStorage.getItem('deck-mode') === 'spektrum') mode = 'spektrum'; } catch (e) {}
+  const latar = mati => {
+    titik.mati = mati;
+    if (mati) root.dataset.latar = 'mati'; else delete root.dataset.latar;
+    bx.classList.toggle('aktif', mati); bx.setAttribute('aria-checked', mati ? 'true' : 'false');
+    const nm = mati ? 'Nyalakan latar' : 'Matikan latar'; bx.title = nm; bx.setAttribute('aria-label', nm);
+    if (titik.kanvas) { titikUkuran(); if (!mati) titikMinta(); }   // mati: kanvas dikosongkan (memori dan CPU bebas)
+  };
+  let mati = false;
+  try { const sv = localStorage.getItem('deck-latar'); mati = sv === null ? PERANGKAT_LEMAH : sv === 'mati'; } catch (e) { mati = PERANGKAT_LEMAH; }   // perangkat lemah: latar mati sebagai bawaan
+  latar(mati); modeLatar(mode);
+  // dipanggil pengawas bingkai bila latar membuat halaman patah-patah
+  titik.lambat = () => {
+    mati = true; try { localStorage.setItem('deck-latar', 'mati'); } catch (e) {}
+    latar(true); toast('Latar dimatikan otomatis karena perangkat terasa berat. Nyalakan lagi lewat menu tema (\u2299).');
+  };
+  bs.addEventListener('click', () => { mode = mode === 'spektrum' ? 'caret' : 'spektrum'; try { localStorage.setItem('deck-mode', mode); } catch (e) {} if (mati) { mati = false; try { localStorage.setItem('deck-latar', 'hidup'); } catch (e) {} latar(false); } modeLatar(mode); tutup(); });
+  bx.addEventListener('click', () => { mati = !mati; try { localStorage.setItem('deck-latar', mati ? 'mati' : 'hidup'); } catch (e) {} latar(mati); tutup(); });
+  const tutup = () => { menu.hidden = true; tb.setAttribute('aria-expanded', 'false'); };
+  const pasang = () => {
+    const gelap = t === 'gelap' || t === 'mono-gelap', mono = t.indexOf('mono') === 0;
+    root.dataset.tema = gelap ? 'gelap' : 'terang';
+    if (mono) root.dataset.mono = '1'; else delete root.dataset.mono;
+    const cur = PIL.find(x => x[0] === t);
+    tb.textContent = cur[1]; tb.title = 'Tampilan: ' + cur[2];
+    PIL.forEach((x, i) => { tombol[i].classList.toggle('aktif', x[0] === t); tombol[i].setAttribute('aria-checked', x[0] === t ? 'true' : 'false'); });
+    TITIK.warna = gelap ? '#5c5c5c' : '#9a9a9a'; titik.gelap = gelap; titik.mono = mono;
+    dispatchEvent(new Event('resize'));   // gambar ulang latar
+  };
+  tb.addEventListener('click', e => { e.stopPropagation(); const buka = menu.hidden; menu.hidden = !buka; tb.setAttribute('aria-expanded', buka ? 'true' : 'false'); });
+  document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) tutup(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) tutup(); });
+  pasang();
+})();
+(function urutMulai() {
+  const sel = document.getElementById('urut');
+  try { const v = localStorage.getItem('deck-urut'); if (v === 'terbaru' || v === 'nama') urutan = v; } catch (e) {}
+  sel.value = urutan;
+  sel.addEventListener('change', () => {
+    urutan = sel.value; try { localStorage.setItem('deck-urut', urutan); } catch (e) {}
+    render();
+  });
+})();
+(function rapiMulai() {
+  const tb = document.getElementById('btn-rapi');
+  try { rapi = localStorage.getItem('deck-rapi') === '1'; } catch (e) {}
+  const pasang = () => { tb.setAttribute('aria-pressed', rapi ? 'true' : 'false'); tb.textContent = rapi ? '▦ Rapi' : '▦ Acak'; };
+  tb.addEventListener('click', () => {
+    rapi = !rapi; try { localStorage.setItem('deck-rapi', rapi ? '1' : '0'); } catch (e) {}
+    pasang(); bunyiSebar(rapi); render();
+    if (!rapi && window.petaTengah) requestAnimationFrame(petaTengah);   // kembali ke Acak: mulai dari tengah kanvas
+  });
+  pasang();
+})();
+(function mulai() {
+  const b = document.getElementById('banner');
+  if (!sb) {
+    b.append(h('div', {}, 'Pustaka Supabase gagal dimuat. Periksa koneksi lalu muat ulang halaman.'));
+  }
+  renderAlat(); render(); muat();
+  tickTimer(); setInterval(tickTimer, 1000);
+  setInterval(() => { const el = document.getElementById('timer'); if (el) el.textContent = '[' + teksReset(sisaReset(waktuServer())) + ']'; }, 250);   // angka detik tidak melompat
+  titikMulai(); tautMulai(); statMulai(); petaMulai();
+  addEventListener('resize', gambarBingkai);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(gambarBingkai);
+  bantuanMulai();
+  setInterval(() => muat(true), CONFIG.REFRESH_MS);
+  renderLogin(); authMulai(); realtimeMulai();
+  if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+})();
+</script>
+</body>
+</html>

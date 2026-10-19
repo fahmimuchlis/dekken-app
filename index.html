@@ -444,6 +444,31 @@
   html.foto #tip { display:none !important; }
   footer.hukum { position:static !important; pointer-events:auto !important; padding:28px 16px 100px !important; font-size:12px; text-align:center; max-width:none; }
   footer.hukum a { color:inherit; }
+  /* ===== stiker tempel ===== */
+  .kartu:not(.lapis), .balas { position:relative; }
+  .stk-lapis { position:absolute; inset:0; z-index:4; pointer-events:none; }
+  .stk { position:absolute; left:var(--x); top:var(--y); transform:translate(-50%,-50%) rotate(var(--m)); font-size:26px; line-height:1; pointer-events:none; user-select:none; -webkit-user-select:none;
+         font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; color:#000;
+         filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+  .stk.baru { animation:stk-tempel .35s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes stk-tempel { from { transform:translate(-50%,-50%) rotate(var(--m)) scale(2); opacity:0; } to { transform:translate(-50%,-50%) rotate(var(--m)) scale(1); opacity:1; } }
+  :root[data-mono="1"] .stk { filter:grayscale(1) contrast(1.15) drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+  html.stk-tempel .stk-lapis { pointer-events:auto; cursor:copy; }
+  html.stk-tempel .kartu:not(.lapis), html.stk-tempel .balas { box-shadow:0 0 0 2px rgba(127,127,127,.35); }
+  html.stk-cabut .stk { pointer-events:auto; cursor:pointer; }
+  html.stk-cabut .stk:hover { outline:2px solid #e11; outline-offset:3px; border-radius:50%; }
+  html.foto .stk-lapis { pointer-events:none; }
+  #btn-stiker[aria-pressed="true"] { background:var(--h); color:var(--p); }
+  #palet-stiker { position:fixed; left:50%; bottom:68px; transform:translateX(-50%); z-index:27; display:flex; flex-wrap:wrap; gap:4px 6px; align-items:center; justify-content:center;
+                  width:max-content; max-width:min(94vw,560px); padding:8px 10px 10px; background:var(--p); color:var(--h); border:2px solid var(--h); }
+  #palet-stiker[hidden] { display:none; }
+  #palet-stiker .ket { flex-basis:100%; text-align:center; font-size:12px; margin-bottom:2px; }
+  #palet-stiker .pl { font:24px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; padding:4px 6px; background:transparent; border:2px solid transparent; cursor:pointer; color:#000; }
+  #palet-stiker .pl:hover { border-color:var(--h); }
+  #palet-stiker .pl[aria-pressed="true"] { border-color:var(--h); background:rgba(127,127,127,.28); }
+  #palet-stiker .alat-p { font:inherit; font-size:13px; padding:5px 10px; margin-left:4px; background:var(--p); color:var(--h); border:2px solid var(--h); cursor:pointer; }
+  #palet-stiker .alat-p[aria-pressed="true"], #palet-stiker .alat-p.selesai { background:var(--h); color:var(--p); }
+  @media (max-width:640px) { #btn-stiker .lbl { display:none; } #palet-stiker { bottom:62px; } }
 </style>
 </head>
 <body>
@@ -636,13 +661,15 @@ async function muat(otomatis) {
   sinkronMulai();
   try {
     const t0 = Date.now();
-    const [r, w] = await Promise.all([
+    const [r, w, st] = await Promise.all([
       sb.from('posts').select('*').order('waktu', { ascending: true }).limit(5000),
-      sb.rpc('kini_ms')
+      sb.rpc('kini_ms'),
+      ambilStiker()
     ]);
     if (r.error) throw r.error;
     if (!w.error && Number(w.data) > 0) skew = Number(w.data) - (t0 + Date.now()) / 2;
     dataServer = (r.data || []).map(normal).filter(p => p.id && p.teks);
+    if (st) stikerData = st;   // null = tabel stiker belum ada / gagal dibaca: pertahankan yang lama
     // data dari server adalah kebenaran: tutupan sementara tidak diperlukan lagi
     lokal = []; override = {}; ovPoll = {}; ovTautan = {}; ovHapus = {}; ovBuka = {}; ovGame = {};
     {   // bunyi "dek dek" bila ada kartu baru dari orang lain
@@ -661,6 +688,9 @@ function realtimeMulai() {
   if (!sb) return;
   sb.channel('kartu-berubah').on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
     clearTimeout(tRealtime); tRealtime = setTimeout(() => muat(true), 350);
+  }).on('postgres_changes', { event: '*', schema: 'public', table: 'stiker' }, p => {   // stiker: ubah langsung di tempatnya, tanpa memuat ulang papan
+    if (p.eventType === 'INSERT' && p.new) terapkanStiker(p.new);
+    else if (p.eventType === 'DELETE' && p.old && p.old.id) buangStiker(p.old.id);
   }).subscribe();
   document.addEventListener('focusout', () => { if (muatTunda) setTimeout(() => muat(true), 300); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) muat(true); });
@@ -722,6 +752,8 @@ const RPC = {
   vote:    i => ['vote', { p_id: i.id, p_nilai: i.nilai }],
   hapus:   i => ['hapus', { p_id: i.id }],
   pilih:   i => ['pilih', { p_id: i.id, p_indeks: i.indeks }],
+  tempel:  i => ['tempel', { p_id: i.id, p_jenis: i.jenis, p_x: i.x, p_y: i.y }],
+  lepas:   i => ['lepas', { p_id: i.id }],
   ronde:   i => ['ronde', { p_id: i.id }],
   tampil:  i => ['tampil', { p_id: i.id }],
   tautan:  i => ['tautan', { p_id: i.id, p_ke: i.ke }],
@@ -775,6 +807,7 @@ async function sapa() {
 }
 function bersihkanAkun() {
   sayaVote = {}; milikSaya = new Set(); seret = null; sayaPilih = {}; segelSaya = {}; gameBuka = null; dosenSaya = false; statusAkun = 'aktif'; komposBuka = false; pollBuka = false; hapusKonfirm = null;
+  if (typeof aturStiker === 'function') aturStiker(null);
 }
 function keluar(diam) {
   sesi = null; bersihkanAkun();
@@ -1234,6 +1267,7 @@ function kartuPolling(p) {
     h('div', { class: 'poll-foot' }, h('span', {}, total + ' suara · ', sisa), h('span', { class: 'poll-kanan' }, tombolHapus(p, 0), titikTaut(p))),
     labelTaut(p));
   kartu.dataset.id = p.id;
+  kartu.append(lapisStiker(p));
   item.append(h('div', { class: 'deck' }, kartu));
   return item;
 }
@@ -1277,6 +1311,7 @@ function kartuBalasan(p, i, n, prev, setelahKompos) {
   }));
   const el = h('div', { class: 'balas' + (lain ? ' kartu lain b-' + p.bentuk : '') }, isiKartu(p), balasBtn);
   el.dataset.pid = p.id;
+  el.append(lapisStiker(p));
   // bentuk selain persegi punya sudut kosong, jadi digeser lebih ke samping agar tumpukan terlihat jelas
   const ekstra = lain ? 22 : 0;
   el.style.marginLeft = (i * langkah + (i > 0 ? ekstra : 0)).toFixed(1) + 'px';
@@ -1389,6 +1424,7 @@ function kartuUtama(p, balasan) {
   const labelJam = p.habis ? h('span', { class: 'label-tmr' }, ikonJam(), h('span', { class: 'tmr-sisa', 'data-habis': p.habis }, sisaKartu(p.habis))) : null;
   const kartu = h('article', { class: 'kartu b-' + p.bentuk + (lain ? ' lain' : '') + (p.tmr ? ' tmr' : '') }, labelJam, (p.game) ? h('span', { class: 'label-game' }, ikonSvg(IKON_GAME), h('span', {}, p.game === 1 ? 'GAME' : 'GAME \u00b7 terbuka')) : null, isiKartu(p), bawah, labelTaut(p));
   kartu.dataset.id = p.id;
+  kartu.append(lapisStiker(p));
   kartu.style.background = `color-mix(in srgb, ${KARTU[p.kartu]} 92%, #000)`;   // lapisan paling depan dalam deck
   const dek = h('div', { class: 'deck' + (n ? ' berbalas' : '') });
   if (n) {
@@ -1431,6 +1467,107 @@ function kartuUtama(p, balasan) {
   return item;
 }
 
+/* ================== STIKER TEMPEL ================== */
+/* Daftar ini harus sama dengan jenis_stiker() di stiker.sql */
+const STIKER = [['senyum', '\u{1F600}', 'Senyum'], ['jempol', '\u{1F44D}', 'Jempol'], ['hati', '❤️', 'Hati'], ['api', '\u{1F525}', 'Api'], ['ide', '\u{1F4A1}', 'Ide'], ['tanya', '❓', 'Tanya'],
+                ['tepuk', '\u{1F44F}', 'Tepuk tangan'], ['tawa', '\u{1F602}', 'Tertawa'], ['mikir', '\u{1F914}', 'Berpikir'], ['centang', '✅', 'Centang'], ['bintang', '⭐', 'Bintang'], ['pesta', '\u{1F389}', 'Pesta']];
+const STIKER_EMOJI = Object.fromEntries(STIKER.map(([k, e]) => [k, e]));
+let stikerData = [];          // semua stiker di papan: { id, post_id, jenis, x, y, miring }
+let stikerMode = null;        // null | { t: 'tempel', jenis } | { t: 'cabut' }
+let stikerJenis = 'senyum';   // pilihan terakhir
+let stikerBaru = null;        // id stiker yang baru menempel (untuk animasi)
+async function ambilStiker() {
+  if (!sb) return null;
+  const hasil = [];
+  for (let i = 0; i < 20; i++) {
+    const { data, error } = await sb.from('stiker').select('*').order('waktu', { ascending: true }).range(i * 1000, i * 1000 + 999);
+    if (error) return null;
+    hasil.push(...(data || [])); if (!data || data.length < 1000) break;
+  }
+  return hasil;
+}
+function elemenStiker(s) {
+  const e = h('span', { class: 'stk' + (s.id === stikerBaru ? ' baru' : ''), 'data-sid': s.id, role: 'img', 'aria-label': 'Stiker ' + ((STIKER.find(x => x[0] === s.jenis) || [])[2] || '') }, STIKER_EMOJI[s.jenis] || '⭐');
+  e.style.setProperty('--x', Number(s.x).toFixed(1) + '%');
+  e.style.setProperty('--y', Number(s.y).toFixed(1) + '%');
+  e.style.setProperty('--m', (Number(s.miring) || 0) + 'deg');
+  e.addEventListener('click', ev => { if (stikerMode && stikerMode.t === 'cabut') { ev.stopPropagation(); cabutStiker(s.id); } });
+  return e;
+}
+function isiLapis(el) { const id = el.dataset.stk; el.replaceChildren(...stikerData.filter(s => s.post_id === id).map(elemenStiker)); }
+function segarkanLapis(postId) { document.querySelectorAll('.stk-lapis').forEach(el => { if (el.dataset.stk === postId) isiLapis(el); }); }
+function lapisStiker(p) {
+  if (tersegel(p)) return null;   // jawaban game yang belum dibuka tidak bisa distiker
+  const el = h('div', { class: 'stk-lapis', 'data-stk': p.id });
+  isiLapis(el);
+  el.addEventListener('click', e => {
+    if (!stikerMode || stikerMode.t !== 'tempel') return;
+    e.stopPropagation();
+    const r = el.getBoundingClientRect(); if (!r.width || !r.height) return;
+    const x = Math.min(100, Math.max(0, (e.clientX - r.left) / r.width * 100)), y = Math.min(100, Math.max(0, (e.clientY - r.top) / r.height * 100));
+    tempelStiker(p.id, Math.round(x * 10) / 10, Math.round(y * 10) / 10);
+  });
+  return el;
+}
+function terapkanStiker(row, lamaId) {
+  const ubah = new Set();
+  stikerData = stikerData.filter(s => { const buang = s.id === row.id || (lamaId && s.id === lamaId); if (buang) ubah.add(s.post_id); return !buang; });
+  stikerData.push(row); ubah.add(row.post_id);
+  ubah.forEach(segarkanLapis);
+}
+function buangStiker(id) {
+  const s = stikerData.find(x => x.id === id); if (!s) return;
+  stikerData = stikerData.filter(x => x.id !== id); segarkanLapis(s.post_id);
+}
+async function tempelStiker(postId, x, y) {
+  if (!butuhLogin() || !stikerMode || stikerMode.t !== 'tempel') return;
+  try {
+    const j = await panggil({ aksi: 'tempel', id: postId, jenis: stikerMode.jenis, x, y });
+    stikerBaru = j.stiker.id; terapkanStiker(j.stiker, j.lama);
+    setTimeout(() => { if (stikerBaru === j.stiker.id) stikerBaru = null; }, 600);
+    bunyiDekdek();
+  } catch (e) { toast(e.message); }
+}
+async function cabutStiker(id) {
+  if (!butuhLogin()) return;
+  try { await panggil({ aksi: 'lepas', id }); buangStiker(id); }
+  catch (e) { toast(e.message); if (/tidak ditemukan/i.test(e.message)) buangStiker(id); }
+}
+function aturStiker(mode) {
+  stikerMode = mode;
+  if (mode && mode.t === 'tempel') stikerJenis = mode.jenis;
+  const root = document.documentElement;
+  root.classList.toggle('stk-tempel', !!mode && mode.t === 'tempel');
+  root.classList.toggle('stk-cabut', !!mode && mode.t === 'cabut');
+  const pal = document.getElementById('palet-stiker'), tb = document.getElementById('btn-stiker');
+  if (pal) {
+    pal.hidden = !mode;
+    pal.querySelectorAll('.pl').forEach(b => b.setAttribute('aria-pressed', mode && mode.t === 'tempel' && mode.jenis === b.dataset.jenis ? 'true' : 'false'));
+    const cb = pal.querySelector('.cabut'); if (cb) cb.setAttribute('aria-pressed', mode && mode.t === 'cabut' ? 'true' : 'false');
+    const ket = pal.querySelector('.ket');
+    if (ket) ket.textContent = mode && mode.t === 'cabut' ? 'Ketuk stiker yang ingin dicabut' : 'Pilih stiker, lalu ketuk kartu mana pun. Satu stiker per kartu.';
+  }
+  if (tb) tb.setAttribute('aria-pressed', mode ? 'true' : 'false');
+}
+(function stikerMulai() {
+  const tb = h('button', { type: 'button', id: 'btn-stiker', class: 'btn garis', 'aria-pressed': 'false', 'aria-controls': 'palet-stiker', title: 'Tempel stiker di kartu mana pun' }, '☺', h('span', { class: 'lbl' }, ' Stiker'));
+  const anchor = document.getElementById('btn-suara'); anchor.parentNode.insertBefore(tb, anchor);
+  const pal = h('div', { id: 'palet-stiker', role: 'toolbar', 'aria-label': 'Koleksi stiker', hidden: '' },
+    h('div', { class: 'ket', 'aria-live': 'polite' }, ''),
+    STIKER.map(([k, e, nama]) => h('button', { type: 'button', class: 'pl', 'data-jenis': k, title: nama, 'aria-label': nama, 'aria-pressed': 'false', onclick: () => aturStiker({ t: 'tempel', jenis: k }) }, e)),
+    h('button', { type: 'button', class: 'alat-p cabut', 'aria-pressed': 'false', title: 'Cabut stiker (siapa pun boleh mencabut)', onclick: () => aturStiker(stikerMode && stikerMode.t === 'cabut' ? { t: 'tempel', jenis: stikerJenis } : { t: 'cabut' }) }, '✕ Cabut'),
+    h('button', { type: 'button', class: 'alat-p selesai', onclick: () => aturStiker(null) }, 'Selesai'));
+  document.body.append(pal);
+  tb.addEventListener('click', () => {
+    if (stikerMode) return aturStiker(null);
+    if (!butuhLogin()) return;
+    if (statusAkun !== 'aktif') return toast('Klik Daftar dulu untuk memakai stiker.');
+    if (komposBuka) { komposBuka = false; renderAlat(); render(); }
+    aturStiker({ t: 'tempel', jenis: stikerJenis });
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && stikerMode) aturStiker(null); });
+})();
+
 /* ---------- Bantuan (tombol ?) ---------- */
 function isiBantuan() {
   const batas = Object.keys(BENTUK).map(b => `${BENTUK[b].label} ${BENTUK[b].maks}`).join(', ');
@@ -1452,6 +1589,7 @@ function isiBantuan() {
     ...bagian('Kartu timer', 'Tombol di ujung kanan deretan bentuk (kotak dengan ikon stopwatch) membuat kartu timer: kartu persegi panjang merah berlabel TIMER. Pilih umur kartu 5, 15, atau 30 menit. Hitung mundur tampil di kartu; saat habis, kartu dan semua balasannya hilang sendiri. Pembuat juga bisa menghapusnya kapan saja dengan \u2715. Kartu timer bisa dibalas, divote, dan disambungkan seperti kartu biasa.'),
     ...bagian('Kartu game', 'Di kartu biasa milikmu (selain polling dan timer) ada tombol berikon kontroler game di dekat tombol Balas. Klik untuk menjadikannya kartu game: label GAME muncul, dan semua jawaban dari orang lain tersegel (bergembok), isinya hanya terlihat pengirimnya sendiri. Satu akun satu jawaban, dan pembuat kartu tidak ikut menjawab. Ketika siap, pembuat menekan ikon mata di baris tombol kartunya: semua jawaban terbuka untuk semua orang dan menjadi balasan biasa. Kartu game dihapus dengan \u2715 seperti kartu lain; balasannya ikut terhapus.'),
     ...bagian('Polling', 'Kartu oranye bertanda POLLING berisi satu pertanyaan dengan 2 sampai 5 pilihan. Semua akun terdaftar yang sudah masuk boleh memilih: klik satu pilihan (satu akun satu pilihan), klik pilihan lain untuk mengganti, atau klik pilihan yang sama lagi untuk membatalkan. Hasil berupa persentase dan jumlah suara langsung terlihat oleh semua orang, juga oleh yang belum masuk. Tiap polling punya hitung mundur sendiri di bagian bawah kartu; setelah selesai pilihan terkunci dan pilihan terbanyak diberi bingkai. Polling yang sedang berjalan selalu di posisi pertama, hanya satu polling berjalan pada satu waktu, warnanya oranye di semua tampilan (juga monokrom), tidak bisa dibalas, dan bisa disambungkan seperti kartu biasa. Polling hanya bisa dibuat oleh dosen: setelah masuk, tombol polling di ujung kanan deretan bentuk di bawah layar membuka kartu pembuat polling (pertanyaan, pilihan, dan lama polling: 15 menit, 30 menit, 1 jam, 2 jam, 4 jam, atau 8 jam). Polling ikut dikosongkan oleh reset harian.'),
+    ...bagian('Stiker', 'Tombol ☺ Stiker di kanan atas membuka koleksi 12 stiker (senyum, jempol, hati, api, ide, dan lainnya). Pilih satu, lalu ketuk di mana saja pada kartu mana pun untuk menempelkannya. Satu akun hanya bisa satu stiker per kartu: menempel lagi di kartu yang sama memindahkan atau mengganti stikermu. Tombol ✕ Cabut membiarkanmu mencabut stiker dengan mengetuknya, dan siapa pun yang sudah masuk boleh mencabut stiker mana pun. Stiker ikut terhapus saat kartunya dihapus atau papan di-reset. Jawaban kartu game yang masih tersegel tidak bisa distiker. Tutup koleksi dengan Selesai atau tombol Esc.'),
     ...bagian('Urut dan Rapi/Acak', 'Di kanan atas, pilihan "Urut" mengurutkan kartu menurut suara, yang terbaru, atau nama username A–Z. Tombol di sebelahnya menunjukkan kondisi tampilan: "Acak" (kartu tertempel miring seperti biasa) atau "Rapi" (semua kartu tersusun dalam kolom rapi dan semua balasan terbuka); klik untuk berganti. Keduanya hanya mengubah tampilanmu sendiri dan diingat di browser ini; orang lain tidak terpengaruh dan isi papan tidak berubah.'),
     ...bagian('Statistik', 'Kotak "Statistik" di kanan bawah menampilkan jumlah pengguna aktif, kartu, balasan, dan koneksi, serta username yang sedang aktif. Klik judulnya untuk menyembunyikan atau menampilkannya. Yang tampil hanya username, bukan email; pengunjung yang belum masuk hanya terhitung di angka.'),
     ...bagian('Tampilan', 'Tombol ikon di kanan atas (di samping tombol ?) membuka pilihan: ☀ terang, ☾ gelap, ○ monokrom terang, ● monokrom gelap, dan ⊘ untuk mematikan atau menyalakan latar tanda ^ (lihat "Latar tanda ^"). Mode monokrom hanya memakai hitam dan putih (kontras penuh): kartu dan balasan saling berlawanan warna. Pilihan pertama mengikuti pengaturan perangkatmu, lalu diingat di browser ini dan tidak mengubah isi kartu.'),

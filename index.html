@@ -1889,10 +1889,25 @@ function renderBaca() {
   root.replaceChildren(...kids);
   if (fokus) {
     const el = fokus === '@judul' ? document.getElementById('baca-judul') : root.querySelector('[data-fk="' + fokus.replace(/"/g, '') + '"]');
-    if (el) el.focus({ preventScroll: true });
+    if (el) { bacaPulih = true; el.focus({ preventScroll: true }); bacaPulih = false; if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) tengahkan(el); }
   }
   svTandai(false);
 }
+let bacaPulih = false;
+function tengahkan(el) {   // letakkan elemen di tengah layar (bukan menempel di tepi atas/bawah)
+  try {
+    const r = el.getBoundingClientRect(), vh = innerHeight;
+    if (r.height > vh * .8) return;                       // terlalu tinggi: biarkan
+    const tengah = r.top + r.height / 2;
+    if (tengah > vh * .38 && tengah < vh * .62) return;   // sudah dekat tengah
+    el.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  } catch (e) {}
+}
+document.addEventListener('focusin', e => {
+  if (!bacaAktif || bacaPulih) return;
+  const t = e.target; if (!t || !t.closest || !t.closest('#baca')) return;
+  tengahkan(t.closest('.bk') && !/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) && t.matches('h3, h4') ? t.closest('.bk') : t);
+});
 function aturBaca(on) {
   bacaAktif = !!on;
   try { localStorage.setItem('deck-baca', on ? '1' : '0'); } catch (e) {}

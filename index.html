@@ -544,10 +544,9 @@
   #baca details.catatan summary { cursor:pointer; font-weight:700; color:var(--h); }
 
   #gerbang { position:fixed; inset:0; z-index:100000; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3vmin; padding:2vmin; }
-  @property --gerbang-a { syntax:'<angle>'; inherits:false; initial-value:0deg; }
-  #gerbang-btn { --gerbang-a:0deg; width:min(88vw,74vh); height:min(88vw,74vh); border-radius:50%; border:0; padding:0; cursor:pointer; background:conic-gradient(from 0deg, transparent 0 var(--gerbang-a), #ffd400 var(--gerbang-a) 360deg); animation:gerbangHapus 20s linear forwards; }
+  #gerbang-btn { width:min(80vw,68vh); height:min(80vw,68vh); border-radius:50%; border:0; padding:0; cursor:pointer; background:#ffd400; animation:gerbangDetak 1.2s ease-in-out infinite; }
   #gerbang-btn:focus { outline:none; }
-  @keyframes gerbangHapus { from { --gerbang-a:0deg; } to { --gerbang-a:360deg; } }
+  @keyframes gerbangDetak { 0%{transform:scale(1)} 14%{transform:scale(1.1)} 28%{transform:scale(1)} 42%{transform:scale(1.07)} 70%,100%{transform:scale(1)} }
   @media (prefers-reduced-motion: reduce) { #gerbang-btn { animation:none; } }
 </style>
 </head>

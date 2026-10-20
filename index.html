@@ -542,6 +542,15 @@
   #baca .btn.bicara.dengar { background:#c81d25 !important; color:#fff !important; border-color:#c81d25 !important; animation:rekam 1.2s ease-in-out infinite; }
   #baca .kursor-suara { outline:5px solid #1a73e8; outline-offset:4px; }
   #baca details.catatan summary { cursor:pointer; font-weight:700; color:var(--h); }
+
+  #gerbang { position:fixed; inset:0; z-index:100000; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:16px; }
+  #gerbang-btn { width:min(70vw,70vh,420px); height:min(70vw,70vh,420px); border-radius:50%; border:0; background:#ffd400; color:#000; font:800 clamp(22px,5vw,40px)/1.1 system-ui,sans-serif; cursor:pointer; }
+  #gerbang-btn:focus-visible { outline:6px solid #fff; outline-offset:6px; }
+  #gerbang p { color:#fff; font:600 16px/1.4 system-ui,sans-serif; text-align:center; max-width:30em; margin:0; }
+  .gerbang-garis { width:min(70vw,420px); height:6px; background:#333; border-radius:3px; overflow:hidden; }
+  .gerbang-garis i { display:block; height:100%; background:#ffd400; animation:gerbangJalan 5s linear forwards; }
+  @keyframes gerbangJalan { from { width:100%; } to { width:0; } }
+  @media (prefers-reduced-motion: reduce) { .gerbang-garis i { animation:none; width:100%; } }
 </style>
 </head>
 <body>
@@ -1843,7 +1852,7 @@ function renderBaca() {
   const nama = namaRuang(ruangSaya);
   const judul = h('h2', { id: 'baca-judul', tabindex: '-1' }, 'Mode Baca · ' + nama + ' · ' + utama.length + ' kartu' + (jumlah > utama.length ? ', ' + (jumlah - utama.length) + ' balasan' : ''));
   const bar = h('div', { class: 'bar', role: 'group', 'aria-label': 'Pengaturan Mode Baca' });
-  if (SR) bar.append(fk(h('button', { type: 'button', class: 'btn bicara' + (sv.jalan ? ' dengar' : ''), id: 'btn-bicara', 'aria-pressed': sv.jalan ? 'true' : 'false', 'aria-label': 'Bicara: ucapkan satu perintah. Pintasan Alt M', title: 'Ucapkan satu perintah (Alt+M)', onclick: () => svTekan() }, sv.jalan ? '\uD83C\uDF99 Mendengarkan\u2026' : '\uD83C\uDF99 Bicara (Alt+M)'), 'bicara'));
+  if (SR) bar.append(fk(h('button', { type: 'button', class: 'btn bicara' + (sv.jalan ? ' dengar' : ''), id: 'btn-bicara', 'aria-pressed': sv.jalan ? 'true' : 'false', 'aria-label': 'Bicara: ucapkan satu perintah. Pintasan: tekan spasi dan Z bersamaan', title: 'Ucapkan satu perintah (Spasi+Z)', onclick: () => svTekan() }, sv.jalan ? '\uD83C\uDF99 Mendengarkan\u2026' : '\uD83C\uDF99 Bicara (Spasi+Z)'), 'bicara'));
   bar.append(fk(h('button', { type: 'button', class: 'btn', onclick: () => { if (!butuhLogin()) return; bacaBaru = !bacaBaru; bacaBalas = null; bacaFokusKey = bacaBaru ? 'ft-baru' : 'baru'; render(); } }, bacaBaru ? 'Tutup form kartu baru' : 'Tulis kartu baru'), 'baru'));
   if (TTS) {
     const sem = h('button', { type: 'button', class: 'btn garis teks-tb', 'data-baca': '*semua', 'data-label': 'Bacakan semua kartu', 'aria-pressed': bacaGrup === '*semua' ? 'true' : 'false',
@@ -1897,7 +1906,7 @@ function aturBaca(on) {
   komposBuka = false; pollBuka = false; balasTerbuka = null; balasKe = null; bacaBaru = false; bacaBalas = null; hapusKonfirm = null;
   render();
   if (bacaAktif) {
-    umumkan('Mode Baca aktif. Kartu ditampilkan sebagai daftar. Gunakan navigasi judul untuk berpindah antar kartu.' + (SR ? ' Tekan Alt dan M untuk memberi perintah suara.' : ''));
+    umumkan('Mode Baca aktif. Kartu ditampilkan sebagai daftar. Gunakan navigasi judul untuk berpindah antar kartu.' + (SR ? ' Tekan spasi dan Z bersamaan untuk memberi perintah suara.' : ''));
     const j = document.getElementById('baca-judul'); if (j) j.focus();
   } else { umumkan('Kembali ke tampilan papan.'); const t = document.getElementById('btn-baca'); if (t) t.focus(); }
 }
@@ -1906,6 +1915,38 @@ function aturBaca(on) {
   tb.addEventListener('click', () => aturBaca(!bacaAktif));
   if (bacaAktif) { document.documentElement.classList.add('mode-baca'); tb.setAttribute('aria-pressed', 'true'); tb.textContent = '☰ Papan'; }
 })();
+
+/* ---- Gerbang Mode Netra: lingkaran kuning saat aplikasi dibuka; 5 detik tanpa klik = tampilan normal ---- */
+function gerbangNetra() {
+  let sudah = false; try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
+  if (sudah || document.getElementById('gerbang')) return;
+  const KATA = 'Masuk ke dalam mode netra, klik warna kuning.';
+  let usai = false, wkt = null;
+  const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Pilih tampilan' });
+  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': 'Masuk ke dalam mode netra. Klik warna kuning. Bila tidak, aplikasi terbuka normal dalam 5 detik.' }, 'Mode Netra');
+  const ket = h('p', { 'aria-hidden': 'true' }, 'Klik lingkaran kuning untuk Mode Netra. Tanpa klik, tampilan normal dalam 5 detik.');
+  const garis = h('div', { class: 'gerbang-garis', 'aria-hidden': 'true' }, h('i'));
+  ov.append(btn, ket, garis); document.body.append(ov);
+  const tutup = masuk => {
+    if (usai) return; usai = true; clearTimeout(wkt);
+    try { speechSynthesis.cancel(); } catch (e) {}
+    ov.remove();
+    if (masuk) {
+      if (window.setTemaNetra) setTemaNetra();
+      if (!bacaAktif) aturBaca(true);
+    }
+  };
+  btn.addEventListener('click', () => tutup(true));
+  wkt = setTimeout(() => tutup(false), 5000);
+  try { btn.focus(); } catch (e) {}
+  try {
+    if (window.speechSynthesis && window.SpeechSynthesisUtterance) {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(KATA); u.lang = 'id-ID'; u.rate = 1;
+      speechSynthesis.speak(u);
+    }
+  } catch (e) {}
+}
 
 /* ---- Mode Suara: perintah lisan tekan-untuk-bicara, di dalam Mode Baca ---- */
 const BANTUAN_SUARA = 'Perintah: berikutnya, sebelumnya, kartu berikutnya, kartu sebelumnya, pertama, terakhir, kartu nomor, balasan nomor, baca, baca semua, berhenti, naikkan, turunkan, pilih nomor, balas, kartu baru, ruang nomor, papan utama, lebih cepat, lebih lambat, normal. Saat menulis: kirim, ulangi, tambah, baca, batal. Menghapus kartu hanya lewat tombol di layar.';
@@ -1927,7 +1968,7 @@ function svStatus(t) {
   if (t !== undefined) sv.status = t;
   const el = document.getElementById('sv-status'); if (el) el.textContent = sv.status;
   const b = document.getElementById('btn-bicara');
-  if (b) { b.classList.toggle('dengar', sv.jalan); b.setAttribute('aria-pressed', sv.jalan ? 'true' : 'false'); b.textContent = sv.jalan ? '🎙 Mendengarkan…' : '🎙 Bicara (Alt+M)'; }
+  if (b) { b.classList.toggle('dengar', sv.jalan); b.setAttribute('aria-pressed', sv.jalan ? 'true' : 'false'); b.textContent = sv.jalan ? '🎙 Mendengarkan…' : '🎙 Bicara (Spasi+Z)'; }
 }
 function svReset() {
   if (sv.rec) { try { sv.rec.abort ? sv.rec.abort() : sv.rec.stop(); } catch (e) {} }
@@ -2117,9 +2158,25 @@ async function svJalankan(alts) {
   if (cocok(/^(keluar dari mode baca|tutup mode baca|keluar mode baca)$/)) { aturBaca(false); return; }
   bicara('Perintah tidak dikenal. Ucapkan bantuan untuk daftar perintah.');
 }
-document.addEventListener('keydown', e => {
-  if (bacaAktif && SR && e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyM') { e.preventDefault(); svTekan(); }
-});
+(function pintasanSuara() {
+  // Spasi+Z bersamaan = tombol Bicara. Diabaikan saat mengetik di kotak tulis.
+  const tahan = { Space: false, KeyZ: false }; let dipakai = false;
+  const mengetik = t => t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) && !/^(checkbox|radio|button|submit)$/.test(t.type || ''));
+  document.addEventListener('keydown', e => {
+    if (!(e.code in tahan)) return;
+    if (mengetik(e.target)) return;
+    tahan[e.code] = true;
+    if (bacaAktif && SR && !e.ctrlKey && !e.metaKey && !e.altKey && tahan.Space && tahan.KeyZ) {
+      e.preventDefault(); if (!e.repeat && !dipakai) { dipakai = true; svTekan(); } else e.preventDefault();
+    }
+  }, true);
+  document.addEventListener('keyup', e => {
+    if (!(e.code in tahan)) return;
+    if (dipakai && e.code === 'Space') e.preventDefault();   // cegah klik tombol yang sedang fokus
+    tahan[e.code] = false; if (!tahan.Space && !tahan.KeyZ) dipakai = false;
+  }, true);
+  addEventListener('blur', () => { tahan.Space = tahan.KeyZ = false; dipakai = false; });
+})();
 
 /* ================== STIKER TEMPEL ================== */
 /* Daftar ini harus sama dengan jenis_stiker() di stiker.sql */
@@ -2245,7 +2302,7 @@ function isiBantuan() {
     ...bagian('Polling', 'Kartu oranye bertanda POLLING berisi satu pertanyaan dengan 2 sampai 5 pilihan. Semua akun terdaftar yang sudah masuk boleh memilih: klik satu pilihan (satu akun satu pilihan), klik pilihan lain untuk mengganti, atau klik pilihan yang sama lagi untuk membatalkan. Hasil berupa persentase dan jumlah suara langsung terlihat oleh semua orang, juga oleh yang belum masuk. Tiap polling punya hitung mundur sendiri di bagian bawah kartu; setelah selesai pilihan terkunci dan pilihan terbanyak diberi bingkai. Polling yang sedang berjalan selalu di posisi pertama, hanya satu polling berjalan pada satu waktu, warnanya oranye di semua tampilan (juga monokrom), tidak bisa dibalas, dan bisa disambungkan seperti kartu biasa. Polling hanya bisa dibuat oleh dosen: setelah masuk, tombol polling di ujung kanan deretan bentuk di bawah layar membuka kartu pembuat polling (pertanyaan, pilihan, dan lama polling: 15 menit, 30 menit, 1 jam, 2 jam, 4 jam, atau 8 jam). Polling ikut dikosongkan oleh reset harian.'),
     ...bagian('Stiker', 'Tombol ☺ Stiker di kanan atas membuka koleksi 12 stiker (senyum, jempol, hati, api, ide, dan lainnya). Pilih satu, lalu ketuk di mana saja pada kartu mana pun untuk menempelkannya. Satu akun hanya bisa satu stiker per kartu: menempel lagi di kartu yang sama memindahkan atau mengganti stikermu. Tombol ✕ Cabut membiarkanmu mencabut stiker dengan mengetuknya, dan siapa pun yang sudah masuk boleh mencabut stiker mana pun. Stiker ikut terhapus saat kartunya dihapus atau papan di-reset. Jawaban kartu game yang masih tersegel tidak bisa distiker. Tutup koleksi dengan Selesai atau tombol Esc.'),
     ...bagian('Ruang (breakout)', 'Dosen dapat membagi kelas ke beberapa ruang: tombol ▣ Ruang di kanan atas, isi awalan dan jumlah, lalu Buat. Setiap orang memilih ruangnya lewat tombol yang sama dan hanya melihat kartu, balasan, dan stiker di ruang itu; kartu baru otomatis masuk ke ruang yang sedang dipilih. Boleh pindah ruang kapan saja, dan angka di samping nama ruang menunjukkan berapa orang yang sedang aktif di sana. Papan utama tetap ada dan tidak terpengaruh. Polling dosen masuk ke ruang tempat dosen berada. Setelah selesai, dosen menutup ruang (satu per satu atau semuanya) dan semua kartunya otomatis digabung ke papan utama. Reset harian juga menutup semua ruang.'),
-    ...bagian('Suara dan Mode Baca', 'Tombol 🎤 di kotak tulis memungkinkan kamu berbicara dan ucapanmu menjadi teks (dikte, bahasa Indonesia); tekan lagi untuk berhenti, lalu periksa teksnya sebelum Kirim. Dikte butuh izin mikrofon dan internet, dan tidak muncul bila browser tidak mendukung. Tombol speaker pada kartu membacakan kartu beserta balasannya. Tombol ☰ Baca di kanan atas membuka Mode Baca: semua kartu ruangmu ditampilkan sebagai daftar berurutan yang mudah dijelajahi dengan pembaca layar dan keyboard, lengkap dengan suara naik/turun, balasan, polling, tulis kartu, dan pembacaan semua kartu (kecepatan bisa diatur, kartu baru bisa dibacakan otomatis). Tekan ☰ Papan untuk kembali ke tampilan papan. Di Mode Baca ada juga perintah suara: tekan tombol Bicara (atau Alt+M), ucapkan satu perintah seperti berikutnya, baca, naikkan, balas, atau kartu baru, dan Dekken menjawab dengan suara. Saat menulis, Dekken membacakan ulang isinya dan menunggu kata kirim sebelum mengirim. Ucapkan bantuan untuk daftar lengkap.'),
+    ...bagian('Suara dan Mode Baca', 'Tombol 🎤 di kotak tulis memungkinkan kamu berbicara dan ucapanmu menjadi teks (dikte, bahasa Indonesia); tekan lagi untuk berhenti, lalu periksa teksnya sebelum Kirim. Dikte butuh izin mikrofon dan internet, dan tidak muncul bila browser tidak mendukung. Tombol speaker pada kartu membacakan kartu beserta balasannya. Tombol ☰ Baca di kanan atas membuka Mode Baca: semua kartu ruangmu ditampilkan sebagai daftar berurutan yang mudah dijelajahi dengan pembaca layar dan keyboard, lengkap dengan suara naik/turun, balasan, polling, tulis kartu, dan pembacaan semua kartu (kecepatan bisa diatur, kartu baru bisa dibacakan otomatis). Tekan ☰ Papan untuk kembali ke tampilan papan. Di Mode Baca ada juga perintah suara: tekan tombol Bicara (atau tekan Spasi dan Z bersamaan, di luar kotak tulis), ucapkan satu perintah seperti berikutnya, baca, naikkan, balas, atau kartu baru, dan Dekken menjawab dengan suara. Saat menulis, Dekken membacakan ulang isinya dan menunggu kata kirim sebelum mengirim. Ucapkan bantuan untuk daftar lengkap.'),
     ...bagian('Urut dan Rapi/Acak', 'Di kanan atas, pilihan "Urut" mengurutkan kartu menurut suara, yang terbaru, atau nama username A–Z. Tombol di sebelahnya menunjukkan kondisi tampilan: "Acak" (kartu tertempel miring seperti biasa) atau "Rapi" (semua kartu tersusun dalam kolom rapi dan semua balasan terbuka); klik untuk berganti. Keduanya hanya mengubah tampilanmu sendiri dan diingat di browser ini; orang lain tidak terpengaruh dan isi papan tidak berubah.'),
     ...bagian('Statistik', 'Kotak "Statistik" di kanan bawah menampilkan jumlah pengguna aktif, kartu, balasan, dan koneksi, serta username yang sedang aktif. Klik judulnya untuk menyembunyikan atau menampilkannya. Yang tampil hanya username, bukan email; pengunjung yang belum masuk hanya terhitung di angka.'),
     ...bagian('Tampilan', 'Tombol ikon di kanan atas (di samping tombol ?) membuka pilihan: ☀ terang, ☾ gelap, ○ monokrom terang, ● monokrom gelap, dan ⊘ untuk mematikan atau menyalakan latar tanda ^ (lihat "Latar tanda ^"). Mode monokrom hanya memakai hitam dan putih (kontras penuh): kartu dan balasan saling berlawanan warna. Pilihan pertama mengikuti pengaturan perangkatmu, lalu diingat di browser ini dan tidak mengubah isi kartu.'),
@@ -2974,6 +3031,7 @@ function petaMulai() {
   tb.addEventListener('click', e => { e.stopPropagation(); const buka = menu.hidden; menu.hidden = !buka; tb.setAttribute('aria-expanded', buka ? 'true' : 'false'); });
   document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) tutup(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) tutup(); });
+  window.setTemaNetra = () => { t = (t === 'gelap' || t === 'mono-gelap') ? 'mono-gelap' : 'mono-terang'; try { localStorage.setItem('deck-tema', t); } catch (e) {} pasang(); };
   pasang();
 })();
 (function urutMulai() {
@@ -3002,6 +3060,7 @@ function petaMulai() {
     b.append(h('div', {}, 'Pustaka Supabase gagal dimuat. Periksa koneksi lalu muat ulang halaman.'));
   }
   renderAlat(); render(); muat();
+  gerbangNetra();
   tickTimer(); setInterval(tickTimer, 1000);
   setInterval(() => { const el = document.getElementById('timer'); if (el) el.textContent = '[' + teksReset(sisaReset(waktuServer())) + ']'; }, 250);   // angka detik tidak melompat
   titikMulai(); tautMulai(); statMulai(); petaMulai();

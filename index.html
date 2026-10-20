@@ -536,6 +536,12 @@
   #baca form.tulis .baris { color:var(--h); font-size:16px; }
   #baca .kosong-b { padding:24px 0; font-size:19px; }
   @media (prefers-reduced-motion: reduce) { .btn.mik.rekam { animation:none; } }
+
+  /* ===== Mode Suara ===== */
+  #baca .btn.bicara { font-size:18px; font-weight:700; }
+  #baca .btn.bicara.dengar { background:#c81d25 !important; color:#fff !important; border-color:#c81d25 !important; animation:rekam 1.2s ease-in-out infinite; }
+  #baca .kursor-suara { outline:5px solid #1a73e8; outline-offset:4px; }
+  #baca details.catatan summary { cursor:pointer; font-weight:700; color:var(--h); }
 </style>
 </head>
 <body>
@@ -601,6 +607,7 @@ try { bacaAktif = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
 let bacaBaru = false, bacaBalas = null, bacaFokusKey = '';   // bacaBalas: { parent, ke }
 let bacaOtomatis = false, bacaLaju = 1;
 try { bacaOtomatis = localStorage.getItem('deck-baca-oto') === '1'; const l = parseFloat(localStorage.getItem('deck-baca-laju')); if (l >= .6 && l <= 1.6) bacaLaju = l; } catch (e) {}
+let sv = { aktif: false, jalan: false, rec: null, mode: 'perintah', id: '', draft: null, status: '' };   // Mode Suara (perintah lisan tekan-untuk-bicara)
 let diktat = null;           // dikte yang sedang berjalan: { rec, tb, ta }
 let dosenSaya = false;        // akun yang masuk adalah dosen (boleh membuat polling)
 let pollBuka = false;         // kartu penulis polling sedang terbuka
@@ -1633,6 +1640,7 @@ function renderRuang() {
 
 /* ================== AKSESIBILITAS: DIKTE, DIBACAKAN, MODE BACA ================== */
 function umumkan(t) {
+  if (sv.aktif && bacaAktif && TTS) { bacaTambah([{ teks: String(t || '').replace(/[\u2713\u2714]/g, '') }]); return; }
   const el = document.getElementById('info-sr'); if (!el) return;
   el.textContent = ''; setTimeout(() => { el.textContent = String(t || ''); }, 60);
 }
@@ -1696,7 +1704,7 @@ function bacaLanjut(token) {
   if (!x) { bacaGrup = ''; bacaSegarkan(); return; }
   const u = new SpeechSynthesisUtterance(x.teks); bacaUtt = u;
   u.lang = 'id-ID'; u.rate = bacaLaju; const v = suaraId(); if (v) u.voice = v;
-  u.onend = () => bacaLanjut(token);
+  u.onend = () => { if (token === bacaToken && x.lalu) x.lalu(); bacaLanjut(token); };
   u.onerror = () => { if (token === bacaToken) { bacaGrup = ''; bacaAntri = []; bacaSegarkan(); } };
   try { TTS.speak(u); } catch (e) { bacaGrup = ''; bacaSegarkan(); }
 }
@@ -1835,6 +1843,7 @@ function renderBaca() {
   const nama = namaRuang(ruangSaya);
   const judul = h('h2', { id: 'baca-judul', tabindex: '-1' }, 'Mode Baca · ' + nama + ' · ' + utama.length + ' kartu' + (jumlah > utama.length ? ', ' + (jumlah - utama.length) + ' balasan' : ''));
   const bar = h('div', { class: 'bar', role: 'group', 'aria-label': 'Pengaturan Mode Baca' });
+  if (SR) bar.append(fk(h('button', { type: 'button', class: 'btn bicara' + (sv.jalan ? ' dengar' : ''), id: 'btn-bicara', 'aria-pressed': sv.jalan ? 'true' : 'false', 'aria-label': 'Bicara: ucapkan satu perintah. Pintasan Alt M', title: 'Ucapkan satu perintah (Alt+M)', onclick: () => svTekan() }, sv.jalan ? '\uD83C\uDF99 Mendengarkan\u2026' : '\uD83C\uDF99 Bicara (Alt+M)'), 'bicara'));
   bar.append(fk(h('button', { type: 'button', class: 'btn', onclick: () => { if (!butuhLogin()) return; bacaBaru = !bacaBaru; bacaBalas = null; bacaFokusKey = bacaBaru ? 'ft-baru' : 'baru'; render(); } }, bacaBaru ? 'Tutup form kartu baru' : 'Tulis kartu baru'), 'baru'));
   if (TTS) {
     const sem = h('button', { type: 'button', class: 'btn garis teks-tb', 'data-baca': '*semua', 'data-label': 'Bacakan semua kartu', 'aria-pressed': bacaGrup === '*semua' ? 'true' : 'false',
@@ -1849,6 +1858,7 @@ function renderBaca() {
   }
   bar.append(fk(h('button', { type: 'button', class: 'btn garis', onclick: () => aturBaca(false) }, 'Keluar dari Mode Baca'), 'keluar'));
   const kids = [judul, bar];
+  if (SR) kids.push(h('p', { id: 'sv-status', class: 'catatan', 'aria-hidden': 'true' }, sv.status), h('details', { class: 'catatan' }, h('summary', {}, 'Daftar perintah suara'), h('p', {}, BANTUAN_SUARA)));
   if (TTS && !suaraId()) kids.push(h('p', { class: 'catatan' }, 'Catatan: suara bahasa Indonesia belum terpasang di perangkat ini, jadi bacaan memakai suara bawaan perangkat.'));
   if (bacaBaru) kids.push(formBaca('baru', '', null, 'Tulis kartu baru di ' + nama));
   if (!utama.length) kids.push(h('p', { class: 'kosong-b' }, 'Belum ada kartu di ' + nama + '. Tekan "Tulis kartu baru" untuk memulai.'));
@@ -1875,6 +1885,7 @@ function renderBaca() {
     const el = fokus === '@judul' ? document.getElementById('baca-judul') : root.querySelector('[data-fk="' + fokus.replace(/"/g, '') + '"]');
     if (el) el.focus({ preventScroll: true });
   }
+  svTandai(false);
 }
 function aturBaca(on) {
   bacaAktif = !!on;
@@ -1882,11 +1893,11 @@ function aturBaca(on) {
   document.documentElement.classList.toggle('mode-baca', bacaAktif);
   const tb = document.getElementById('btn-baca');
   if (tb) { tb.setAttribute('aria-pressed', bacaAktif ? 'true' : 'false'); tb.textContent = bacaAktif ? '☰ Papan' : '☰ Baca'; tb.title = bacaAktif ? 'Kembali ke tampilan papan kartu' : 'Mode Baca: daftar kartu berurutan yang ramah pembaca layar'; }
-  berhentiBaca(); berhentiDikte();
+  berhentiBaca(); berhentiDikte(); svReset();
   komposBuka = false; pollBuka = false; balasTerbuka = null; balasKe = null; bacaBaru = false; bacaBalas = null; hapusKonfirm = null;
   render();
   if (bacaAktif) {
-    umumkan('Mode Baca aktif. Kartu ditampilkan sebagai daftar. Gunakan navigasi judul untuk berpindah antar kartu.');
+    umumkan('Mode Baca aktif. Kartu ditampilkan sebagai daftar. Gunakan navigasi judul untuk berpindah antar kartu.' + (SR ? ' Tekan Alt dan M untuk memberi perintah suara.' : ''));
     const j = document.getElementById('baca-judul'); if (j) j.focus();
   } else { umumkan('Kembali ke tampilan papan.'); const t = document.getElementById('btn-baca'); if (t) t.focus(); }
 }
@@ -1895,6 +1906,220 @@ function aturBaca(on) {
   tb.addEventListener('click', () => aturBaca(!bacaAktif));
   if (bacaAktif) { document.documentElement.classList.add('mode-baca'); tb.setAttribute('aria-pressed', 'true'); tb.textContent = '☰ Papan'; }
 })();
+
+/* ---- Mode Suara: perintah lisan tekan-untuk-bicara, di dalam Mode Baca ---- */
+const BANTUAN_SUARA = 'Perintah: berikutnya, sebelumnya, kartu berikutnya, kartu sebelumnya, pertama, terakhir, kartu nomor, balasan nomor, baca, baca semua, berhenti, naikkan, turunkan, pilih nomor, balas, kartu baru, ruang nomor, papan utama, lebih cepat, lebih lambat, normal. Saat menulis: kirim, ulangi, tambah, baca, batal. Menghapus kartu hanya lewat tombol di layar.';
+const ANGKA_KATA = [['sembilan belas', 19], ['delapan belas', 18], ['tujuh belas', 17], ['enam belas', 16], ['lima belas', 15], ['empat belas', 14], ['tiga belas', 13], ['dua belas', 12], ['sebelas', 11], ['dua puluh', 20], ['sepuluh', 10], ['sembilan', 9], ['delapan', 8], ['tujuh', 7], ['enam', 6], ['lima', 5], ['empat', 4], ['tiga', 3], ['dua', 2], ['satu', 1]];
+function normSuara(t) {
+  let x = String(t || '').toLowerCase().replace(/[.,!?;:"'()]/g, ' ').replace(/\s+/g, ' ').trim();
+  ANGKA_KATA.forEach(([k, v]) => { x = x.replace(new RegExp('\\b' + k + '\\b', 'g'), String(v)); });
+  return x;
+}
+let acBip = null;
+function bip(f, d) {
+  try { acBip = acBip || new (window.AudioContext || window.webkitAudioContext)(); const o = acBip.createOscillator(), g = acBip.createGain(); o.frequency.value = f; g.gain.value = .15; o.connect(g); g.connect(acBip.destination); o.start(); o.stop(acBip.currentTime + (d || .12)); } catch (e) {}
+}
+function bicara(teks, lalu) {
+  if (!TTS) { toast(teks); return; }
+  bacaDaftar([{ teks: String(teks || '').replace(/[✓✔]/g, ''), lalu }], 'suara');
+}
+function svStatus(t) {
+  if (t !== undefined) sv.status = t;
+  const el = document.getElementById('sv-status'); if (el) el.textContent = sv.status;
+  const b = document.getElementById('btn-bicara');
+  if (b) { b.classList.toggle('dengar', sv.jalan); b.setAttribute('aria-pressed', sv.jalan ? 'true' : 'false'); b.textContent = sv.jalan ? '🎙 Mendengarkan…' : '🎙 Bicara (Alt+M)'; }
+}
+function svReset() {
+  if (sv.rec) { try { sv.rec.abort ? sv.rec.abort() : sv.rec.stop(); } catch (e) {} }
+  sv.aktif = false; sv.jalan = false; sv.rec = null; sv.mode = 'perintah'; sv.id = ''; sv.draft = null; sv.status = '';
+}
+function svItems() {
+  const { utama, anak } = susunData(), daftar = [];
+  utama.forEach((p, i) => {
+    const bal = susunBalasan(anak[p.id] || []);
+    daftar.push({ p, k: i + 1, K: utama.length, utama: true, n: bal.length });
+    bal.forEach((b, j) => daftar.push({ p: b, parent: p, j: j + 1, J: bal.length, utama: false }));
+  });
+  return daftar;
+}
+function svDeskripsi(x) {
+  const teks = bacaanSatu(x.p);
+  if (x.utama) return 'Kartu ' + x.k + ' dari ' + x.K + '. ' + teks + (x.n ? ' ' + x.n + ' balasan.' : '') + (x.p.poll ? ' Ucapkan pilih diikuti nomor untuk memilih.' : '');
+  return 'Balasan ' + x.j + ' dari ' + x.J + '. ' + teks;
+}
+function svTandai(gulir) {
+  document.querySelectorAll('#baca .kursor-suara').forEach(e => e.classList.remove('kursor-suara'));
+  if (!sv.id) return;
+  const a = document.querySelector('#baca article[aria-labelledby="bk-' + sv.id + '"]');
+  if (a) { a.classList.add('kursor-suara'); if (gulir) a.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+}
+function svPindah(daftar, i) {
+  if (!daftar.length) { bicara('Belum ada kartu di ruang ini.'); return; }
+  const x = daftar[Math.max(0, Math.min(daftar.length - 1, i))];
+  sv.id = x.p.id; svTandai(true); bicara(svDeskripsi(x));
+}
+function svTekan() {
+  if (sv.jalan) { try { sv.rec.stop(); } catch (e) {} return; }
+  svDengar();
+}
+function svDengar() {
+  if (!SR) { bicara('Perangkat ini tidak mendukung perintah suara.'); return; }
+  if (sv.jalan) return;
+  berhentiBaca(); sv.aktif = true;
+  const bebas = sv.mode === 'isi' || sv.mode === 'nama';
+  let rec;
+  try { rec = new SR(); } catch (e) { bicara('Perintah suara tidak bisa dimulai.'); return; }
+  rec.lang = 'id-ID'; rec.maxAlternatives = 3; rec.continuous = bebas; rec.interimResults = false;
+  const akhir = []; let alts = [], err = '', tDiam = null;
+  sv.jalan = true; sv.rec = rec; svStatus('Mendengarkan…');
+  rec.onstart = () => bip(880);
+  rec.onresult = ev => {
+    if (bebas) {
+      for (let i = ev.resultIndex || 0; i < ev.results.length; i++) { const r = ev.results[i]; if (r.isFinal && r[0]) akhir.push(String(r[0].transcript).trim()); }
+      clearTimeout(tDiam); tDiam = setTimeout(() => { try { rec.stop(); } catch (e) {} }, 2200);   // berhenti setelah 2 detik hening
+    } else {
+      const r = ev.results[ev.results.length - 1]; alts = []; for (let k = 0; k < r.length; k++) alts.push(r[k].transcript);
+      try { rec.stop(); } catch (e) {}
+    }
+  };
+  rec.onerror = ev => { err = ev.error || ''; };
+  rec.onend = () => {
+    clearTimeout(tDiam); clearTimeout(tMaks);
+    if (sv.rec === rec) { sv.jalan = false; sv.rec = null; }
+    bip(520, .08); svStatus('');
+    svSelesai(bebas ? akhir.join(' ').trim() : alts, bebas, err);
+  };
+  const tMaks = setTimeout(() => { try { rec.stop(); } catch (e) {} }, bebas ? 40000 : 9000);
+  try { rec.start(); } catch (e) { sv.jalan = false; sv.rec = null; svStatus(''); bicara('Perintah suara tidak bisa dimulai. Coba lagi.'); }
+}
+function svSelesai(hasil, bebas, err) {
+  const kosong = bebas ? !String(hasil).trim() : !hasil.length;
+  if (kosong) {
+    const pesan = { 'not-allowed': 'Izin mikrofon ditolak. Izinkan mikrofon untuk situs ini di pengaturan browser.', 'service-not-allowed': 'Perintah suara tidak diizinkan di browser ini.',
+      'audio-capture': 'Mikrofon tidak ditemukan.', 'network': 'Perintah suara membutuhkan koneksi internet.' }[err] || 'Tidak terdengar. Tekan tombol bicara dan coba lagi.';
+    bicara(pesan); return;
+  }
+  svStatus('Terdengar: ' + (bebas ? hasil : hasil[0]));
+  if (sv.mode === 'nama') { svTerimaNama(hasil); return; }
+  if (sv.mode === 'isi') { svTerimaIsi(hasil); return; }
+  svJalankan(hasil);
+}
+/* menulis lewat suara: nama (bila belum ada) -> isi -> konfirmasi -> kirim */
+function svMulaiTulis(parent, ke) {
+  if (!tokenHidup()) { bicara('Masuk dulu dengan akun Google di layar.'); return; }
+  const kunci = ke ? ke.id : (parent || 'baru'), d = ambilDraft(kunci);
+  if (d.b === 'waktu') d.b = 'persegi';
+  d.t = '';
+  sv.draft = { kunci, parent: parent || '', ke: ke || null, tambah: false, untuk: ke ? 'Balas ke ' + ke.username + '.' : parent ? 'Balas kartu ini.' : 'Kartu baru.' };
+  if (!String(d.u || '').trim()) { sv.mode = 'nama'; bicara('Sebutkan nama pengguna yang ingin dipakai.', svDengar); return; }
+  sv.mode = 'isi'; bicara(sv.draft.untuk + ' Silakan ucapkan isinya.', svDengar);
+}
+function svTerimaNama(t) {
+  const d = ambilDraft(sv.draft.kunci);
+  d.u = String(t).replace(/[^\p{L}\p{N} ._-]/gu, '').trim().slice(0, CONFIG.MAKS_USERNAME).trim();
+  if (!d.u) { bicara('Nama tidak terbaca. Sebutkan lagi.', svDengar); return; }
+  setUser(d.u); sv.mode = 'isi'; bicara('Nama ' + d.u + '. ' + sv.draft.untuk + ' Silakan ucapkan isinya.', svDengar);
+}
+function svTerimaIsi(t) {
+  const dr = sv.draft, d = ambilDraft(dr.kunci), maks = BENTUK[d.b].maks;
+  let teks = ((dr.tambah && d.t ? d.t + ' ' : '') + t).trim(), pesan = '';
+  if (teks.length > maks) { teks = teks.slice(0, maks); pesan = ' Teks dipotong karena batas ' + maks + ' huruf.'; }
+  d.t = teks; dr.tambah = false; sv.mode = 'konfirmasi';
+  bicara('Isi: ' + teks + '.' + pesan + ' Ucapkan kirim, ulangi, tambah, baca, atau batal.', svDengar);
+}
+async function svKirim() {
+  const dr = sv.draft, n0 = milikSaya.size;
+  await kirim(dr.kunci, dr.parent, {}, dr.ke);
+  if (milikSaya.size > n0) { sv.mode = 'perintah'; sv.draft = null; }
+  else bacaTambah([{ teks: 'Belum terkirim. Ucapkan kirim untuk mencoba lagi, atau batal.', lalu: svDengar }]);
+}
+function svKonfirmasi(cocok) {
+  const dr = sv.draft, d = dr ? ambilDraft(dr.kunci) : null;
+  if (!dr) { sv.mode = 'perintah'; bicara('Tidak ada tulisan yang menunggu.'); return; }
+  if (cocok(/^(kirim|kirimkan|ya|ya kirim)$/)) { svKirim(); return; }
+  if (cocok(/^(ulangi|ulang|ganti)$/)) { d.t = ''; dr.tambah = false; sv.mode = 'isi'; bicara('Silakan ucapkan ulang isinya.', svDengar); return; }
+  if (cocok(/^(tambah|tambahkan|lanjutkan)$/)) { dr.tambah = true; sv.mode = 'isi'; bicara('Silakan lanjutkan.', svDengar); return; }
+  if (cocok(/^(baca|bacakan)$/)) { bicara('Isi: ' + d.t + '. Ucapkan kirim, ulangi, tambah, atau batal.', svDengar); return; }
+  if (cocok(/^(batal|batalkan|tidak|jangan)$/)) { delete draft[dr.kunci]; sv.mode = 'perintah'; sv.draft = null; bicara('Dibatalkan.'); return; }
+  bicara('Ucapkan kirim, ulangi, tambah, baca, atau batal.', svDengar);
+}
+async function svJalankan(alts) {
+  const kand = alts.map(normSuara).filter(Boolean);
+  const cocok = re => { for (const t of kand) { const m = t.match(re); if (m) return m; } return null; };
+  if (sv.mode === 'konfirmasi') { svKonfirmasi(cocok); return; }
+  const daftar = svItems();
+  let i = daftar.findIndex(y => y.p.id === sv.id); const awal = i < 0; if (awal) i = 0;
+  const x = daftar[i] || null;
+  let m;
+  const balasanDari = k => daftar.filter(y => !y.utama && y.parent.id === k.id).map(y => y.p);
+  if (cocok(/^(bantuan|perintah|daftar perintah|tolong|help)$/)) { bicara(BANTUAN_SUARA); return; }
+  if (cocok(/^(berhenti|diam|stop|cukup)$/)) { berhentiBaca(); return; }
+  if (cocok(/^(baca semua|bacakan semua|baca semua kartu)$/)) {
+    const utama = daftar.filter(y => y.utama);
+    bacaDaftar([{ teks: 'Ruang ' + namaRuang(ruangSaya) + ', ' + utama.length + ' kartu.' }].concat(utama.flatMap(y => bacaanKartu(y.p, balasanDari(y.p)))), '*suara'); return;
+  }
+  if (cocok(/^(baca|bacakan|ulangi|ulang)$/)) {
+    if (!x) { bicara('Belum ada kartu di ruang ini.'); return; }
+    bacaDaftar(x.utama ? bacaanKartu(x.p, balasanDari(x.p)) : [{ teks: bacaanSatu(x.p) }], 'suara'); return;
+  }
+  if (cocok(/^kartu (berikutnya|selanjutnya|lanjut)$/)) { const j = daftar.findIndex((y, k) => k > (awal ? -1 : i) && y.utama); if (j < 0) bicara('Sudah di kartu terakhir.'); else svPindah(daftar, j); return; }
+  if (cocok(/^kartu (sebelumnya|mundur|kembali)$/)) { let j = -1; for (let k = (awal ? 0 : i) - 1; k >= 0; k--) if (daftar[k].utama) { j = k; break; } if (j < 0) bicara('Sudah di kartu pertama.'); else svPindah(daftar, j); return; }
+  if (cocok(/^(berikutnya|selanjutnya|lanjut|next|maju)$/)) { if (!awal && i + 1 >= daftar.length) bicara('Sudah di akhir daftar.'); else svPindah(daftar, awal ? 0 : i + 1); return; }
+  if (cocok(/^(sebelumnya|mundur|kembali)$/)) { if (awal || i <= 0) bicara('Sudah di awal daftar.'); else svPindah(daftar, i - 1); return; }
+  if (cocok(/^(pertama|awal|paling atas|dari awal)$/)) { svPindah(daftar, 0); return; }
+  if (cocok(/^(terakhir|akhir|paling bawah)$/)) { svPindah(daftar, daftar.length - 1); return; }
+  if ((m = cocok(/^(?:kartu |nomor |kartu nomor )(\d+)$/))) { const j = daftar.findIndex(y => y.utama && y.k === +m[1]); if (j < 0) bicara('Tidak ada kartu nomor ' + m[1] + '.'); else svPindah(daftar, j); return; }
+  if ((m = cocok(/^(?:balasan |balasan nomor )(\d+)$/))) {
+    if (!x) { bicara('Belum ada kartu di ruang ini.'); return; }
+    const induk = x.utama ? x.p.id : x.parent.id, j = daftar.findIndex(y => !y.utama && y.parent.id === induk && y.j === +m[1]);
+    if (j < 0) bicara('Tidak ada balasan nomor ' + m[1] + ' di kartu ini.'); else svPindah(daftar, j); return;
+  }
+  const arah = cocok(/^(naikkan|naik|suka|setuju|vote naik)$/) ? 1 : cocok(/^(turunkan|turun|tidak setuju|vote turun)$/) ? -1 : 0;
+  if (arah) {
+    if (!x) { bicara('Pilih kartu dulu dengan perintah berikutnya.'); return; }
+    if (!tokenHidup()) { bicara('Masuk dulu dengan akun Google di layar.'); return; }
+    if (x.p.poll || tersegel(x.p)) { bicara('Kartu ini tidak bisa diberi suara.'); return; }
+    const sebelum = sayaVote[x.p.id] || 0;
+    await vote(x.p.id, arah, {});
+    const sesudah = sayaVote[x.p.id] || 0, p = susunData().peta.get(x.p.id) || x.p;
+    if (sesudah !== sebelum) bacaTambah([{ teks: sesudah === 1 ? 'Naik. ' + p.up + ' suara naik.' : sesudah === -1 ? 'Turun. ' + p.down + ' suara turun.' : 'Suara dibatalkan.' }]);
+    return;
+  }
+  if ((m = cocok(/^(?:pilih|pilihan|pilih nomor|pilihan nomor) (\d+)$/))) {
+    if (!x || !x.p.poll) { bicara('Kartu ini bukan polling.'); return; }
+    const n = +m[1], pl = x.p.poll;
+    if (n < 1 || n > pl.o.length) { bicara('Pilihan hanya dari 1 sampai ' + pl.o.length + '.'); return; }
+    if (pl.akhir <= Date.now()) { bicara('Polling sudah selesai.'); return; }
+    if (!tokenHidup()) { bicara('Masuk dulu dengan akun Google di layar.'); return; }
+    const sebelum = sayaPilih[x.p.id];
+    await pilihOpsi(x.p.id, n - 1, {});
+    const sesudah = sayaPilih[x.p.id];
+    if (sesudah !== sebelum) bacaTambah([{ teks: sesudah === n - 1 ? 'Memilih ' + pl.o[n - 1] + '.' : 'Pilihan dibatalkan.' }]);
+    return;
+  }
+  if (cocok(/^(balas|balasan|jawab|balas kartu ini)$/)) {
+    if (!x) { bicara('Pilih kartu dulu dengan perintah berikutnya.'); return; }
+    if (x.p.poll || tersegel(x.p)) { bicara('Kartu ini tidak bisa dibalas.'); return; }
+    svMulaiTulis(x.utama ? x.p.id : x.parent.id, x.utama ? null : x.p); return;
+  }
+  if (cocok(/^(kartu baru|tulis kartu|tulis kartu baru|buat kartu|buat kartu baru)$/)) { svMulaiTulis('', null); return; }
+  if (cocok(/^(papan utama|ruang utama|ke papan utama)$/)) { pilihRuang(''); bicara('Papan utama.'); return; }
+  if ((m = cocok(/^(?:ruang|masuk ruang|pindah ruang|pindah ke ruang|ke ruang) (.+)$/))) {
+    const t = m[1], r = ruangData.find(y => { const n = normSuara(y.nama); return n === 'ruang ' + t || n === t; }) || ruangData.find(y => normSuara(y.nama).includes(t));
+    if (!r) { bicara('Ruang ' + t + ' tidak ditemukan.'); return; }
+    pilihRuang(r.id); bicara('Masuk ' + r.nama + '. ' + susunData().utama.length + ' kartu.'); return;
+  }
+  if (cocok(/^(lebih cepat|cepat)$/)) { bacaLaju = Math.min(1.6, +(bacaLaju + .2).toFixed(1)); try { localStorage.setItem('deck-baca-laju', String(bacaLaju)); } catch (e) {} bicara('Lebih cepat.'); return; }
+  if (cocok(/^(lebih lambat|lambat|pelan)$/)) { bacaLaju = Math.max(.6, +(bacaLaju - .2).toFixed(1)); try { localStorage.setItem('deck-baca-laju', String(bacaLaju)); } catch (e) {} bicara('Lebih lambat.'); return; }
+  if (cocok(/^normal$/)) { bacaLaju = 1; try { localStorage.setItem('deck-baca-laju', '1'); } catch (e) {} bicara('Kecepatan normal.'); return; }
+  if (cocok(/^hapus/)) { bicara('Menghapus kartu tidak tersedia lewat suara. Gunakan tombol Hapus di layar.'); return; }
+  if (cocok(/^(matikan mode suara|mode suara mati|selesai)$/)) { sv.aktif = false; bicara('Mode suara dimatikan. Pengumuman kembali lewat pembaca layar.'); return; }
+  if (cocok(/^(keluar dari mode baca|tutup mode baca|keluar mode baca)$/)) { aturBaca(false); return; }
+  bicara('Perintah tidak dikenal. Ucapkan bantuan untuk daftar perintah.');
+}
+document.addEventListener('keydown', e => {
+  if (bacaAktif && SR && e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyM') { e.preventDefault(); svTekan(); }
+});
 
 /* ================== STIKER TEMPEL ================== */
 /* Daftar ini harus sama dengan jenis_stiker() di stiker.sql */
@@ -2020,7 +2245,7 @@ function isiBantuan() {
     ...bagian('Polling', 'Kartu oranye bertanda POLLING berisi satu pertanyaan dengan 2 sampai 5 pilihan. Semua akun terdaftar yang sudah masuk boleh memilih: klik satu pilihan (satu akun satu pilihan), klik pilihan lain untuk mengganti, atau klik pilihan yang sama lagi untuk membatalkan. Hasil berupa persentase dan jumlah suara langsung terlihat oleh semua orang, juga oleh yang belum masuk. Tiap polling punya hitung mundur sendiri di bagian bawah kartu; setelah selesai pilihan terkunci dan pilihan terbanyak diberi bingkai. Polling yang sedang berjalan selalu di posisi pertama, hanya satu polling berjalan pada satu waktu, warnanya oranye di semua tampilan (juga monokrom), tidak bisa dibalas, dan bisa disambungkan seperti kartu biasa. Polling hanya bisa dibuat oleh dosen: setelah masuk, tombol polling di ujung kanan deretan bentuk di bawah layar membuka kartu pembuat polling (pertanyaan, pilihan, dan lama polling: 15 menit, 30 menit, 1 jam, 2 jam, 4 jam, atau 8 jam). Polling ikut dikosongkan oleh reset harian.'),
     ...bagian('Stiker', 'Tombol ☺ Stiker di kanan atas membuka koleksi 12 stiker (senyum, jempol, hati, api, ide, dan lainnya). Pilih satu, lalu ketuk di mana saja pada kartu mana pun untuk menempelkannya. Satu akun hanya bisa satu stiker per kartu: menempel lagi di kartu yang sama memindahkan atau mengganti stikermu. Tombol ✕ Cabut membiarkanmu mencabut stiker dengan mengetuknya, dan siapa pun yang sudah masuk boleh mencabut stiker mana pun. Stiker ikut terhapus saat kartunya dihapus atau papan di-reset. Jawaban kartu game yang masih tersegel tidak bisa distiker. Tutup koleksi dengan Selesai atau tombol Esc.'),
     ...bagian('Ruang (breakout)', 'Dosen dapat membagi kelas ke beberapa ruang: tombol ▣ Ruang di kanan atas, isi awalan dan jumlah, lalu Buat. Setiap orang memilih ruangnya lewat tombol yang sama dan hanya melihat kartu, balasan, dan stiker di ruang itu; kartu baru otomatis masuk ke ruang yang sedang dipilih. Boleh pindah ruang kapan saja, dan angka di samping nama ruang menunjukkan berapa orang yang sedang aktif di sana. Papan utama tetap ada dan tidak terpengaruh. Polling dosen masuk ke ruang tempat dosen berada. Setelah selesai, dosen menutup ruang (satu per satu atau semuanya) dan semua kartunya otomatis digabung ke papan utama. Reset harian juga menutup semua ruang.'),
-    ...bagian('Suara dan Mode Baca', 'Tombol 🎤 di kotak tulis memungkinkan kamu berbicara dan ucapanmu menjadi teks (dikte, bahasa Indonesia); tekan lagi untuk berhenti, lalu periksa teksnya sebelum Kirim. Dikte butuh izin mikrofon dan internet, dan tidak muncul bila browser tidak mendukung. Tombol speaker pada kartu membacakan kartu beserta balasannya. Tombol ☰ Baca di kanan atas membuka Mode Baca: semua kartu ruangmu ditampilkan sebagai daftar berurutan yang mudah dijelajahi dengan pembaca layar dan keyboard, lengkap dengan suara naik/turun, balasan, polling, tulis kartu, dan pembacaan semua kartu (kecepatan bisa diatur, kartu baru bisa dibacakan otomatis). Tekan ☰ Papan untuk kembali ke tampilan papan.'),
+    ...bagian('Suara dan Mode Baca', 'Tombol 🎤 di kotak tulis memungkinkan kamu berbicara dan ucapanmu menjadi teks (dikte, bahasa Indonesia); tekan lagi untuk berhenti, lalu periksa teksnya sebelum Kirim. Dikte butuh izin mikrofon dan internet, dan tidak muncul bila browser tidak mendukung. Tombol speaker pada kartu membacakan kartu beserta balasannya. Tombol ☰ Baca di kanan atas membuka Mode Baca: semua kartu ruangmu ditampilkan sebagai daftar berurutan yang mudah dijelajahi dengan pembaca layar dan keyboard, lengkap dengan suara naik/turun, balasan, polling, tulis kartu, dan pembacaan semua kartu (kecepatan bisa diatur, kartu baru bisa dibacakan otomatis). Tekan ☰ Papan untuk kembali ke tampilan papan. Di Mode Baca ada juga perintah suara: tekan tombol Bicara (atau Alt+M), ucapkan satu perintah seperti berikutnya, baca, naikkan, balas, atau kartu baru, dan Dekken menjawab dengan suara. Saat menulis, Dekken membacakan ulang isinya dan menunggu kata kirim sebelum mengirim. Ucapkan bantuan untuk daftar lengkap.'),
     ...bagian('Urut dan Rapi/Acak', 'Di kanan atas, pilihan "Urut" mengurutkan kartu menurut suara, yang terbaru, atau nama username A–Z. Tombol di sebelahnya menunjukkan kondisi tampilan: "Acak" (kartu tertempel miring seperti biasa) atau "Rapi" (semua kartu tersusun dalam kolom rapi dan semua balasan terbuka); klik untuk berganti. Keduanya hanya mengubah tampilanmu sendiri dan diingat di browser ini; orang lain tidak terpengaruh dan isi papan tidak berubah.'),
     ...bagian('Statistik', 'Kotak "Statistik" di kanan bawah menampilkan jumlah pengguna aktif, kartu, balasan, dan koneksi, serta username yang sedang aktif. Klik judulnya untuk menyembunyikan atau menampilkannya. Yang tampil hanya username, bukan email; pengunjung yang belum masuk hanya terhitung di angka.'),
     ...bagian('Tampilan', 'Tombol ikon di kanan atas (di samping tombol ?) membuka pilihan: ☀ terang, ☾ gelap, ○ monokrom terang, ● monokrom gelap, dan ⊘ untuk mematikan atau menyalakan latar tanda ^ (lihat "Latar tanda ^"). Mode monokrom hanya memakai hitam dan putih (kontras penuh): kartu dan balasan saling berlawanan warna. Pilihan pertama mengikuti pengaturan perangkatmu, lalu diingat di browser ini dan tidak mengubah isi kartu.'),

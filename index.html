@@ -292,12 +292,12 @@
   #banner div { border:2px dashed var(--h); padding:10px 14px; margin:8px 0; }
 
   /* ===== gaya tombol ala "Sign in with Google": sudut 4px, garis tepi 1px abu ===== */
-  header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-foto, header #btn-rapi, header #urut {
+  header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-foto, header #btn-rapi, header #urut {
     height:40px; box-sizing:border-box; border:1px solid #dadce0 !important; border-radius:4px !important; background:#fff !important; color:#3c4043 !important;
     font:500 14px/1 "Google Sans", Roboto, Arial, sans-serif !important; letter-spacing:.2px; padding:0 14px !important; min-width:40px !important;
     display:inline-flex; align-items:center; justify-content:center; text-decoration:none; transition:background .15s, box-shadow .15s; }
   header .kanan select, header #urut { padding:0 10px !important; }
-  header #btn-tema, header #btn-suara, header #btn-ruang, header #btn-foto, header #btn-help { width:40px; padding:0 !important; }
+  header #btn-tema, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-foto, header #btn-help { width:40px; padding:0 !important; }
   header .kanan .btn:hover:not(:disabled), header .kanan select:hover { background:#f8f9fa !important; box-shadow:0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); }
   header #btn-akun { max-width:160px; display:inline-block; line-height:38px; }
   header #btn-suara.mati { opacity:.55; }
@@ -314,10 +314,10 @@
   :root[data-tema="gelap"] #menu-tema button:hover, :root[data-tema="gelap"] #menu-akun button:hover, :root[data-tema="gelap"] #menu-ruang button:hover { background:#1f1f1f !important; }
   :root[data-tema="gelap"] #menu-tema button.aktif, :root[data-tema="gelap"] #menu-ruang button.aktif { background:#1f3a5f !important; color:#8ab4f8 !important; }
 
-  :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #btn-akun, :root[data-tema="gelap"] header #btn-tema, :root[data-tema="gelap"] header #btn-help, :root[data-tema="gelap"] header #btn-suara, :root[data-tema="gelap"] header #btn-ruang, :root[data-tema="gelap"] header #btn-foto, :root[data-tema="gelap"] header #btn-rapi, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
-  :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover:not(:disabled), :root[data-tema="gelap"] header #btn-akun:hover:not(:disabled), :root[data-tema="gelap"] header #btn-tema:hover:not(:disabled), :root[data-tema="gelap"] header #btn-help:hover:not(:disabled), :root[data-tema="gelap"] header #btn-suara:hover:not(:disabled), :root[data-tema="gelap"] header #btn-ruang:hover:not(:disabled), :root[data-tema="gelap"] header #btn-foto:hover:not(:disabled), :root[data-tema="gelap"] header #btn-rapi:hover:not(:disabled), :root[data-tema="gelap"] header #urut:hover:not(:disabled) { background:#1f1f1f !important; box-shadow:none; }
-  :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #btn-akun, :root[data-mono="1"][data-tema="terang"] header #btn-tema, :root[data-mono="1"][data-tema="terang"] header #btn-help, :root[data-mono="1"][data-tema="terang"] header #btn-suara, :root[data-mono="1"][data-tema="terang"] header #btn-ruang, :root[data-mono="1"][data-tema="terang"] header #btn-foto, :root[data-mono="1"][data-tema="terang"] header #btn-rapi, :root[data-mono="1"][data-tema="terang"] header #urut { border-color:#000 !important; color:#000 !important; background:#fff !important; }
-  :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #btn-akun, :root[data-mono="1"][data-tema="gelap"] header #btn-tema, :root[data-mono="1"][data-tema="gelap"] header #btn-help, :root[data-mono="1"][data-tema="gelap"] header #btn-suara, :root[data-mono="1"][data-tema="gelap"] header #btn-ruang, :root[data-mono="1"][data-tema="gelap"] header #btn-foto, :root[data-mono="1"][data-tema="gelap"] header #btn-rapi, :root[data-mono="1"][data-tema="gelap"] header #urut { border-color:#fff !important; color:#fff !important; background:#000 !important; }
+  :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #btn-akun, :root[data-tema="gelap"] header #btn-tema, :root[data-tema="gelap"] header #btn-help, :root[data-tema="gelap"] header #btn-suara, :root[data-tema="gelap"] header #btn-ruang, :root[data-tema="gelap"] header #btn-baca, :root[data-tema="gelap"] header #btn-foto, :root[data-tema="gelap"] header #btn-rapi, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
+  :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover:not(:disabled), :root[data-tema="gelap"] header #btn-akun:hover:not(:disabled), :root[data-tema="gelap"] header #btn-tema:hover:not(:disabled), :root[data-tema="gelap"] header #btn-help:hover:not(:disabled), :root[data-tema="gelap"] header #btn-suara:hover:not(:disabled), :root[data-tema="gelap"] header #btn-ruang:hover:not(:disabled), :root[data-tema="gelap"] header #btn-baca:hover:not(:disabled), :root[data-tema="gelap"] header #btn-foto:hover:not(:disabled), :root[data-tema="gelap"] header #btn-rapi:hover:not(:disabled), :root[data-tema="gelap"] header #urut:hover:not(:disabled) { background:#1f1f1f !important; box-shadow:none; }
+  :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #btn-akun, :root[data-mono="1"][data-tema="terang"] header #btn-tema, :root[data-mono="1"][data-tema="terang"] header #btn-help, :root[data-mono="1"][data-tema="terang"] header #btn-suara, :root[data-mono="1"][data-tema="terang"] header #btn-ruang, :root[data-mono="1"][data-tema="terang"] header #btn-baca, :root[data-mono="1"][data-tema="terang"] header #btn-foto, :root[data-mono="1"][data-tema="terang"] header #btn-rapi, :root[data-mono="1"][data-tema="terang"] header #urut { border-color:#000 !important; color:#000 !important; background:#fff !important; }
+  :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #btn-akun, :root[data-mono="1"][data-tema="gelap"] header #btn-tema, :root[data-mono="1"][data-tema="gelap"] header #btn-help, :root[data-mono="1"][data-tema="gelap"] header #btn-suara, :root[data-mono="1"][data-tema="gelap"] header #btn-ruang, :root[data-mono="1"][data-tema="gelap"] header #btn-baca, :root[data-mono="1"][data-tema="gelap"] header #btn-foto, :root[data-mono="1"][data-tema="gelap"] header #btn-rapi, :root[data-mono="1"][data-tema="gelap"] header #urut { border-color:#fff !important; color:#fff !important; background:#000 !important; }
   /* kotak Statistik */
   #statistik { background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font-family:"Google Sans", Roboto, Arial, sans-serif; }
   #stat-judul { background:transparent; color:#3c4043; font-weight:500; padding:10px 12px; }
@@ -338,7 +338,7 @@
   :root[data-mono="1"][data-tema="terang"] #menu-tema, :root[data-mono="1"][data-tema="terang"] #menu-akun, :root[data-mono="1"][data-tema="terang"] #menu-ruang, :root[data-mono="1"][data-tema="terang"] #statistik { border-color:#000 !important; color:#000 !important; }
   :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #urut,
   :root[data-mono="1"][data-tema="gelap"] #menu-tema, :root[data-mono="1"][data-tema="gelap"] #menu-akun, :root[data-mono="1"][data-tema="gelap"] #menu-ruang, :root[data-mono="1"][data-tema="gelap"] #statistik { border-color:#fff !important; color:#fff !important; }
-  @media (max-width:640px) { header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-foto, header #btn-rapi, header #urut { height:34px; font-size:12px !important; padding:0 8px !important; min-width:34px !important; } header #btn-akun { line-height:32px; } header .kanan { gap:5px; } }
+  @media (max-width:640px) { header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-foto, header #btn-rapi, header #urut { height:34px; font-size:12px !important; padding:0 8px !important; min-width:34px !important; } header #btn-akun { line-height:32px; } header .kanan { gap:5px; } }
 
   /* ===== Peta kartu (minimap) ===== */
   #peta { position:fixed; left:12px; bottom:12px; z-index:26; width:208px; background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font:14px "Google Sans", Roboto, Arial, sans-serif; --pm-dim:rgba(255,255,255,.62); }
@@ -492,9 +492,50 @@
   :root[data-tema="gelap"] #menu-ruang .jdl { color:#9aa0a6 !important; }
   :root[data-mono="1"][data-tema="terang"] #menu-ruang .jdl { color:#000 !important; }
   :root[data-mono="1"][data-tema="gelap"] #menu-ruang .jdl { color:#fff !important; }
-  header #btn-ruang { width:auto !important; padding:0 12px !important; }
+  header #btn-ruang, header #btn-baca { width:auto !important; padding:0 12px !important; }
   #menu-ruang .kosong { padding:8px 10px; font-size:13px; opacity:.7; }
   @media (max-width:640px) { #btn-ruang .t { max-width:84px; } #menu-ruang { position:fixed; left:12px; right:12px; top:56px; width:auto; } }
+
+  /* ===== Dikte, bacakan, Mode Baca ===== */
+  .sr { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  .kompos .baris .kiri { display:inline-flex; align-items:center; gap:8px; }
+  .btn.mik { padding:2px 10px; font-size:16px; line-height:1.5; }
+  .btn.mik.rekam { background:#c81d25 !important; color:#fff !important; border-color:#c81d25 !important; animation:rekam 1.2s ease-in-out infinite; }
+  @keyframes rekam { 50% { opacity:.6; } }
+  .btn.ikon-btn[aria-pressed="true"] { box-shadow:0 0 0 3px #1a73e8; }
+  html.mode-baca #dek, html.mode-baca #peta, html.mode-baca #statistik, html.mode-baca #titik, html.mode-baca #garis,
+  html.mode-baca #btn-rapi, html.mode-baca #btn-stiker, html.mode-baca #palet-stiker, html.mode-baca #alat .ikon, html.mode-baca #alat .petunjuk { display:none !important; }
+  #baca { display:none; }
+  html.mode-baca #baca { display:block; max-width:820px; margin:0 auto; padding:14px 16px 120px; font-size:18px; line-height:1.55; color:var(--h); }
+  html.mode-baca #alat { position:static; padding:0 16px 10px; }
+  html.mode-baca footer.hukum { position:static; padding:0 16px 90px; }
+  #baca h2 { font-size:22px; margin:6px 0 4px; }
+  #baca .bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0 16px; padding:12px; border:2px solid var(--h); }
+  #baca .bar label { display:inline-flex; gap:6px; align-items:center; font-size:16px; }
+  #baca .bar select { font:inherit; font-size:16px; padding:6px 8px; background:var(--p); color:var(--h); border:2px solid var(--h); }
+  #baca .catatan { font-size:15px; color:var(--abu); margin:0 0 12px; }
+  #baca .btn { font-size:16px; padding:8px 14px; min-height:40px; border:2px solid var(--h); cursor:pointer; }
+  #baca .btn:disabled { opacity:.55; cursor:default; }
+  #baca button:focus-visible, #baca input:focus-visible, #baca textarea:focus-visible, #baca select:focus-visible, #baca h2:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+  #baca ol { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:18px; }
+  #baca .bk { border:2px solid var(--h); padding:14px 16px; background:var(--p); }
+  #baca .bk.poll { border-style:dashed; }
+  #baca .bk h3, #baca .bk h4 { font-size:19px; margin:0; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+  #baca .lencana-b { font-size:14px; font-weight:700; border:2px solid var(--h); padding:0 6px; }
+  #baca .meta { font-size:15px; color:var(--abu); margin:2px 0 8px; }
+  #baca .teks-b { margin:6px 0 10px; font-size:20px; white-space:pre-wrap; overflow-wrap:anywhere; }
+  #baca .aksi-b { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px; }
+  #baca .aksi-b .btn[aria-pressed="true"] { background:var(--h); color:var(--p); }
+  #baca .bk-balas { margin:14px 0 0 18px; padding-left:14px; border-left:4px solid var(--h); }
+  #baca .poll-b { display:flex; flex-direction:column; gap:8px; margin:8px 0; }
+  #baca .poll-b .btn { text-align:left; justify-content:space-between; display:flex; gap:12px; }
+  #baca .konfirm { display:inline-flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  #baca form.tulis { display:flex; flex-direction:column; gap:8px; margin:12px 0; padding:12px; border:2px dashed var(--h); }
+  #baca form.tulis label { font-size:16px; font-weight:700; }
+  #baca form.tulis input, #baca form.tulis textarea { font:inherit; font-size:18px; padding:8px; color:#000; background:#fff; border:2px solid var(--h); }
+  #baca form.tulis .baris { color:var(--h); font-size:16px; }
+  #baca .kosong-b { padding:24px 0; font-size:19px; }
+  @media (prefers-reduced-motion: reduce) { .btn.mik.rekam { animation:none; } }
 </style>
 </head>
 <body>
@@ -504,13 +545,15 @@
   <div class="judul">
     <h1><b aria-label="Dekken"><span style="font-size:1.3333em">D</span><span style="font-size:1.2667em">e</span><span style="font-size:1.2em">k</span><span style="font-size:1.1333em">k</span><span style="font-size:1.0667em">e</span><span style="font-size:1em">n</span></b> : Tumpuk, balas, dan naikkan! <span id="timer" title="Sisa waktu tempel catatan sebelum papan di-reset"></span></h1>
   </div>
-  <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><span id="ruang-wrap" hidden><button type="button" id="btn-ruang" class="btn garis" aria-haspopup="true" aria-expanded="false" title="Pilih ruang (breakout)">▣ Ruang</button><div id="menu-ruang" role="menu" hidden></div></span><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><div id="login"></div></div>
+  <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><span id="ruang-wrap" hidden><button type="button" id="btn-ruang" class="btn garis" aria-haspopup="true" aria-expanded="false" title="Pilih ruang (breakout)">▣ Ruang</button><div id="menu-ruang" role="menu" hidden></div></span><button type="button" id="btn-baca" class="btn garis" aria-pressed="false" title="Mode Baca: daftar kartu berurutan yang ramah pembaca layar">☰ Baca</button><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><div id="login"></div></div>
 </header>
 <aside id="statistik"><button type="button" id="stat-judul" aria-expanded="true"><span>Statistik</span><span id="stat-panah">▾</span></button><div id="stat-isi"></div></aside>
 <aside id="peta" hidden><button type="button" id="peta-judul" aria-expanded="true"><span>Peta kartu</span><span id="peta-panah">▾</span></button><div id="peta-isi"><div id="peta-kanvas" role="presentation" title="Klik atau seret untuk berpindah"><canvas></canvas><div id="peta-kotak"></div></div></div><div id="peta-zoom"><button type="button" id="pz-min" aria-label="Perkecil" title="Perkecil (Ctrl + gulir)">−</button><button type="button" id="pz-nilai" title="Kembali ke 100%">100%</button><button type="button" id="pz-plus" aria-label="Perbesar" title="Perbesar (Ctrl + gulir)">+</button></div></aside>
 <nav id="alat"><div id="bentuk-baris"></div></nav>
 <div id="banner"></div>
 <main class="dek" id="dek"></main>
+<main class="baca" id="baca" aria-label="Mode Baca"></main>
+<div id="info-sr" class="sr" role="status" aria-live="polite"></div>
 <footer class="hukum"><a href="privasi.html">Kebijakan Privasi</a> · <a href="syarat.html">Syarat Layanan</a></footer>
 <div id="bantuan"></div>
 <div id="toast"></div>
@@ -553,6 +596,12 @@ let ruangData = [];          // [{id, nama, urut}] dari server
 let ruangSaya = '';          // '' = papan utama
 try { ruangSaya = localStorage.getItem('deck-ruang') || ''; } catch (e) {}
 let ruangBuka = false, ruangKonfirm = '';
+let bacaAktif = false;       // Mode Baca: tampilan daftar lurus untuk pembaca layar (tersimpan di browser ini)
+try { bacaAktif = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
+let bacaBaru = false, bacaBalas = null, bacaFokusKey = '';   // bacaBalas: { parent, ke }
+let bacaOtomatis = false, bacaLaju = 1;
+try { bacaOtomatis = localStorage.getItem('deck-baca-oto') === '1'; const l = parseFloat(localStorage.getItem('deck-baca-laju')); if (l >= .6 && l <= 1.6) bacaLaju = l; } catch (e) {}
+let diktat = null;           // dikte yang sedang berjalan: { rec, tb, ta }
 let dosenSaya = false;        // akun yang masuk adalah dosen (boleh membuat polling)
 let pollBuka = false;         // kartu penulis polling sedang terbuka
 let pollDraft = { u: '', q: '', o: ['', ''], menit: 60 };
@@ -628,6 +677,7 @@ function h(tag, a = {}, ...kids) {
 }
 let tToast;
 function toast(msg) {
+  umumkan(msg);
   const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block';
   clearTimeout(tToast); tToast = setTimeout(() => t.style.display = 'none', 3500);
 }
@@ -711,7 +761,13 @@ async function muat(otomatis) {
     lokal = []; override = {}; ovPoll = {}; ovTautan = {}; ovHapus = {}; ovBuka = {}; ovGame = {};
     {   // bunyi "dek dek" bila ada kartu baru dari orang lain
       const kini = new Set(dataServer.filter(p => p.ruang === ruangSaya).map(p => p.id));
-      if (suaraKead.dikenal && otomatis && dataServer.some(p => p.ruang === ruangSaya && !suaraKead.dikenal.has(p.id) && !milikSaya.has(p.id))) bunyiDekdek();
+      const baru = (suaraKead.dikenal && otomatis) ? dataServer.filter(p => p.ruang === ruangSaya && !suaraKead.dikenal.has(p.id) && !milikSaya.has(p.id)) : [];
+      if (baru.length) bunyiDekdek();
+      if (baru.length && bacaAktif) {
+        const bisa = baru.filter(p => !tersegel(p));
+        if (bisa.length) umumkan(bisa.length === 1 ? 'Kartu baru dari ' + bisa[0].username : bisa.length + ' kartu baru dari ' + [...new Set(bisa.map(p => p.username))].slice(0, 3).join(', '));
+        if (bacaOtomatis && bisa.length) bacaTambah(bisa.map(p => ({ teks: bacaanSatu(p) })));
+      }
       suaraKead.dikenal = kini;
     }
     render();
@@ -737,8 +793,9 @@ function realtimeMulai() {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) muat(true); });
 }
 function sedangMengetik() {
+  if (diktat) return true;   // sedang berdikte: jangan membongkar kotak tulis
   const a = document.activeElement;
-  return a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT') && document.getElementById('dek').contains(a);
+  return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /^(text|search|email|tel|url|number)?$/.test(a.type))) && (document.getElementById('dek').contains(a) || document.getElementById('baca').contains(a));
 }
 function semua() {
   const m = new Map();
@@ -941,7 +998,7 @@ async function kirim(kunci, parent, btn, ke) {
     if (j.segel) segelSaya[j.post.id] = j.segel;
     if (d.b !== 'waktu') { localStorage.setItem('deck_warna', d.w); localStorage.setItem('deck_kartu', d.k); localStorage.setItem('deck_bentuk', d.b); }
     delete draft[kunci];
-    if (parent) { balasTerbuka = null; balasKe = null; dekBuka = parent; } else komposBuka = false;
+    if (parent) { balasTerbuka = null; balasKe = null; dekBuka = parent; bacaBalas = null; bacaFokusKey = 'bl-' + (ke ? ke.id : parent); } else { komposBuka = false; bacaBaru = false; bacaFokusKey = 'baru'; }
     toast('Terkirim ✓'); bunyiDekdek();
     if (suaraKead.dikenal) suaraKead.dikenal.add(j.post.id);
   } catch (e) { toast(e.message); }
@@ -1231,17 +1288,18 @@ function kompos(kunci, parent, ke) {
       onclick: () => { ubahBentuk(d, b); render(); }
     }))) : null;
 
+  const mik = tombolDikte(t);
   const bisaGame = !!(parent && !ke && gameBisa(parent));
   const kirimBtn = h('button', { class: 'btn', type: 'button', onclick: () => kirim(kunci, parent, kirimBtn, ke) }, 'Kirim');
   const batal = h('button', { class: 'btn garis', type: 'button',
     onclick: () => { if (parent) { balasTerbuka = null; balasKe = null; } else komposBuka = false; renderAlat(); render(); } }, 'Batal');
   const infoGame = !bisaGame ? null : h('div', { class: 'game-toggle' }, h('span', {}, 'Kartu game: jawabanmu tersegel, hanya kamu yang melihat sampai pembuat kartu menekan ikon mata. Satu jawaban per akun.'));
   const kontrol = h('div', { class: 'kontrol' }, infoGame, pilihanBentuk, pilihanTeks, pilihanKartu,
-    h('div', { class: 'baris' }, hitung, h('span', { class: 'tombol' }, batal, kirimBtn)));
+    h('div', { class: 'baris' }, h('span', { class: 'kiri' }, mik, hitung), h('span', { class: 'tombol' }, batal, kirimBtn)));
   if (timer) {
     const pil = h('select', { 'aria-label': 'Umur kartu', onchange: e => { d.j = Number(e.target.value); } }, DURASI_TIMER.map(([n, tx]) => h('option', { value: n }, tx)));
     pil.value = String(d.j);
-    kontrol.replaceChildren(h('div', { class: 'tmr-pilih' }, h('span', {}, 'Kartu hilang setelah:'), pil), h('div', { class: 'baris' }, hitung, h('span', { class: 'tombol' }, batal, kirimBtn)));
+    kontrol.replaceChildren(h('div', { class: 'tmr-pilih' }, h('span', {}, 'Kartu hilang setelah:'), pil), h('div', { class: 'baris' }, h('span', { class: 'kiri' }, mik, hitung), h('span', { class: 'tombol' }, batal, kirimBtn)));
   }
   return h('div', { class: 'kompos' + (parent ? ' popup' : '') }, ke ? h('div', { class: 'ke' }, '↳ membalas @' + ke.username) : null, kartu, kontrol);
 }
@@ -1309,7 +1367,7 @@ function kartuPolling(p) {
     h('span', { class: 'label-poll' }, 'POLLING'),
     h('div', { class: 'kepala' }, h('div', {}, h('div', { class: 'nama' }, p.username, p.dosen ? h('span', { class: 'lencana', title: 'Dosen terverifikasi', 'aria-label': 'Dosen terverifikasi' }, '✓') : null), h('div', { class: 'waktu' }, fmt(p.waktu)))),
     h('p', { class: 'poll-q' }, p.teks), ...opsi,
-    h('div', { class: 'poll-foot' }, h('span', {}, total + ' suara · ', sisa), h('span', { class: 'poll-kanan' }, tombolHapus(p, 0), titikTaut(p))),
+    h('div', { class: 'poll-foot' }, h('span', {}, total + ' suara · ', sisa), h('span', { class: 'poll-kanan' }, tombolBacaIkon(p.id, () => bacaanKartu(p, [])), tombolHapus(p, 0), titikTaut(p))),
     labelTaut(p));
   kartu.dataset.id = p.id;
   kartu.append(lapisStiker(p));
@@ -1462,6 +1520,7 @@ function kartuUtama(p, balasan) {
       else { bukaDek(p.id); balasTerbuka = p.id; balasKe = null; }
       render(); gulirKompos();
     }),
+    tombolBacaIkon(p.id, () => bacaanKartu(p, balasan)),
     (milikSaya.has(p.id) && !p.game && !p.poll && !p.tmr && tokenHidup()) ? tombolIkon(IKON_GAME, 'Jadikan kartu game (jawaban orang lain tersegel)', e => { e.stopPropagation(); mulaiRonde(p.id); }) : null,
     (milikSaya.has(p.id) && p.game === 1 && tokenHidup()) ? (() => { const b = tombolIkon(IKON_MATA, 'Tampilkan semua jawaban', e => { e.stopPropagation(); tampilkan(p.id, e.currentTarget); }); b.classList.add('tampil'); return b; })() : null,
     titikTaut(p),
@@ -1570,6 +1629,271 @@ function renderRuang() {
   document.addEventListener('click', e => { if (ruangBuka && !e.composedPath().includes(wrap)) tutupMenuRuang(); });   // composedPath: tombol di menu ikut diganti saat render
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && ruangBuka) tutupMenuRuang(); });
   renderRuang();
+})();
+
+/* ================== AKSESIBILITAS: DIKTE, DIBACAKAN, MODE BACA ================== */
+function umumkan(t) {
+  const el = document.getElementById('info-sr'); if (!el) return;
+  el.textContent = ''; setTimeout(() => { el.textContent = String(t || ''); }, 60);
+}
+
+/* ---- Dikte: bicara menjadi teks (Web Speech API bawaan browser; tombol disembunyikan bila tidak didukung) ---- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+function berhentiDikte() { if (diktat) { try { diktat.rec.stop(); } catch (e) {} } }
+function tombolDikte(ta) {
+  if (!SR) return null;
+  const b = h('button', { type: 'button', class: 'btn garis mik', 'aria-pressed': 'false', 'aria-label': 'Dikte: bicara untuk mengisi teks', title: 'Dikte: bicara untuk mengisi teks' }, '🎤');
+  b.addEventListener('click', e => { e.stopPropagation(); if (diktat && diktat.tb === b) berhentiDikte(); else mulaiDikte(ta, b); });
+  return b;
+}
+function mulaiDikte(ta, tb) {
+  berhentiDikte();
+  let rec;
+  try { rec = new SR(); } catch (e) { toast('Dikte tidak bisa dimulai di perangkat ini.'); return; }
+  rec.lang = 'id-ID'; rec.continuous = true; rec.interimResults = true;
+  const maks = Number(ta.maxLength) > 0 ? Number(ta.maxLength) : 1000;
+  const dasar = ta.value;
+  const tulis = ev => {
+    if (!ta.isConnected) { berhentiDikte(); return; }
+    const fin = [], sem = [];
+    for (let i = 0; i < ev.results.length; i++) { const r = ev.results[i], x = String(r[0].transcript || '').trim(); if (!x) continue; (r.isFinal ? fin : sem).push(x); }
+    const ucap = fin.concat(sem).join(' ');
+    ta.value = ((dasar && ucap && !/\s$/.test(dasar) ? dasar + ' ' : dasar) + ucap).slice(0, maks);
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const kini = { rec, tb, ta };
+  rec.onstart = () => { diktat = kini; tb.classList.add('rekam'); tb.setAttribute('aria-pressed', 'true'); tb.setAttribute('aria-label', 'Hentikan dikte'); umumkan('Mendengarkan. Silakan berbicara.'); };
+  rec.onresult = tulis;
+  rec.onerror = ev => {
+    const pesan = { 'not-allowed': 'Izin mikrofon ditolak. Izinkan mikrofon untuk situs ini di pengaturan browser.', 'service-not-allowed': 'Dikte tidak diizinkan di browser ini.',
+      'no-speech': 'Tidak ada suara terdengar.', 'audio-capture': 'Mikrofon tidak ditemukan.', 'network': 'Dikte membutuhkan koneksi internet.', 'language-not-supported': 'Bahasa Indonesia belum didukung dikte di perangkat ini.' }[ev.error];
+    if (pesan) toast(pesan);
+  };
+  rec.onend = () => { clearTimeout(kini.t); if (diktat === kini) diktat = null; tb.classList.remove('rekam'); tb.setAttribute('aria-pressed', 'false'); tb.setAttribute('aria-label', 'Dikte: bicara untuk mengisi teks'); umumkan('Dikte selesai.'); };
+  kini.t = setTimeout(() => { try { rec.stop(); } catch (e) {} }, 90000);   // pengaman: berhenti sendiri setelah 90 detik
+  try { rec.start(); } catch (e) { toast('Dikte tidak bisa dimulai.'); }
+}
+
+/* ---- Dibacakan: teks menjadi suara (speechSynthesis bawaan perangkat) ---- */
+const TTS = window.speechSynthesis || null;
+const IKON_SUARA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+let bacaAntri = [], bacaGrup = '', bacaToken = 0, bacaUtt = null;
+function suaraId() { try { return (TTS.getVoices() || []).find(v => /^id([-_]|$)/i.test(v.lang)) || null; } catch (e) { return null; } }
+function bacaSegarkan() {
+  document.querySelectorAll('[data-baca]').forEach(el => {
+    const on = el.dataset.baca === bacaGrup; el.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (el.classList.contains('teks-tb')) el.textContent = on ? '⏹ Berhenti membaca' : (el.dataset.label || 'Bacakan');
+  });
+}
+function berhentiBaca() {
+  bacaToken++; bacaAntri = []; bacaGrup = '';
+  if (TTS) { try { TTS.cancel(); } catch (e) {} }
+  bacaSegarkan();
+}
+function bacaLanjut(token) {
+  if (token !== bacaToken) return;
+  const x = bacaAntri.shift();
+  if (!x) { bacaGrup = ''; bacaSegarkan(); return; }
+  const u = new SpeechSynthesisUtterance(x.teks); bacaUtt = u;
+  u.lang = 'id-ID'; u.rate = bacaLaju; const v = suaraId(); if (v) u.voice = v;
+  u.onend = () => bacaLanjut(token);
+  u.onerror = () => { if (token === bacaToken) { bacaGrup = ''; bacaAntri = []; bacaSegarkan(); } };
+  try { TTS.speak(u); } catch (e) { bacaGrup = ''; bacaSegarkan(); }
+}
+function bacaDaftar(daftar, grup) {
+  if (!TTS) { toast('Perangkat ini tidak mendukung pembacaan suara.'); return; }
+  berhentiBaca();
+  const token = ++bacaToken; bacaAntri = daftar.slice(); bacaGrup = grup || '*'; bacaSegarkan();
+  bacaLanjut(token);
+}
+function bacaTambah(daftar) {   // kartu baru: dibacakan setelah antrean berjalan, atau langsung bila sedang diam
+  if (!TTS || !daftar.length) return;
+  if (bacaGrup) bacaAntri.push(...daftar); else bacaDaftar(daftar, 'baru');
+}
+const akhiri = t => { t = String(t || '').trim(); return /[.!?\u2026:]$/.test(t) ? t : t + '.'; };
+function bacaanSatu(p) {
+  const dari = p.username + (p.dosen ? ', dosen' : '');
+  if (p.poll) {
+    const pl = p.poll, aktif = pl.akhir > Date.now();
+    return 'Polling dari ' + dari + '. ' + akhiri(p.teks) + ' Pilihan: ' + pl.o.map((o, i) => (i + 1) + ', ' + o + ', ' + pl.h[i] + ' suara').join('. ') + '. ' + (aktif ? 'Polling masih berjalan.' : 'Polling sudah selesai.');
+  }
+  if (tersegel(p)) return 'Balasan tersegel dari ' + p.username + '.';
+  if (p.parent) return 'Balasan dari ' + dari + (p.membalas ? ' kepada ' + p.membalas : '') + ': ' + akhiri(p.teks);
+  return dari + ' menulis: ' + akhiri(p.teks);
+}
+function bacaanKartu(p, balasan) {
+  const hasil = [{ teks: bacaanSatu(p) }];
+  if (!p.poll) susunBalasan(balasan || []).forEach(b => hasil.push({ teks: bacaanSatu(b) }));
+  return hasil;
+}
+function bacaGeser(grup, daftar) { if (bacaGrup === grup) berhentiBaca(); else bacaDaftar(daftar(), grup); }
+function tombolBacaIkon(grup, daftar) {   // tombol 🔊 kecil pada kartu di papan
+  if (!TTS) return null;
+  const b = tombolIkon(IKON_SUARA, 'Bacakan kartu ini dan balasannya', e => { e.stopPropagation(); bacaGeser(grup, daftar); });
+  b.dataset.baca = grup; b.setAttribute('aria-pressed', bacaGrup === grup ? 'true' : 'false');
+  return b;
+}
+if (TTS) { try { TTS.onvoiceschanged = () => { if (bacaAktif) renderBaca(); }; } catch (e) {} }
+
+/* ---- Mode Baca: daftar lurus berurutan untuk pembaca layar ---- */
+function susunData() {
+  const all = semua(), sekarang = Date.now();
+  const polaktif = p => p.poll && p.poll.akhir > sekarang;
+  const utama = all.filter(p => !p.parent).sort(urutKartu());
+  utama.sort((a, b) => (polaktif(b) ? 1 : 0) - (polaktif(a) ? 1 : 0));
+  const anak = {};
+  all.filter(p => p.parent).forEach(p => (anak[p.parent] = anak[p.parent] || []).push(p));
+  Object.values(anak).forEach(a => a.sort(urut));
+  return { utama, anak, jumlah: all.length, peta: new Map(all.map(p => [p.id, p])) };
+}
+function fk(el, kunci) { el.dataset.fk = kunci; return el; }
+function voteBaca(p) {
+  const s = sayaVote[p.id] || 0;
+  const mk = (n, lbl, tanda, jum) => fk(h('button', { type: 'button', class: 'btn garis', 'aria-pressed': s === n ? 'true' : 'false', 'aria-label': lbl + ', ' + jum + ' suara' + (s === n ? ', sudah kamu pilih' : ''),
+    onclick: e => { bacaFokusKey = 'v' + n + '-' + p.id; vote(p.id, n, e.currentTarget); } }, tanda + ' ' + jum), 'v' + n + '-' + p.id);
+  return [mk(1, 'Naikkan', '↑', p.up), mk(-1, 'Turunkan', '↓', p.down)];
+}
+function hapusBaca(p, nBalasan) {
+  if (!(milikSaya.has(p.id) || dosenSaya)) return null;
+  if (hapusKonfirm === p.id) {
+    const ya = fk(h('button', { type: 'button', class: 'btn', onclick: () => hapusKartu(p.id, ya) }, nBalasan ? 'Ya, hapus beserta ' + nBalasan + ' balasan' : 'Ya, hapus'), 'hy-' + p.id);
+    const tdk = fk(h('button', { type: 'button', class: 'btn garis', onclick: () => { hapusKonfirm = null; bacaFokusKey = 'hp-' + p.id; render(); } }, 'Batal'), 'ht-' + p.id);
+    return h('span', { class: 'konfirm', role: 'group', 'aria-label': 'Konfirmasi hapus kartu' }, 'Hapus kartu ini?', ya, tdk);
+  }
+  return fk(h('button', { type: 'button', class: 'btn garis', onclick: () => { hapusKonfirm = p.id; bacaFokusKey = 'hy-' + p.id; render(); } }, 'Hapus'), 'hp-' + p.id);
+}
+function formBaca(kunci, parent, ke, judul) {
+  const d = ambilDraft(kunci);
+  if (d.b === 'waktu') d.b = 'persegi';
+  const maks = BENTUK[d.b].maks;
+  const hitung = h('span', { 'aria-hidden': 'true' }, d.t.length + '/' + maks);
+  const u = fk(h('input', { type: 'text', id: 'fu-' + kunci, maxlength: CONFIG.MAKS_USERNAME, value: d.u, autocomplete: 'nickname', oninput: e => { d.u = e.target.value; } }), 'fu-' + kunci);
+  const t = fk(h('textarea', { id: 'ft-' + kunci, rows: 4, maxlength: maks, oninput: e => { d.t = e.target.value; hitung.textContent = d.t.length + '/' + maks; } }), 'ft-' + kunci);
+  t.value = d.t;
+  const kb = h('button', { type: 'button', class: 'btn', onclick: () => kirim(kunci, parent, kb, ke) }, 'Kirim');
+  const batal = h('button', { type: 'button', class: 'btn garis', onclick: () => { if (parent) { bacaFokusKey = 'bl-' + (ke ? ke.id : parent); bacaBalas = null; } else { bacaFokusKey = 'baru'; bacaBaru = false; } render(); } }, 'Batal');
+  const game = (parent && !ke && gameBisa(parent)) ? h('p', { class: 'catatan' }, 'Kartu game: jawabanmu tersegel, hanya kamu yang melihat sampai pembuat kartu membukanya.') : null;
+  const form = h('form', { class: 'tulis', 'aria-label': judul, onsubmit: e => e.preventDefault() },
+    h('h3', {}, judul), game,
+    h('label', { for: 'fu-' + kunci }, 'Username'), u,
+    h('label', { for: 'ft-' + kunci }, 'Isi kartu (maksimal ' + maks + ' huruf)'), t,
+    h('div', { class: 'baris' }, h('span', { class: 'kiri' }, tombolDikte(t), hitung), h('span', { class: 'tombol' }, batal, ' ', kb)));
+  return form;
+}
+function kartuBaca(p, balasan, peta, sebagaiBalasan) {
+  const idj = 'bk-' + p.id, n = balasan.length;
+  const jenis = p.poll ? 'Polling' : p.tmr ? 'Kartu timer' : p.game ? 'Kartu game' : '';
+  const tautan = (p.tautan || []).map(id => peta.get(id)).filter(Boolean).map(x => x.username);
+  const stiker = stikerData.filter(x => x.post_id === p.id);
+  const nStk = stiker.length ? 'Stiker: ' + [...new Set(stiker.map(x => (STIKER.find(y => y[0] === x.jenis) || [])[2] || 'stiker'))].join(', ') : '';
+  const meta = [jenis, fmt(p.waktu), p.habis ? sisaKartu(p.habis) : '', tautan.length ? 'Tersambung dengan kartu dari ' + tautan.join(', ') : '', nStk].filter(Boolean).join(' · ');
+  const kepala = h(sebagaiBalasan ? 'h4' : 'h3', { id: idj },
+    sebagaiBalasan ? 'Balasan dari ' + p.username : p.username,
+    p.dosen ? h('span', { class: 'lencana-b' }, '✓ Dosen terverifikasi') : null,
+    sebagaiBalasan && p.membalas ? h('span', { class: 'meta' }, 'untuk ' + p.membalas) : null);
+  const kids = [kepala, h('p', { class: 'meta' }, meta)];
+  if (tersegel(p)) {
+    const sendiri = milikSaya.has(p.id) && segelSaya[p.id];
+    kids.push(h('p', { class: 'teks-b' }, sendiri ? 'Jawaban tersegel (hanya kamu yang melihat): ' + segelSaya[p.id] : 'Jawaban tersegel. Terbuka saat penanya membukanya.'));
+  } else if (p.poll) {
+    const pl = p.poll, aktif = pl.akhir > Date.now(), total = pl.h.reduce((a, b) => a + b, 0), saya = sayaPilih[p.id];
+    kids.push(h('p', { class: 'teks-b' }, p.teks));
+    kids.push(h('div', { class: 'poll-b', role: 'group', 'aria-label': 'Pilihan polling' }, pl.o.map((o, i) => {
+      const pc = total ? Math.round(pl.h[i] * 100 / total) : 0;
+      return fk(h('button', { type: 'button', class: 'btn garis', disabled: !aktif, 'aria-pressed': saya === i ? 'true' : 'false',
+        onclick: e => { bacaFokusKey = 'po-' + p.id + '-' + i; pilihOpsi(p.id, i, e.currentTarget); } },
+        h('span', {}, (saya === i ? '● ' : '') + o), h('span', {}, pc + '% · ' + pl.h[i] + ' suara')), 'po-' + p.id + '-' + i);
+    })));
+    kids.push(h('p', { class: 'meta' }, total + ' suara · ' + (aktif ? 'polling masih berjalan, ' + sisaPoll(pl.akhir) : 'polling sudah selesai')));
+  } else {
+    kids.push(h('p', { class: 'teks-b' }, p.teks === TANDA_SEGEL ? 'Membuka…' : p.teks));
+  }
+  const aksi = h('div', { class: 'aksi-b', role: 'group', 'aria-label': 'Aksi untuk kartu dari ' + p.username });
+  if (!tersegel(p) && !p.poll) aksi.append(...voteBaca(p));
+  if (!p.poll && !tersegel(p)) aksi.append(fk(h('button', { type: 'button', class: 'btn garis', 'aria-label': 'Balas ' + p.username, onclick: () => {
+    if (!butuhLogin()) return;
+    const parent = p.parent || p.id;
+    bacaBalas = (bacaBalas && bacaBalas.parent === parent && bacaBalas.ke === (p.parent ? p.id : null)) ? null : { parent, ke: p.parent ? p.id : null };
+    bacaBaru = false; bacaFokusKey = bacaBalas ? 'ft-' + (p.parent ? p.id : p.id) : 'bl-' + p.id; render();
+  } }, 'Balas'), 'bl-' + p.id));
+  if (TTS && !tersegel(p)) {
+    const grup = 'b-' + p.id;
+    const tb = h('button', { type: 'button', class: 'btn garis teks-tb', 'data-baca': grup, 'data-label': 'Bacakan', 'aria-pressed': bacaGrup === grup ? 'true' : 'false',
+      onclick: () => bacaGeser(grup, () => bacaanKartu(p, balasan)) }, bacaGrup === grup ? '⏹ Berhenti membaca' : 'Bacakan');
+    aksi.append(tb);
+  }
+  const hp = hapusBaca(p, n); if (hp) aksi.append(hp);
+  kids.push(aksi);
+  return h('article', { class: 'bk' + (p.poll ? ' poll' : ''), 'aria-labelledby': idj }, kids);
+}
+function renderBaca() {
+  const root = document.getElementById('baca'); if (!root) return;
+  const a = document.activeElement;
+  let fokus = bacaFokusKey || (a && root.contains(a) && a.dataset ? a.dataset.fk || (a.id === 'baca-judul' ? '@judul' : '') : '');
+  bacaFokusKey = '';
+  const { utama, anak, jumlah, peta } = susunData();
+  const nama = namaRuang(ruangSaya);
+  const judul = h('h2', { id: 'baca-judul', tabindex: '-1' }, 'Mode Baca · ' + nama + ' · ' + utama.length + ' kartu' + (jumlah > utama.length ? ', ' + (jumlah - utama.length) + ' balasan' : ''));
+  const bar = h('div', { class: 'bar', role: 'group', 'aria-label': 'Pengaturan Mode Baca' });
+  bar.append(fk(h('button', { type: 'button', class: 'btn', onclick: () => { if (!butuhLogin()) return; bacaBaru = !bacaBaru; bacaBalas = null; bacaFokusKey = bacaBaru ? 'ft-baru' : 'baru'; render(); } }, bacaBaru ? 'Tutup form kartu baru' : 'Tulis kartu baru'), 'baru'));
+  if (TTS) {
+    const sem = h('button', { type: 'button', class: 'btn garis teks-tb', 'data-baca': '*semua', 'data-label': 'Bacakan semua kartu', 'aria-pressed': bacaGrup === '*semua' ? 'true' : 'false',
+      onclick: () => bacaGeser('*semua', () => [{ teks: 'Ruang ' + nama + ', ' + utama.length + ' kartu.' }].concat(utama.flatMap(p => bacaanKartu(p, anak[p.id] || [])))) }, bacaGrup === '*semua' ? '⏹ Berhenti membaca' : 'Bacakan semua kartu');
+    bar.append(fk(sem, 'semua'));
+    const kec = fk(h('select', { id: 'baca-laju', 'aria-label': 'Kecepatan membaca', onchange: e => { bacaLaju = parseFloat(e.target.value) || 1; try { localStorage.setItem('deck-baca-laju', String(bacaLaju)); } catch (x) {} } },
+      [['0.7', 'Lambat'], ['1', 'Normal'], ['1.3', 'Cepat']].map(([v, l]) => h('option', { value: v, selected: Math.abs(parseFloat(v) - bacaLaju) < .05 ? '' : null }, l))), 'laju');
+    bar.append(h('label', {}, 'Kecepatan: ', kec));
+    const oto = fk(h('input', { type: 'checkbox', id: 'baca-oto', checked: bacaOtomatis ? '' : null, onchange: e => { bacaOtomatis = e.target.checked; try { localStorage.setItem('deck-baca-oto', bacaOtomatis ? '1' : '0'); } catch (x) {} } }), 'oto');
+    oto.checked = bacaOtomatis;
+    bar.append(h('label', {}, oto, 'Bacakan kartu baru otomatis'));
+  }
+  bar.append(fk(h('button', { type: 'button', class: 'btn garis', onclick: () => aturBaca(false) }, 'Keluar dari Mode Baca'), 'keluar'));
+  const kids = [judul, bar];
+  if (TTS && !suaraId()) kids.push(h('p', { class: 'catatan' }, 'Catatan: suara bahasa Indonesia belum terpasang di perangkat ini, jadi bacaan memakai suara bawaan perangkat.'));
+  if (bacaBaru) kids.push(formBaca('baru', '', null, 'Tulis kartu baru di ' + nama));
+  if (!utama.length) kids.push(h('p', { class: 'kosong-b' }, 'Belum ada kartu di ' + nama + '. Tekan "Tulis kartu baru" untuk memulai.'));
+  const daftar = h('ol', { 'aria-label': 'Daftar kartu di ' + nama });
+  utama.forEach(p => {
+    const bal = susunBalasan(anak[p.id] || []);
+    const li = h('li', {}, kartuBaca(p, bal, peta, false));
+    const art = li.firstChild;
+    if (bacaBalas && bacaBalas.parent === p.id && !bacaBalas.ke) art.append(formBaca(p.id, p.id, null, 'Balas ' + p.username));
+    if (bal.length) {
+      const ol = h('ol', { class: 'bk-balas', 'aria-label': 'Balasan untuk kartu dari ' + p.username + ', ' + bal.length + ' balasan' });
+      bal.forEach(b => {
+        const lb = h('li', {}, kartuBaca(b, [], peta, true));
+        if (bacaBalas && bacaBalas.parent === p.id && bacaBalas.ke === b.id) lb.firstChild.append(formBaca(b.id, p.id, b, 'Balas ' + b.username));
+        ol.append(lb);
+      });
+      art.append(ol);
+    }
+    daftar.append(li);
+  });
+  kids.push(daftar);
+  root.replaceChildren(...kids);
+  if (fokus) {
+    const el = fokus === '@judul' ? document.getElementById('baca-judul') : root.querySelector('[data-fk="' + fokus.replace(/"/g, '') + '"]');
+    if (el) el.focus({ preventScroll: true });
+  }
+}
+function aturBaca(on) {
+  bacaAktif = !!on;
+  try { localStorage.setItem('deck-baca', on ? '1' : '0'); } catch (e) {}
+  document.documentElement.classList.toggle('mode-baca', bacaAktif);
+  const tb = document.getElementById('btn-baca');
+  if (tb) { tb.setAttribute('aria-pressed', bacaAktif ? 'true' : 'false'); tb.textContent = bacaAktif ? '☰ Papan' : '☰ Baca'; tb.title = bacaAktif ? 'Kembali ke tampilan papan kartu' : 'Mode Baca: daftar kartu berurutan yang ramah pembaca layar'; }
+  berhentiBaca(); berhentiDikte();
+  komposBuka = false; pollBuka = false; balasTerbuka = null; balasKe = null; bacaBaru = false; bacaBalas = null; hapusKonfirm = null;
+  render();
+  if (bacaAktif) {
+    umumkan('Mode Baca aktif. Kartu ditampilkan sebagai daftar. Gunakan navigasi judul untuk berpindah antar kartu.');
+    const j = document.getElementById('baca-judul'); if (j) j.focus();
+  } else { umumkan('Kembali ke tampilan papan.'); const t = document.getElementById('btn-baca'); if (t) t.focus(); }
+}
+(function bacaMulai() {
+  const tb = document.getElementById('btn-baca');
+  tb.addEventListener('click', () => aturBaca(!bacaAktif));
+  if (bacaAktif) { document.documentElement.classList.add('mode-baca'); tb.setAttribute('aria-pressed', 'true'); tb.textContent = '☰ Papan'; }
 })();
 
 /* ================== STIKER TEMPEL ================== */
@@ -1696,6 +2020,7 @@ function isiBantuan() {
     ...bagian('Polling', 'Kartu oranye bertanda POLLING berisi satu pertanyaan dengan 2 sampai 5 pilihan. Semua akun terdaftar yang sudah masuk boleh memilih: klik satu pilihan (satu akun satu pilihan), klik pilihan lain untuk mengganti, atau klik pilihan yang sama lagi untuk membatalkan. Hasil berupa persentase dan jumlah suara langsung terlihat oleh semua orang, juga oleh yang belum masuk. Tiap polling punya hitung mundur sendiri di bagian bawah kartu; setelah selesai pilihan terkunci dan pilihan terbanyak diberi bingkai. Polling yang sedang berjalan selalu di posisi pertama, hanya satu polling berjalan pada satu waktu, warnanya oranye di semua tampilan (juga monokrom), tidak bisa dibalas, dan bisa disambungkan seperti kartu biasa. Polling hanya bisa dibuat oleh dosen: setelah masuk, tombol polling di ujung kanan deretan bentuk di bawah layar membuka kartu pembuat polling (pertanyaan, pilihan, dan lama polling: 15 menit, 30 menit, 1 jam, 2 jam, 4 jam, atau 8 jam). Polling ikut dikosongkan oleh reset harian.'),
     ...bagian('Stiker', 'Tombol ☺ Stiker di kanan atas membuka koleksi 12 stiker (senyum, jempol, hati, api, ide, dan lainnya). Pilih satu, lalu ketuk di mana saja pada kartu mana pun untuk menempelkannya. Satu akun hanya bisa satu stiker per kartu: menempel lagi di kartu yang sama memindahkan atau mengganti stikermu. Tombol ✕ Cabut membiarkanmu mencabut stiker dengan mengetuknya, dan siapa pun yang sudah masuk boleh mencabut stiker mana pun. Stiker ikut terhapus saat kartunya dihapus atau papan di-reset. Jawaban kartu game yang masih tersegel tidak bisa distiker. Tutup koleksi dengan Selesai atau tombol Esc.'),
     ...bagian('Ruang (breakout)', 'Dosen dapat membagi kelas ke beberapa ruang: tombol ▣ Ruang di kanan atas, isi awalan dan jumlah, lalu Buat. Setiap orang memilih ruangnya lewat tombol yang sama dan hanya melihat kartu, balasan, dan stiker di ruang itu; kartu baru otomatis masuk ke ruang yang sedang dipilih. Boleh pindah ruang kapan saja, dan angka di samping nama ruang menunjukkan berapa orang yang sedang aktif di sana. Papan utama tetap ada dan tidak terpengaruh. Polling dosen masuk ke ruang tempat dosen berada. Setelah selesai, dosen menutup ruang (satu per satu atau semuanya) dan semua kartunya otomatis digabung ke papan utama. Reset harian juga menutup semua ruang.'),
+    ...bagian('Suara dan Mode Baca', 'Tombol 🎤 di kotak tulis memungkinkan kamu berbicara dan ucapanmu menjadi teks (dikte, bahasa Indonesia); tekan lagi untuk berhenti, lalu periksa teksnya sebelum Kirim. Dikte butuh izin mikrofon dan internet, dan tidak muncul bila browser tidak mendukung. Tombol speaker pada kartu membacakan kartu beserta balasannya. Tombol ☰ Baca di kanan atas membuka Mode Baca: semua kartu ruangmu ditampilkan sebagai daftar berurutan yang mudah dijelajahi dengan pembaca layar dan keyboard, lengkap dengan suara naik/turun, balasan, polling, tulis kartu, dan pembacaan semua kartu (kecepatan bisa diatur, kartu baru bisa dibacakan otomatis). Tekan ☰ Papan untuk kembali ke tampilan papan.'),
     ...bagian('Urut dan Rapi/Acak', 'Di kanan atas, pilihan "Urut" mengurutkan kartu menurut suara, yang terbaru, atau nama username A–Z. Tombol di sebelahnya menunjukkan kondisi tampilan: "Acak" (kartu tertempel miring seperti biasa) atau "Rapi" (semua kartu tersusun dalam kolom rapi dan semua balasan terbuka); klik untuk berganti. Keduanya hanya mengubah tampilanmu sendiri dan diingat di browser ini; orang lain tidak terpengaruh dan isi papan tidak berubah.'),
     ...bagian('Statistik', 'Kotak "Statistik" di kanan bawah menampilkan jumlah pengguna aktif, kartu, balasan, dan koneksi, serta username yang sedang aktif. Klik judulnya untuk menyembunyikan atau menampilkannya. Yang tampil hanya username, bukan email; pengunjung yang belum masuk hanya terhitung di angka.'),
     ...bagian('Tampilan', 'Tombol ikon di kanan atas (di samping tombol ?) membuka pilihan: ☀ terang, ☾ gelap, ○ monokrom terang, ● monokrom gelap, dan ⊘ untuk mematikan atau menyalakan latar tanda ^ (lihat "Latar tanda ^"). Mode monokrom hanya memakai hitam dan putih (kontras penuh): kartu dan balasan saling berlawanan warna. Pilihan pertama mengikuti pengaturan perangkatmu, lalu diingat di browser ini dan tidak mengubah isi kartu.'),
@@ -2171,6 +2496,7 @@ function statMulai() {
   hadirMulai();
 }
 function render() {
+  if (bacaAktif) { renderBaca(); return; }
   { const tp = document.getElementById('tip'); if (tp) tp.hidden = true; }
   titikFoto(); titikLacak(900);
   const dek = document.getElementById('dek'); dek.innerHTML = '';

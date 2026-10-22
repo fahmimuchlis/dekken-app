@@ -544,11 +544,14 @@
   #baca details.catatan summary { cursor:pointer; font-weight:700; color:var(--h); }
 
   #gerbang { position:fixed; inset:0; z-index:100000; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3vmin; padding:2vmin; }
-  #gerbang-btn { width:min(80vw,68vh); height:min(80vw,68vh); border-radius:50%; border:0; padding:0; cursor:pointer; background:#ffd400; animation:gerbangDetak 1.2s ease-in-out infinite; }
+  #gerbang-btn { width:min(88vw,80vh); aspect-ratio:1000/980; border:0; padding:0; cursor:pointer; background:none; }
   #gerbang-btn:focus { outline:none; }
+  #gerbang-btn svg { display:block; width:100%; height:auto; overflow:visible; }
+  #gerbang-btn polygon { fill:#ffff00; stroke:#000; stroke-width:3; stroke-linejoin:miter; }
+  #gerbang-btn .gk { animation:gkJatuh .4s ease-out both; animation-delay:calc(var(--i) * .5s); }
+  @keyframes gkJatuh { from { opacity:0; transform:translateY(-70px); } to { opacity:1; transform:none; } }
   #gerbang .gerbang-ket { color:#fff; margin:0; text-align:center; text-transform:uppercase; font:500 16px/1.4 system-ui,sans-serif; max-width:34em; }
-  @keyframes gerbangDetak { 0%{transform:scale(1)} 14%{transform:scale(1.1)} 28%{transform:scale(1)} 42%{transform:scale(1.07)} 70%,100%{transform:scale(1)} }
-  @media (prefers-reduced-motion: reduce) { #gerbang-btn { animation:none; } }
+  @media (prefers-reduced-motion: reduce) { #gerbang-btn .gk { animation:none !important; opacity:1; } }
   #btn-purge { border:2px solid var(--h); font-size:18px; line-height:1; }
   #btn-purge[hidden] { display:none !important; }
   #purge-ov { position:fixed; inset:0; z-index:99990; background:rgba(200,0,0,.5); display:flex; align-items:center; justify-content:center; padding:16px; }
@@ -1990,9 +1993,18 @@ function aturBaca(on) {
 function gerbangNetra() {
   let sudah = false; try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
   if (sudah || document.getElementById('gerbang')) return;
-  let usai = false, wkt = null, ulang = null;
+  let usai = false, akhir = false, wkt = null, ulang = null;
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Pilih tampilan' });
   const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': 'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.' });
+  // tumpukan kartu: 40 kartu rapat, tiap 0,5 detik satu kartu mendarat di atas tumpukan (bawah dulu); tidak diulang
+  (() => {
+    const N = 40, DY = 17; let g = '';
+    for (let k = N - 1; k >= 0; k--) {
+      const y0 = 55 + DY * k, y1 = y0 + 236, d = .6 * k;   // simetris terhadap x=500; kartu bawah sedikit lebih sempit
+      g += '<g class="gk" style="--i:' + (N - 1 - k) + '"><polygon points="' + [187.5 + d, y0, 812.5 - d, y0, 871 - d, y1, 129 + d, y1].map(v => +v.toFixed(1)).join(' ').replace(/(\S+ \S+) /g, '$1,').replace(/,$/, '') + '"/></g>';
+    }
+    btn.innerHTML = '<svg viewBox="0 0 1000 ' + (55 + 236 + DY * (N - 1) + 20) + '" aria-hidden="true" focusable="false">' + g + '</svg>';
+  })();
   const ket = h('p', { class: 'gerbang-ket', 'aria-hidden': 'true' }, 'Mode papan akan otomatis aktif bila mengabaikan perintah audio ini.');
   ov.append(btn, ket);
   try {   // judul Dekken tetap tampak di tempat semula (putih di atas latar hitam)
@@ -2005,33 +2017,42 @@ function gerbangNetra() {
     }
   } catch (e) {}
   document.body.append(ov);
-  // kalimat Inggris saja, diulang dengan jeda sampai waktu habis (bip panjang) atau dipilih
+  // kalimat Inggris diucapkan satu kali saja
   const EN = 'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.';
   const ucap = () => {
-    if (usai) return;
     try {
-      if (!(window.speechSynthesis && window.SpeechSynthesisUtterance)) { ulang = setTimeout(ucap, 5000); return; }
+      if (!(window.speechSynthesis && window.SpeechSynthesisUtterance)) return;
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(EN); u.lang = 'en-US'; u.rate = .95;
-      let lanjut = false; const nanti = () => { if (lanjut || usai) return; lanjut = true; ulang = setTimeout(ucap, 2500); };
-      u.onend = nanti; u.onerror = nanti;
       speechSynthesis.speak(u);
-      setTimeout(nanti, 15000);   // jaga-jaga bila onend tak pernah terpanggil
-    } catch (e) { ulang = setTimeout(ucap, 5000); }
+    } catch (e) {}
   };
   const tutup = masuk => {
     if (usai) return; usai = true; clearTimeout(wkt); clearTimeout(ulang);
     try { speechSynthesis.cancel(); } catch (e) {}
     ov.remove();
-    if (!masuk) bip(520, 1.2);   // bip panjang: akomodasi ini selesai, mode papan aktif
     if (masuk) {
       if (window.setTemaNetra) setTemaNetra();
       if (!bacaAktif) aturBaca(true);
       bicara(PANDUAN_MASUK());
     }
   };
-  btn.addEventListener('click', () => tutup(true));
-  wkt = setTimeout(() => tutup(false), 20000);
+  // waktu habis: kalimat yang sedang diucapkan diselesaikan dulu, lalu bip panjang, baru masuk tampilan normal
+  const habis = () => {
+    if (usai || akhir) return; akhir = true; clearTimeout(ulang);
+    const mulai = Date.now();
+    const tunggu = () => {
+      if (usai) return;
+      let bicaraAda = false; try { bicaraAda = !!speechSynthesis.speaking; } catch (e) {}
+      if (bicaraAda && Date.now() - mulai < 7000) { setTimeout(tunggu, 150); return; }
+      try { speechSynthesis.cancel(); } catch (e) {}
+      bip(520, 1.2);
+      setTimeout(() => { if (!usai) { usai = true; ov.remove(); } }, 1300);   // tampilan normal setelah bip panjang selesai
+    };
+    tunggu();
+  };
+  btn.addEventListener('click', () => { if (!akhir) tutup(true); });
+  wkt = setTimeout(habis, 20000);
   try { btn.focus(); } catch (e) {}
   ucap();
 }
@@ -2771,10 +2792,7 @@ function gambarGaris() {
     const jeda = '-' + (performance.now() % 1100).toFixed(0) + 'ms', gap = hidup ? 18 : 16;
     buat('path', { d, fill: 'none', stroke: hl, 'stroke-width': lebar * 2 + 3.4, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 ' + gap, class: 'titik-jalan', style: 'animation-delay:' + jeda + ';--gap:' + gap, opacity: op * .85 });
     buat('path', { d, fill: 'none', stroke: wr, 'stroke-width': lebar * 2 + .4, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 ' + gap, class: 'titik-jalan', style: 'animation-delay:' + jeda + ';--gap:' + gap, opacity: op });
-    if (tb) {   // cincin di sekeliling titik tujuan
-      buat('circle', { cx: q.x, cy: q.y, r: 12.5 + lebar / 2, fill: 'none', stroke: hl, 'stroke-width': lebar + 2.4, opacity: op * .85 });
-      buat('circle', { cx: q.x, cy: q.y, r: 12.5 + lebar / 2, fill: 'none', stroke: wr, 'stroke-width': lebar, opacity: op });
-    } else {
+    if (!tb) {   // kartu tanpa titik sambungan (polling): penanda kecil di tepinya
       buat('circle', { cx: q.x, cy: q.y, r: lebar + 2.6, fill: hl, opacity: op });
       buat('circle', { cx: q.x, cy: q.y, r: lebar + .8, fill: wr, opacity: op });
     }

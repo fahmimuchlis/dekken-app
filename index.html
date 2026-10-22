@@ -1992,7 +1992,7 @@ function gerbangNetra() {
   if (sudah || document.getElementById('gerbang')) return;
   let usai = false, wkt = null, ulang = null;
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Pilih tampilan' });
-  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': 'If you have a visual impairment, enter reading mode and listen, by clicking the yellow area. This accommodation will disappear after a long beep.' });
+  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': 'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.' });
   const ket = h('p', { class: 'gerbang-ket', 'aria-hidden': 'true' }, 'Mode papan akan otomatis aktif bila mengabaikan perintah audio ini.');
   ov.append(btn, ket);
   try {   // judul Dekken tetap tampak di tempat semula (putih di atas latar hitam)
@@ -2005,18 +2005,18 @@ function gerbangNetra() {
     }
   } catch (e) {}
   document.body.append(ov);
-  // kalimat Inggris, diulang terus (dengan jeda) sampai waktu habis (bip panjang) atau dipilih
-  const KATA = 'If you have a visual impairment, enter reading mode and listen, by clicking the yellow area. This accommodation will disappear after a long beep.';
+  // kalimat Inggris saja, diulang dengan jeda sampai waktu habis (bip panjang) atau dipilih
+  const EN = 'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.';
   const ucap = () => {
     if (usai) return;
     try {
       if (!(window.speechSynthesis && window.SpeechSynthesisUtterance)) { ulang = setTimeout(ucap, 5000); return; }
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(KATA); u.lang = 'en-US'; u.rate = .95;
-      let lanjut = false; const nanti = () => { if (lanjut || usai) return; lanjut = true; ulang = setTimeout(ucap, 1800); };
+      const u = new SpeechSynthesisUtterance(EN); u.lang = 'en-US'; u.rate = .95;
+      let lanjut = false; const nanti = () => { if (lanjut || usai) return; lanjut = true; ulang = setTimeout(ucap, 2500); };
       u.onend = nanti; u.onerror = nanti;
       speechSynthesis.speak(u);
-      setTimeout(nanti, 9000);   // jaga-jaga bila onend tak pernah terpanggil
+      setTimeout(nanti, 15000);   // jaga-jaga bila onend tak pernah terpanggil
     } catch (e) { ulang = setTimeout(ucap, 5000); }
   };
   const tutup = masuk => {

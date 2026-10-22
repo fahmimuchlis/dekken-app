@@ -1769,6 +1769,7 @@ function bacaLanjut(token) {
   if (token !== bacaToken) return;
   const x = bacaAntri.shift();
   if (!x) { bacaGrup = ''; bacaSegarkan(); return; }
+  if (x.jeda) { setTimeout(() => bacaLanjut(token), x.jeda); return; }   // jeda hening antar kata
   const u = new SpeechSynthesisUtterance(x.teks); bacaUtt = u;
   u.lang = 'id-ID'; u.rate = bacaLaju; const v = suaraId(); if (v) u.voice = v;
   u.onend = () => { if (token === bacaToken && x.lalu) x.lalu(); bacaLanjut(token); };
@@ -2034,7 +2035,7 @@ function gerbangNetra() {
     if (masuk) {
       if (window.setTemaNetra) setTemaNetra();
       if (!bacaAktif) aturBaca(true);
-      bicara(PANDUAN_MASUK());
+      bicaraDaftar(PANDUAN_MASUK());
     }
   };
   // waktu habis: kalimat yang sedang diucapkan diselesaikan dulu, lalu bip panjang, baru masuk tampilan normal
@@ -2057,12 +2058,20 @@ function gerbangNetra() {
   ucap();
 }
 function PANDUAN_MASUK() {
-  return 'Mode baca aktif. ' + (SR
-    ? 'Untuk memberi perintah, tekan spasi dan Z bersamaan, tunggu bunyi bip, lalu ucapkan satu perintah. Contoh perintah: berikutnya, sebelumnya, baca, baca semua, naikkan, turunkan, balas, kartu baru, ruang nomor satu, dan papan utama. Ucapkan bantuan untuk daftar lengkap. Untuk berhenti bicara, ucapkan berhenti. Bisa juga memakai tombol Tab dan Enter.'
-    : 'Browser ini tidak mendukung perintah suara. Gunakan tombol Tab untuk berpindah, dan Enter untuk memilih. Gunakan Chrome untuk perintah suara.');
+  if (!SR) return [{ teks: 'Mode baca aktif. Browser ini tidak mendukung perintah suara. Gunakan tombol Tab untuk berpindah, dan Enter untuk memilih. Gunakan Chrome untuk perintah suara.' }];
+  return [{ teks: 'Mode baca aktif. Untuk memberi perintah, tekan spasi dan Z bersamaan, tunggu bunyi bip, lalu ucapkan satu perintah.' }, { jeda: JEDA_GRUP }]
+    .concat(daftarKata([['Contoh perintah.', ['berikutnya', 'sebelumnya', 'baca', 'baca semua', 'naikkan', 'turunkan', 'balas', 'kartu baru', 'ruang nomor satu', 'papan utama']]]))
+    .concat([{ jeda: JEDA_GRUP }, { teks: 'Ucapkan bantuan untuk daftar lengkap. Untuk berhenti bicara, ucapkan berhenti. Bisa juga memakai tombol Tab dan Enter.' }]);
 }
 
 /* ---- Mode Suara: perintah lisan tekan-untuk-bicara, di dalam Mode Baca ---- */
+const BANTUAN_ITEMS = () => daftarKata([
+  ['Berpindah kartu.', ['berikutnya', 'sebelumnya', 'pertama', 'terakhir', 'kartu nomor, lalu sebut angkanya', 'balasan nomor, lalu sebut angkanya']],
+  ['Membaca.', ['baca', 'baca semua', 'berhenti']],
+  ['Tindakan.', ['naikkan', 'turunkan', 'pilih nomor, untuk polling', 'balas', 'kartu baru', 'ruang nomor, lalu sebut angkanya', 'papan utama']],
+  ['Kecepatan suara.', ['lebih cepat', 'lebih lambat', 'normal']],
+  ['Saat menulis.', ['kirim', 'ulangi', 'tambah', 'baca', 'batal']]
+]).concat([{ jeda: JEDA_GRUP }, { teks: 'Menghapus kartu hanya lewat tombol di layar.' }]);
 const BANTUAN_SUARA = 'Perintah: berikutnya, sebelumnya, kartu berikutnya, kartu sebelumnya, pertama, terakhir, kartu nomor, balasan nomor, baca, baca semua, berhenti, naikkan, turunkan, pilih nomor, balas, kartu baru, ruang nomor, papan utama, lebih cepat, lebih lambat, normal. Saat menulis: kirim, ulangi, tambah, baca, batal. Menghapus kartu hanya lewat tombol di layar.';
 const ANGKA_KATA = [['sembilan belas', 19], ['delapan belas', 18], ['tujuh belas', 17], ['enam belas', 16], ['lima belas', 15], ['empat belas', 14], ['tiga belas', 13], ['dua belas', 12], ['sebelas', 11], ['dua puluh', 20], ['sepuluh', 10], ['sembilan', 9], ['delapan', 8], ['tujuh', 7], ['enam', 6], ['lima', 5], ['empat', 4], ['tiga', 3], ['dua', 2], ['satu', 1]];
 function normSuara(t) {
@@ -2077,6 +2086,21 @@ function bip(f, d) {
 function bicara(teks, lalu) {
   if (!TTS) { toast(teks); return; }
   bacaDaftar([{ teks: String(teks || '').replace(/[✓✔]/g, ''), lalu }], 'suara');
+}
+// daftar kata dengan jeda hening di antaranya (agar pendengar tunanetra sempat mencerna tiap kata)
+const JEDA_KATA = 800, JEDA_GRUP = 1400;
+function daftarKata(grup) {   // grup: [[judul, [kata...]], ...]
+  const out = [];
+  grup.forEach(([judul, kata], gi) => {
+    if (gi) out.push({ jeda: JEDA_GRUP });
+    out.push({ teks: judul }, { jeda: JEDA_KATA });
+    kata.forEach((k, i) => { out.push({ teks: k }); if (i < kata.length - 1) out.push({ jeda: JEDA_KATA }); });
+  });
+  return out;
+}
+function bicaraDaftar(items) {
+  if (!TTS) { toast('Perangkat ini tidak mendukung pembacaan suara.'); return; }
+  bacaDaftar(items, 'suara');
 }
 function svStatus(t) {
   if (t !== undefined) sv.status = t;
@@ -2207,7 +2231,7 @@ async function svJalankan(alts) {
   const x = daftar[i] || null;
   let m;
   const balasanDari = k => daftar.filter(y => !y.utama && y.parent.id === k.id).map(y => y.p);
-  if (cocok(/^(bantuan|perintah|daftar perintah|tolong|help)$/)) { bicara(BANTUAN_SUARA); return; }
+  if (cocok(/^(bantuan|perintah|daftar perintah|tolong|help)$/)) { bicaraDaftar(BANTUAN_ITEMS()); return; }
   if (cocok(/^(berhenti|diam|stop|cukup)$/)) { berhentiBaca(); return; }
   if (cocok(/^(baca semua|bacakan semua|baca semua kartu)$/)) {
     const utama = daftar.filter(y => y.utama);

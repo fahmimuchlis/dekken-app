@@ -546,6 +546,7 @@
   #gerbang { position:fixed; inset:0; z-index:100000; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3vmin; padding:2vmin; }
   #gerbang-btn { width:min(80vw,68vh); height:min(80vw,68vh); border-radius:50%; border:0; padding:0; cursor:pointer; background:#ffd400; animation:gerbangDetak 1.2s ease-in-out infinite; }
   #gerbang-btn:focus { outline:none; }
+  #gerbang .gerbang-ket { color:#fff; margin:0; text-align:center; text-transform:uppercase; font:500 16px/1.4 system-ui,sans-serif; max-width:34em; }
   @keyframes gerbangDetak { 0%{transform:scale(1)} 14%{transform:scale(1.1)} 28%{transform:scale(1)} 42%{transform:scale(1.07)} 70%,100%{transform:scale(1)} }
   @media (prefers-reduced-motion: reduce) { #gerbang-btn { animation:none; } }
 </style>
@@ -1932,22 +1933,32 @@ function aturBaca(on) {
 function gerbangNetra() {
   let sudah = false; try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
   if (sudah || document.getElementById('gerbang')) return;
-    let usai = false, wkt = null, ulang = null;
+  let usai = false, wkt = null, ulang = null;
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Pilih tampilan' });
-  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': 'If you are visually impaired, click this yellow circle or press enter.' });
-  ov.append(btn); document.body.append(ov);
-  // bip -> kalimat Inggris, diulang terus (dengan jeda) sampai lingkaran habis atau dipilih
-  const KATA = 'If you are visually impaired, click this yellow circle or press enter.';
+  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': 'If you have a visual impairment, enter reading mode and listen, by clicking the yellow area. This accommodation will disappear after a long beep.' });
+  const ket = h('p', { class: 'gerbang-ket', 'aria-hidden': 'true' }, 'Mode papan akan otomatis aktif bila mengabaikan perintah audio ini.');
+  ov.append(btn, ket);
+  try {   // judul Dekken tetap tampak di tempat semula (putih di atas latar hitam)
+    const asli = document.querySelector('header h1');
+    if (asli) {
+      const r = asli.getBoundingClientRect(), c = asli.cloneNode(true), cs = getComputedStyle(asli);
+      c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(x => x.remove()); c.setAttribute('aria-hidden', 'true'); c.className = 'gerbang-judul';
+      c.style.cssText = 'position:absolute;left:' + r.left + 'px;top:' + r.top + 'px;margin:0;color:#fff;font:' + cs.font + ';letter-spacing:' + cs.letterSpacing + ';';
+      ov.append(c);
+    }
+  } catch (e) {}
+  document.body.append(ov);
+  // kalimat Inggris, diulang terus (dengan jeda) sampai waktu habis (bip panjang) atau dipilih
+  const KATA = 'If you have a visual impairment, enter reading mode and listen, by clicking the yellow area. This accommodation will disappear after a long beep.';
   const ucap = () => {
     if (usai) return;
     try {
-      bip(880, .15);
       if (!(window.speechSynthesis && window.SpeechSynthesisUtterance)) { ulang = setTimeout(ucap, 5000); return; }
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(KATA); u.lang = 'en-US'; u.rate = .95;
       let lanjut = false; const nanti = () => { if (lanjut || usai) return; lanjut = true; ulang = setTimeout(ucap, 1800); };
       u.onend = nanti; u.onerror = nanti;
-      setTimeout(() => { if (!usai) speechSynthesis.speak(u); }, 250);
+      speechSynthesis.speak(u);
       setTimeout(nanti, 9000);   // jaga-jaga bila onend tak pernah terpanggil
     } catch (e) { ulang = setTimeout(ucap, 5000); }
   };
@@ -1955,6 +1966,7 @@ function gerbangNetra() {
     if (usai) return; usai = true; clearTimeout(wkt); clearTimeout(ulang);
     try { speechSynthesis.cancel(); } catch (e) {}
     ov.remove();
+    if (!masuk) bip(520, 1.2);   // bip panjang: akomodasi ini selesai, mode papan aktif
     if (masuk) {
       if (window.setTemaNetra) setTemaNetra();
       if (!bacaAktif) aturBaca(true);

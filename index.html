@@ -567,6 +567,12 @@
   #garis .titik-jalan { animation:titikJalan 1.1s linear infinite; }
   @keyframes titikJalan { to { stroke-dashoffset:calc(var(--gap) * -1.0px - 0.1px); } }
   @media (prefers-reduced-motion: reduce) { #garis .titik-jalan { animation:none; } }
+  #intro { position:fixed; inset:0; z-index:100001; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  #intro-skip { position:absolute; top:14px; right:14px; font:600 15px system-ui,sans-serif; color:#fff; background:transparent; border:2px solid #fff; padding:8px 14px; cursor:pointer; }
+  #intro-skip:focus-visible { outline:3px solid #ffff00; outline-offset:3px; }
+  .intro-isi { text-align:center; }
+  .intro-nama { font:800 clamp(48px,12vw,120px)/1.1 system-ui,sans-serif; letter-spacing:.02em; }
+  .intro-tag { margin-top:18px; font:500 clamp(18px,3.4vw,32px)/1.3 system-ui,sans-serif; color:#ffff00; }
 </style>
 </head>
 <body>
@@ -1990,6 +1996,47 @@ function aturBaca(on) {
   if (bacaAktif) { document.documentElement.classList.add('mode-baca'); tb.setAttribute('aria-pressed', 'true'); tb.textContent = '☰ Papan'; }
 })();
 
+/* ---- Intro suara: sambutan singkat sebelum memulai; bisa langsung ditutup (klik, ketuk, Esc, Enter, Spasi, atau tombol Skip) ---- */
+function introDekken(lanjut) {
+  let sudah = false, lihat = false;
+  try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
+  try { lihat = sessionStorage.getItem('deck-intro') === '1'; } catch (e) {}
+  if (sudah || lihat || document.getElementById('intro')) { lanjut(); return; }
+  try { sessionStorage.setItem('deck-intro', '1'); } catch (e) {}
+  let usai = false, wkt = null;
+  const skip = h('button', { type: 'button', id: 'intro-skip', 'aria-label': 'Skip intro' }, 'Skip \u2715');
+  const ov = h('div', { id: 'intro', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Welcome to Dekken. Press Escape, Enter, or Space to skip.' },
+    skip,
+    h('div', { class: 'intro-isi', 'aria-hidden': 'true' },
+      h('div', { class: 'intro-nama' }, ...[...'Dekken'].map((c, i) => h('span', { style: 'font-size:' + [1.3333, 1.2667, 1.2, 1.1333, 1.0667, 1][i] + 'em' }, c))),
+      h('div', { class: 'intro-tag' }, 'Tumpuk, balas, dan naikkan!')));
+  document.body.append(ov);
+  const tutup = () => {
+    if (usai) return; usai = true; clearTimeout(wkt);
+    document.removeEventListener('keydown', tombol, true);
+    try { speechSynthesis.cancel(); } catch (e) {}
+    ov.remove(); lanjut();
+  };
+  const tombol = e => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); tutup(); } };
+  document.addEventListener('keydown', tombol, true);
+  ov.addEventListener('click', tutup);
+  try { skip.focus(); } catch (e) {}
+  const KALIMAT = ['Welcome to Dekken. A collaborative discussion platform designed to structure thought and meaningful dialogue.', 'Stack, Reply, Rise.'];
+  let adaTTS = false;
+  try { adaTTS = !!(window.speechSynthesis && window.SpeechSynthesisUtterance); } catch (e) {}
+  if (!adaTTS) { wkt = setTimeout(tutup, 5000); return; }
+  const ucap = i => {
+    if (usai) return;
+    if (i >= KALIMAT.length) { wkt = setTimeout(tutup, 900); return; }
+    const u = new SpeechSynthesisUtterance(KALIMAT[i]); u.lang = 'en-US'; u.rate = 1;
+    const maju = () => { if (usai) return; wkt = setTimeout(() => ucap(i + 1), 450); };
+    u.onend = maju; u.onerror = maju;
+    try { if (i === 0) speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { maju(); }
+  };
+  wkt = setTimeout(tutup, 25000);   // jaga-jaga bila suara tak pernah selesai
+  ucap(0);
+}
+
 /* ---- Gerbang Mode Netra: lingkaran kuning saat aplikasi dibuka; 20 detik tanpa klik = tampilan normal ---- */
 function gerbangNetra() {
   let sudah = false; try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
@@ -3210,7 +3257,7 @@ function petaMulai() {
     b.append(h('div', {}, 'Pustaka Supabase gagal dimuat. Periksa koneksi lalu muat ulang halaman.'));
   }
   renderAlat(); render(); muat();
-  gerbangNetra();
+  introDekken(gerbangNetra);
   tickTimer(); setInterval(tickTimer, 1000);
   setInterval(() => { const el = document.getElementById('timer'); if (el) el.textContent = '[' + teksReset(sisaReset(waktuServer())) + ']'; }, 250);   // angka detik tidak melompat
   titikMulai(); tautMulai(); statMulai(); petaMulai();

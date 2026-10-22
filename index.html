@@ -2763,7 +2763,7 @@ function gambarGaris() {
   garisData.forEach(([a, b]) => {
     const ka = elKartu(a), kb = elKartu(b);
     const ta = ka && ka.querySelector('.tt'); if (!ta || !kb || ka === kb) return;
-    const p = titikPusat(ta), q = titikTepi(kb, p);
+    const tb = kb.querySelector('.tt'), p = titikPusat(ta), q = tb ? titikPusat(tb) : titikTepi(kb, p);   // ujung garis tepat di titik sambungan kartu tujuan (kartu tanpa titik: di tepinya)
     const hidup = sorot === a || sorot === b, redup = sorot && !hidup;
     const d = lengkung(p, q), lebar = hidup ? 3.6 : 2.2, op = redup ? .22 : 1;
     const milik = milikSaya.has(a), wr = milik ? (warnaPost[a] || KUNING_GARIS) : tinta, hl = milik ? (gelap ? '#000' : '#222') : halo;   // sambunganmu berwarna kartu asalnya
@@ -2771,8 +2771,13 @@ function gambarGaris() {
     const jeda = '-' + (performance.now() % 1100).toFixed(0) + 'ms', gap = hidup ? 18 : 16;
     buat('path', { d, fill: 'none', stroke: hl, 'stroke-width': lebar * 2 + 3.4, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 ' + gap, class: 'titik-jalan', style: 'animation-delay:' + jeda + ';--gap:' + gap, opacity: op * .85 });
     buat('path', { d, fill: 'none', stroke: wr, 'stroke-width': lebar * 2 + .4, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 ' + gap, class: 'titik-jalan', style: 'animation-delay:' + jeda + ';--gap:' + gap, opacity: op });
-    buat('circle', { cx: q.x, cy: q.y, r: lebar + 2.6, fill: hl, opacity: op });
-    buat('circle', { cx: q.x, cy: q.y, r: lebar + .8, fill: wr, opacity: op });
+    if (tb) {   // cincin di sekeliling titik tujuan
+      buat('circle', { cx: q.x, cy: q.y, r: 12.5 + lebar / 2, fill: 'none', stroke: hl, 'stroke-width': lebar + 2.4, opacity: op * .85 });
+      buat('circle', { cx: q.x, cy: q.y, r: 12.5 + lebar / 2, fill: 'none', stroke: wr, 'stroke-width': lebar, opacity: op });
+    } else {
+      buat('circle', { cx: q.x, cy: q.y, r: lebar + 2.6, fill: hl, opacity: op });
+      buat('circle', { cx: q.x, cy: q.y, r: lebar + .8, fill: wr, opacity: op });
+    }
   });
   if (seret && seret.mode === 'tarik' && seret.gerak) {   // garis sementara saat menyeret
     const kel = elKartu(seret.id), ka = kel && kel.querySelector('.tt');

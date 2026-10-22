@@ -218,7 +218,7 @@
   .tt.milik { opacity:1; cursor:crosshair; touch-action:none; }
   .tt.aktif { background:#222; }
   .tt.aktif::after { background:#fff; }
-  article.kartu.sasaran { outline:3px dashed #222; outline-offset:5px; }
+  article.kartu.sasaran, .balas.sasaran { outline:3px dashed #222; outline-offset:5px; }
   #garis { position:absolute; left:0; top:0; z-index:6; pointer-events:none; overflow:visible; }
   .terhubung { display:none; flex-wrap:wrap; gap:4px 8px; font-size:12px; margin-top:8px; }
   .terhubung button { font:inherit; background:none; border:none; border-bottom:1px solid currentColor; padding:0; cursor:pointer; color:inherit; }
@@ -292,12 +292,12 @@
   #banner div { border:2px dashed var(--h); padding:10px 14px; margin:8px 0; }
 
   /* ===== gaya tombol ala "Sign in with Google": sudut 4px, garis tepi 1px abu ===== */
-  header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-foto, header #btn-rapi, header #urut {
+  header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-purge, header #btn-foto, header #btn-rapi, header #urut {
     height:40px; box-sizing:border-box; border:1px solid #dadce0 !important; border-radius:4px !important; background:#fff !important; color:#3c4043 !important;
     font:500 14px/1 "Google Sans", Roboto, Arial, sans-serif !important; letter-spacing:.2px; padding:0 14px !important; min-width:40px !important;
     display:inline-flex; align-items:center; justify-content:center; text-decoration:none; transition:background .15s, box-shadow .15s; }
   header .kanan select, header #urut { padding:0 10px !important; }
-  header #btn-tema, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-foto, header #btn-help { width:40px; padding:0 !important; }
+  header #btn-tema, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-purge, header #btn-foto, header #btn-help { width:40px; padding:0 !important; }
   header .kanan .btn:hover:not(:disabled), header .kanan select:hover { background:#f8f9fa !important; box-shadow:0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); }
   header #btn-akun { max-width:160px; display:inline-block; line-height:38px; }
   header #btn-suara.mati { opacity:.55; }
@@ -314,10 +314,10 @@
   :root[data-tema="gelap"] #menu-tema button:hover, :root[data-tema="gelap"] #menu-akun button:hover, :root[data-tema="gelap"] #menu-ruang button:hover { background:#1f1f1f !important; }
   :root[data-tema="gelap"] #menu-tema button.aktif, :root[data-tema="gelap"] #menu-ruang button.aktif { background:#1f3a5f !important; color:#8ab4f8 !important; }
 
-  :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #btn-akun, :root[data-tema="gelap"] header #btn-tema, :root[data-tema="gelap"] header #btn-help, :root[data-tema="gelap"] header #btn-suara, :root[data-tema="gelap"] header #btn-ruang, :root[data-tema="gelap"] header #btn-baca, :root[data-tema="gelap"] header #btn-foto, :root[data-tema="gelap"] header #btn-rapi, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
-  :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover:not(:disabled), :root[data-tema="gelap"] header #btn-akun:hover:not(:disabled), :root[data-tema="gelap"] header #btn-tema:hover:not(:disabled), :root[data-tema="gelap"] header #btn-help:hover:not(:disabled), :root[data-tema="gelap"] header #btn-suara:hover:not(:disabled), :root[data-tema="gelap"] header #btn-ruang:hover:not(:disabled), :root[data-tema="gelap"] header #btn-baca:hover:not(:disabled), :root[data-tema="gelap"] header #btn-foto:hover:not(:disabled), :root[data-tema="gelap"] header #btn-rapi:hover:not(:disabled), :root[data-tema="gelap"] header #urut:hover:not(:disabled) { background:#1f1f1f !important; box-shadow:none; }
-  :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #btn-akun, :root[data-mono="1"][data-tema="terang"] header #btn-tema, :root[data-mono="1"][data-tema="terang"] header #btn-help, :root[data-mono="1"][data-tema="terang"] header #btn-suara, :root[data-mono="1"][data-tema="terang"] header #btn-ruang, :root[data-mono="1"][data-tema="terang"] header #btn-baca, :root[data-mono="1"][data-tema="terang"] header #btn-foto, :root[data-mono="1"][data-tema="terang"] header #btn-rapi, :root[data-mono="1"][data-tema="terang"] header #urut { border-color:#000 !important; color:#000 !important; background:#fff !important; }
-  :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #btn-akun, :root[data-mono="1"][data-tema="gelap"] header #btn-tema, :root[data-mono="1"][data-tema="gelap"] header #btn-help, :root[data-mono="1"][data-tema="gelap"] header #btn-suara, :root[data-mono="1"][data-tema="gelap"] header #btn-ruang, :root[data-mono="1"][data-tema="gelap"] header #btn-baca, :root[data-mono="1"][data-tema="gelap"] header #btn-foto, :root[data-mono="1"][data-tema="gelap"] header #btn-rapi, :root[data-mono="1"][data-tema="gelap"] header #urut { border-color:#fff !important; color:#fff !important; background:#000 !important; }
+  :root[data-tema="gelap"] header .kanan .btn, :root[data-tema="gelap"] header .kanan select, :root[data-tema="gelap"] header #btn-akun, :root[data-tema="gelap"] header #btn-tema, :root[data-tema="gelap"] header #btn-help, :root[data-tema="gelap"] header #btn-suara, :root[data-tema="gelap"] header #btn-ruang, :root[data-tema="gelap"] header #btn-baca, :root[data-tema="gelap"] header #btn-purge, :root[data-tema="gelap"] header #btn-foto, :root[data-tema="gelap"] header #btn-rapi, :root[data-tema="gelap"] header #urut { background:#131314 !important; border-color:#5f6368 !important; color:#e3e3e3 !important; }
+  :root[data-tema="gelap"] header .kanan .btn:hover:not(:disabled), :root[data-tema="gelap"] header .kanan select:hover:not(:disabled), :root[data-tema="gelap"] header #btn-akun:hover:not(:disabled), :root[data-tema="gelap"] header #btn-tema:hover:not(:disabled), :root[data-tema="gelap"] header #btn-help:hover:not(:disabled), :root[data-tema="gelap"] header #btn-suara:hover:not(:disabled), :root[data-tema="gelap"] header #btn-ruang:hover:not(:disabled), :root[data-tema="gelap"] header #btn-baca:hover:not(:disabled), :root[data-tema="gelap"] header #btn-purge:hover:not(:disabled), :root[data-tema="gelap"] header #btn-foto:hover:not(:disabled), :root[data-tema="gelap"] header #btn-rapi:hover:not(:disabled), :root[data-tema="gelap"] header #urut:hover:not(:disabled) { background:#1f1f1f !important; box-shadow:none; }
+  :root[data-mono="1"][data-tema="terang"] header .kanan .btn, :root[data-mono="1"][data-tema="terang"] header .kanan select, :root[data-mono="1"][data-tema="terang"] header #btn-akun, :root[data-mono="1"][data-tema="terang"] header #btn-tema, :root[data-mono="1"][data-tema="terang"] header #btn-help, :root[data-mono="1"][data-tema="terang"] header #btn-suara, :root[data-mono="1"][data-tema="terang"] header #btn-ruang, :root[data-mono="1"][data-tema="terang"] header #btn-baca, :root[data-mono="1"][data-tema="terang"] header #btn-purge, :root[data-mono="1"][data-tema="terang"] header #btn-foto, :root[data-mono="1"][data-tema="terang"] header #btn-rapi, :root[data-mono="1"][data-tema="terang"] header #urut { border-color:#000 !important; color:#000 !important; background:#fff !important; }
+  :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #btn-akun, :root[data-mono="1"][data-tema="gelap"] header #btn-tema, :root[data-mono="1"][data-tema="gelap"] header #btn-help, :root[data-mono="1"][data-tema="gelap"] header #btn-suara, :root[data-mono="1"][data-tema="gelap"] header #btn-ruang, :root[data-mono="1"][data-tema="gelap"] header #btn-baca, :root[data-mono="1"][data-tema="gelap"] header #btn-purge, :root[data-mono="1"][data-tema="gelap"] header #btn-foto, :root[data-mono="1"][data-tema="gelap"] header #btn-rapi, :root[data-mono="1"][data-tema="gelap"] header #urut { border-color:#fff !important; color:#fff !important; background:#000 !important; }
   /* kotak Statistik */
   #statistik { background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font-family:"Google Sans", Roboto, Arial, sans-serif; }
   #stat-judul { background:transparent; color:#3c4043; font-weight:500; padding:10px 12px; }
@@ -338,7 +338,7 @@
   :root[data-mono="1"][data-tema="terang"] #menu-tema, :root[data-mono="1"][data-tema="terang"] #menu-akun, :root[data-mono="1"][data-tema="terang"] #menu-ruang, :root[data-mono="1"][data-tema="terang"] #statistik { border-color:#000 !important; color:#000 !important; }
   :root[data-mono="1"][data-tema="gelap"] header .kanan .btn, :root[data-mono="1"][data-tema="gelap"] header .kanan select, :root[data-mono="1"][data-tema="gelap"] header #urut,
   :root[data-mono="1"][data-tema="gelap"] #menu-tema, :root[data-mono="1"][data-tema="gelap"] #menu-akun, :root[data-mono="1"][data-tema="gelap"] #menu-ruang, :root[data-mono="1"][data-tema="gelap"] #statistik { border-color:#fff !important; color:#fff !important; }
-  @media (max-width:640px) { header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-foto, header #btn-rapi, header #urut { height:34px; font-size:12px !important; padding:0 8px !important; min-width:34px !important; } header #btn-akun { line-height:32px; } header .kanan { gap:5px; } }
+  @media (max-width:640px) { header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-purge, header #btn-foto, header #btn-rapi, header #urut { height:34px; font-size:12px !important; padding:0 8px !important; min-width:34px !important; } header #btn-akun { line-height:32px; } header .kanan { gap:5px; } }
 
   /* ===== Peta kartu (minimap) ===== */
   #peta { position:fixed; left:12px; bottom:12px; z-index:26; width:208px; background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font:14px "Google Sans", Roboto, Arial, sans-serif; --pm-dim:rgba(255,255,255,.62); }
@@ -492,7 +492,7 @@
   :root[data-tema="gelap"] #menu-ruang .jdl { color:#9aa0a6 !important; }
   :root[data-mono="1"][data-tema="terang"] #menu-ruang .jdl { color:#000 !important; }
   :root[data-mono="1"][data-tema="gelap"] #menu-ruang .jdl { color:#fff !important; }
-  header #btn-ruang, header #btn-baca { width:auto !important; padding:0 12px !important; }
+  header #btn-ruang, header #btn-baca, header #btn-purge { width:auto !important; padding:0 12px !important; }
   #menu-ruang .kosong { padding:8px 10px; font-size:13px; opacity:.7; }
   @media (max-width:640px) { #btn-ruang .t { max-width:84px; } #menu-ruang { position:fixed; left:12px; right:12px; top:56px; width:auto; } }
 
@@ -549,6 +549,21 @@
   #gerbang .gerbang-ket { color:#fff; margin:0; text-align:center; text-transform:uppercase; font:500 16px/1.4 system-ui,sans-serif; max-width:34em; }
   @keyframes gerbangDetak { 0%{transform:scale(1)} 14%{transform:scale(1.1)} 28%{transform:scale(1)} 42%{transform:scale(1.07)} 70%,100%{transform:scale(1)} }
   @media (prefers-reduced-motion: reduce) { #gerbang-btn { animation:none; } }
+  #btn-purge { border:2px solid var(--h); font-size:18px; line-height:1; }
+  #btn-purge[hidden] { display:none !important; }
+  #purge-ov { position:fixed; inset:0; z-index:99990; background:rgba(200,0,0,.5); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .purge-kotak { background:#fff; color:#000; border:3px solid #7a0000; max-width:460px; width:100%; padding:20px; box-shadow:0 8px 40px rgba(0,0,0,.5); }
+  .purge-kotak h2 { margin:0 0 8px; font-size:20px; color:#a00000; }
+  .purge-kotak p { margin:0 0 12px; font-size:15px; line-height:1.45; }
+  .purge-kotak input { width:100%; box-sizing:border-box; font:inherit; font-size:20px; padding:10px; border:2px solid #000; background:#fff; color:#000; text-align:center; letter-spacing:.08em; }
+  .purge-kotak input:focus-visible, .purge-kotak .btn:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+  .purge-aksi { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; }
+  .purge-aksi .btn { font-size:16px; padding:8px 16px; min-height:40px; border:2px solid #000; background:#fff; color:#000; cursor:pointer; }
+  .purge-aksi .btn#purge-ya { background:#a00000; color:#fff; border-color:#a00000; font-weight:700; }
+  .purge-aksi .btn:disabled { opacity:.4; cursor:default; }
+  #garis .titik-jalan { animation:titikJalan 1.1s linear infinite; }
+  @keyframes titikJalan { to { stroke-dashoffset:calc(var(--gap) * -1.0px - 0.1px); } }
+  @media (prefers-reduced-motion: reduce) { #garis .titik-jalan { animation:none; } }
 </style>
 </head>
 <body>
@@ -558,7 +573,7 @@
   <div class="judul">
     <h1><b aria-label="Dekken"><span style="font-size:1.3333em">D</span><span style="font-size:1.2667em">e</span><span style="font-size:1.2em">k</span><span style="font-size:1.1333em">k</span><span style="font-size:1.0667em">e</span><span style="font-size:1em">n</span></b> : Tumpuk, balas, dan naikkan! <span id="timer" title="Sisa waktu tempel catatan sebelum papan di-reset"></span></h1>
   </div>
-  <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><span id="ruang-wrap" hidden><button type="button" id="btn-ruang" class="btn garis" aria-haspopup="true" aria-expanded="false" title="Pilih ruang (breakout)">▣ Ruang</button><div id="menu-ruang" role="menu" hidden></div></span><button type="button" id="btn-baca" class="btn garis" aria-pressed="false" title="Mode Baca: daftar kartu berurutan yang ramah pembaca layar">☰ Baca</button><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><div id="login"></div></div>
+  <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><span id="ruang-wrap" hidden><button type="button" id="btn-ruang" class="btn garis" aria-haspopup="true" aria-expanded="false" title="Pilih ruang (breakout)">▣ Ruang</button><div id="menu-ruang" role="menu" hidden></div></span><button type="button" id="btn-baca" class="btn garis" aria-pressed="false" title="Mode Baca: daftar kartu berurutan yang ramah pembaca layar">☰ Baca</button><button type="button" id="btn-purge" class="btn garis" hidden aria-label="Purge: hapus bersih semua kartu di semua ruang (khusus dosen)" title="Purge: hapus bersih semua kartu (khusus dosen)">🚽</button><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><div id="login"></div></div>
 </header>
 <aside id="statistik"><button type="button" id="stat-judul" aria-expanded="true"><span>Statistik</span><span id="stat-panah">▾</span></button><div id="stat-isi"></div></aside>
 <aside id="peta" hidden><button type="button" id="peta-judul" aria-expanded="true"><span>Peta kartu</span><span id="peta-panah">▾</span></button><div id="peta-isi"><div id="peta-kanvas" role="presentation" title="Klik atau seret untuk berpindah"><canvas></canvas><div id="peta-kotak"></div></div></div><div id="peta-zoom"><button type="button" id="pz-min" aria-label="Perkecil" title="Perkecil (Ctrl + gulir)">−</button><button type="button" id="pz-nilai" title="Kembali ke 100%">100%</button><button type="button" id="pz-plus" aria-label="Perbesar" title="Perbesar (Ctrl + gulir)">+</button></div></aside>
@@ -627,7 +642,7 @@ let balasKe = null;           // id balasan yang sedang dibalas (null = membalas
 let balasTerbuka = null;      // id post yang kartu balasnya sedang terbuka
 let milikSaya = new Set();    // id kartu yang dibuat akun ini (dari server)
 let ovTautan = {};            // sambungan yang baru diubah di sini (menutupi cache CSV sebentar)
-let petaTaut = {}, namaPost = {}, warnaPost = {};
+let petaTaut = {}, namaPost = {}, warnaPost = {}, indukPost = {};
 let seret = null;             // sedang membuat sambungan: { id, mode: 'tarik' | 'pilih', x, y, gerak }
 let sorot = null;             // id kartu yang sedang disorot kursor
 const MAKS_TAUTAN = 5;        // harus sama dengan MAKS_TAUTAN di Kode.gs
@@ -872,6 +887,7 @@ const RPC = {
   polling: i => ['buat_polling', { p: { username: i.username, tanya: i.tanya, opsi: i.opsi, menit: i.menit, ruang: ruangSaya } }],
   buatRuang: i => ['buat_ruang', { p: { awalan: i.awalan, jumlah: i.jumlah } }],
   tutupRuang: i => ['tutup_ruang', { p_id: i.id || null }],
+  purge: () => ['purge_semua', {}],
   post:    i => ['kirim', { p: { username: i.username, teks: i.teks, parent: i.parent || '', membalas: i.membalas || '', warna: i.warna, kartu: i.kartu, bentuk: i.bentuk, menit: i.menit, game: i.game ? 'true' : '', ruang: ruangSaya } }]
 };
 async function panggilInti(isi) {
@@ -1425,8 +1441,8 @@ function kartuBalasan(p, i, n, prev, setelahKompos) {
     if (balasTerbuka === p.parent && balasKe === p.id) { balasTerbuka = null; balasKe = null; }
     else { bukaDek(p.parent); balasTerbuka = p.parent; balasKe = p.id; }
     render(); gulirKompos();
-  }));
-  const el = h('div', { class: 'balas' + (lain ? ' kartu lain b-' + p.bentuk : '') }, isiKartu(p), balasBtn);
+  }), tersegel(p) ? null : titikTaut(p));
+  const el = h('div', { class: 'balas' + (lain ? ' kartu lain b-' + p.bentuk : '') }, isiKartu(p), labelTaut(p), balasBtn);
   el.dataset.pid = p.id;
   el.append(lapisStiker(p));
   // bentuk selain persegi punya sudut kosong, jadi digeser lebih ke samping agar tumpukan terlihat jelas
@@ -1610,7 +1626,48 @@ async function tutupRuangAksi(id) {
   catch (e) { toast(e.message); }
   renderRuang();
 }
+function renderPurge() {
+  const b = document.getElementById('btn-purge'); if (!b) return;
+  b.hidden = !dosenSaya;
+  if (!dosenSaya) tutupPurge();
+}
+function tutupPurge() { const o = document.getElementById('purge-ov'); if (o) { o.remove(); const b = document.getElementById('btn-purge'); if (b) b.focus(); } }
+function bukaPurge() {
+  if (!dosenSaya || document.getElementById('purge-ov')) return;
+  const inp = h('input', { type: 'text', id: 'purge-isi', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Ketik kata purge untuk mengonfirmasi', placeholder: 'purge' });
+  const ya = h('button', { type: 'button', class: 'btn', id: 'purge-ya', disabled: '' }, 'Hapus semua');
+  const batal = h('button', { type: 'button', class: 'btn', onclick: tutupPurge }, 'Batal');
+  const ok = () => inp.value.trim().toLowerCase() === 'purge';
+  const kirim = async () => {
+    if (!ok()) return;
+    ya.disabled = true; batal.disabled = true; inp.disabled = true;
+    try { const j = await panggil({ aksi: 'purge' }); await muat(); tutupPurge(); toast('Papan dibersihkan' + (j && j.dihapus != null ? ' · ' + j.dihapus + ' kartu diarsipkan' : '')); umumkan('Semua kartu sudah dihapus.'); }
+    catch (e) { toast(e.message); ya.disabled = !ok(); batal.disabled = false; inp.disabled = false; inp.focus(); }
+  };
+  inp.addEventListener('input', () => { ya.disabled = !ok(); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); kirim(); } });
+  ya.addEventListener('click', kirim);
+  const kotak = h('div', { class: 'purge-kotak', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'purge-j', 'aria-describedby': 'purge-d' },
+    h('h2', { id: 'purge-j' }, '🚽 Purge: hapus bersih semua'),
+    h('p', { id: 'purge-d' }, 'Semua kartu, balasan, polling, stiker, dan sambungan di papan utama dan semua ruang akan dihapus. Salinannya tersimpan di arsip. Ketik ', h('b', {}, 'purge'), ' untuk melanjutkan.'),
+    inp, h('div', { class: 'purge-aksi' }, batal, ya));
+  const ov = h('div', { id: 'purge-ov' }, kotak);
+  ov.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.stopPropagation(); tutupPurge(); return; }
+    if (e.key === 'Tab') {   // fokus tetap di dalam kotak
+      const f = [inp, batal, ya].filter(x => !x.disabled), i = f.indexOf(document.activeElement);
+      if (!f.length) return; e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
+  });
+  document.body.append(ov); inp.focus();
+  umumkan('Konfirmasi purge. Ketik kata purge lalu tekan Enter untuk menghapus semua kartu. Tekan Escape untuk membatal.');
+}
+function purgeMulai() {
+  const b = document.getElementById('btn-purge'); if (!b) return;
+  b.addEventListener('click', bukaPurge);
+}
 function renderRuang() {
+  renderPurge();
   const wrap = document.getElementById('ruang-wrap'), tb = document.getElementById('btn-ruang'), menu = document.getElementById('menu-ruang');
   if (!wrap || !tb || !menu) return;
   const tampak = dosenSaya || ruangData.length > 0;
@@ -2329,7 +2386,7 @@ function isiBantuan() {
     ...bagian('Menulis kartu', 'Masuk dengan akun Google. Bila akunmu belum terdaftar, muncul tombol Daftar di bawah layar: klik sekali saja, tanpa mengisi apa pun, dan emailmu otomatis tercatat. Administrator dapat memblokir akun yang janggal. Setelah terdaftar, pilih bentuk kartu di bilah bawah layar. Isi username (bebas, boleh nama samaran), tulis pesan, pilih warna teks dan warna kartu, lalu Kirim. Batas huruf tergantung bentuk: ' + batas + '. Pilihan warna teks menyesuaikan warna kartu agar tetap terbaca.'),
     ...bagian('Membalas dan tumpukan', 'Kartu yang punya balasan tampil sebagai tumpukan. Klik kartu utama untuk membuka atau menutup tumpukan. Klik tombol hitam berikon panah ↩ (Balas) di kartu utama untuk membalas postingan, atau di sebuah balasan untuk menanggapi balasan itu (muncul keterangan "membalas @nama"). Kotak tulis muncul tepat di bawah kartu yang dibalas.'),
     ...bagian('↑ dan ↓', 'Beri suara naik atau turun. Satu akun satu suara per kartu; klik lagi untuk membatalkan, atau klik arah sebaliknya untuk mengganti. Kartu diurutkan menurut skor (↑ dikurangi ↓), lalu yang terbaru.'),
-    ...bagian('Menyambungkan kartu', 'Setiap kartu utama punya satu titik bulat di kanan tombol Balas. Pembuat kartu bisa menyambungkan kartunya ke kartu lain dengan garis (titik di kartu orang lain tampak pudar). Di komputer: tekan titik lalu seret ke kartu tujuan, lepas di atas kartu itu. Di HP: ketuk titik, lalu ketuk kartu tujuan. Ketuk titik lagi atau tekan Esc untuk membatalkan. Satu kartu maksimal 5 sambungan; ulangi cara yang sama ke kartu yang sama untuk menghapusnya. Sambungan hanya untuk kartu utama. Arahkan kursor ke sebuah kartu untuk menebalkan garisnya. Di HP garis tidak digambar; sambungan tampil sebagai label "↔ @nama" di kartu, ketuk untuk melompat ke kartu itu. Warna garis: garis yang kamu buat berwarna sama dengan kartu asalnya (kuning, pink, biru, hijau, atau ungu) dengan tepi gelap tipis agar tetap terbaca, termasuk garis yang sedang kamu seret. Garis buatan orang lain berwarna putih di mode gelap dan hitam di mode terang.'),
+    ...bagian('Menyambungkan kartu', 'Setiap kartu utama dan setiap balasan punya satu titik bulat di kanan tombol Balas (balasan tampak setelah tumpukannya dibuka). Pembuat kartu bisa menyambungkan kartunya ke kartu lain dengan garis (titik di kartu orang lain tampak pudar). Di komputer: tekan titik lalu seret ke kartu tujuan, lepas di atas kartu itu. Di HP: ketuk titik, lalu ketuk kartu tujuan. Ketuk titik lagi atau tekan Esc untuk membatalkan. Satu kartu maksimal 5 sambungan; ulangi cara yang sama ke kartu yang sama untuk menghapusnya. Kartu utama dan balasan boleh saling menyambung, selama ada di ruang yang sama. Bila tumpukan balasan ditutup, garisnya menuju kartu utamanya. Arahkan kursor ke sebuah kartu untuk menebalkan garisnya. Di HP garis tidak digambar; sambungan tampil sebagai label "↔ @nama" di kartu, ketuk untuk melompat ke kartu itu. Warna garis: garis yang kamu buat berwarna sama dengan kartu asalnya (kuning, pink, biru, hijau, atau ungu) dengan tepi gelap tipis agar tetap terbaca, termasuk garis yang sedang kamu seret. Garis buatan orang lain berwarna putih di mode gelap dan hitam di mode terang.'),
     ...bagian('Menggeser dan zoom', 'Di mode Acak, papan selebar minimal 6 kolom (layar yang lebih lebar menampilkan lebih banyak kolom) dan dibuka dari tengah. Geser ke samping dengan menyeret latar kosong memakai mouse, Shift + gulir, atau dua jari di trackpad; di HP cukup geser dengan jari. Zoom lewat tombol − dan + di panel Peta kartu, atau Ctrl + gulir (cubit di trackpad), dari 40% sampai 160%; klik angka persennya untuk kembali ke 100%. Memperkecil zoom membantu melihat banyak kartu dan garis koneksi sekaligus. Mode Rapi selalu mengikuti lebar layar. Zoom tidak diingat saat halaman dimuat ulang.'),
     ...bagian('Peta kartu', 'Panel kecil di kiri bawah berisi miniatur seluruh papan (blok abu-abu), dengan kotak berbingkai yang menunjukkan area yang sedang tampak di layar. Klik atau seret di peta untuk berpindah. Klik judulnya untuk melipat panel. Panel hilang otomatis bila seluruh papan sudah muat di satu layar, dan tidak tampil di layar HP.'),
     ...bagian('Menghapus kartu', 'Pembuat kartu atau balasan melihat tombol hitam ✕ (Hapus) di sebelah kiri tombol Balas pada kartunya sendiri; dosen melihatnya di semua kartu, balasan, dan polling. Arahkan kursor ke tombol untuk melihat keterangannya. Klik ✕, lalu klik Ya untuk memastikan (Batal untuk membatalkan). Bila kartu utama dihapus, semua balasan di dalamnya, termasuk balasan orang lain, ikut terhapus, begitu pula suara, pilihan polling, dan garis sambungan ke kartu itu. Polling juga bisa dihapus oleh pembuatnya. Kartu bisa dihapus kapan saja. Kartu yang dihapus tidak bisa dikembalikan dari tampilan ini; salinannya disimpan pengelola di sheet Arsip.'),
@@ -2652,11 +2709,18 @@ function labelTaut(p) {
   if (!ids.length) return null;
   return h('div', { class: 'terhubung', onclick: e => e.stopPropagation() }, '↔',
     ids.map(id => h('button', { type: 'button', onclick: () => {
-      const el = document.querySelector('article.kartu[data-id="' + id + '"]');
+      const el = elKartu(id);
       if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
     } }, '@' + (namaPost[id] || ''))));
 }
-const kartuDi = (x, y) => { const e = document.elementFromPoint(x, y); return e && e.closest ? e.closest('article.kartu[data-id]') : null; };
+const SEL_KARTU = 'article.kartu[data-id], .balas[data-pid]';
+const idKartu = e => e ? (e.dataset.id || e.dataset.pid) : null;
+const kartuDi = (x, y) => { const e = document.elementFromPoint(x, y); return e && e.closest ? e.closest(SEL_KARTU) : null; };
+function elKartu(id) {   // elemen kartu di layar; balasan yang tumpukannya tertutup diwakili kartu induknya
+  let e = document.querySelector('article.kartu[data-id="' + id + '"]') || document.querySelector('.balas[data-pid="' + id + '"]');
+  if (!e && indukPost[id]) e = document.querySelector('article.kartu[data-id="' + indukPost[id] + '"]');
+  return e;
+}
 async function sambung(id, ke) {
   seret = null; gambarGaris();
   if (!butuhLogin()) return;
@@ -2697,19 +2761,21 @@ function gambarGaris() {
     return `M${p.x.toFixed(1)} ${p.y.toFixed(1)} Q${(mx - dy / len * bend).toFixed(1)} ${(my + dx / len * bend).toFixed(1)} ${q.x.toFixed(1)} ${q.y.toFixed(1)}`;
   };
   garisData.forEach(([a, b]) => {
-    const ka = document.querySelector('article.kartu[data-id="' + a + '"]'), kb = document.querySelector('article.kartu[data-id="' + b + '"]');
-    const ta = ka && ka.querySelector('.tt'); if (!ta || !kb) return;
+    const ka = elKartu(a), kb = elKartu(b);
+    const ta = ka && ka.querySelector('.tt'); if (!ta || !kb || ka === kb) return;
     const p = titikPusat(ta), q = titikTepi(kb, p);
     const hidup = sorot === a || sorot === b, redup = sorot && !hidup;
     const d = lengkung(p, q), lebar = hidup ? 3.6 : 2.2, op = redup ? .22 : 1;
     const milik = milikSaya.has(a), wr = milik ? (warnaPost[a] || KUNING_GARIS) : tinta, hl = milik ? (gelap ? '#000' : '#222') : halo;   // sambunganmu berwarna kartu asalnya
-    buat('path', { d, fill: 'none', stroke: hl, 'stroke-width': lebar + 3, 'stroke-linecap': 'round', opacity: op * .85 });
-    buat('path', { d, fill: 'none', stroke: wr, 'stroke-width': lebar, 'stroke-linecap': 'round', opacity: op });
+    // titik-titik yang berjalan dari kartu asal ke kartu tujuan (fase animasi dijaga agar tidak mengulang saat digambar ulang)
+    const jeda = '-' + (performance.now() % 1100).toFixed(0) + 'ms', gap = hidup ? 18 : 16;
+    buat('path', { d, fill: 'none', stroke: hl, 'stroke-width': lebar * 2 + 3.4, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 ' + gap, class: 'titik-jalan', style: 'animation-delay:' + jeda + ';--gap:' + gap, opacity: op * .85 });
+    buat('path', { d, fill: 'none', stroke: wr, 'stroke-width': lebar * 2 + .4, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 ' + gap, class: 'titik-jalan', style: 'animation-delay:' + jeda + ';--gap:' + gap, opacity: op });
     buat('circle', { cx: q.x, cy: q.y, r: lebar + 2.6, fill: hl, opacity: op });
     buat('circle', { cx: q.x, cy: q.y, r: lebar + .8, fill: wr, opacity: op });
   });
   if (seret && seret.mode === 'tarik' && seret.gerak) {   // garis sementara saat menyeret
-    const ka = document.querySelector('article.kartu[data-id="' + seret.id + '"] .tt');
+    const kel = elKartu(seret.id), ka = kel && kel.querySelector('.tt');
     if (ka) {
       const p = titikPusat(ka), q = { x: seret.x + scrollX, y: seret.y + scrollY };
       buat('path', { d: `M${p.x} ${p.y} L${q.x} ${q.y}`, fill: 'none', stroke: gelap ? '#000' : '#222', 'stroke-width': 5.2, 'stroke-linecap': 'round', opacity: .85 });
@@ -2718,7 +2784,7 @@ function gambarGaris() {
   }
 }
 function tandaiSasaran(kartu) {
-  document.querySelectorAll('article.kartu.sasaran').forEach(e => { if (e !== kartu) e.classList.remove('sasaran'); });
+  document.querySelectorAll('.sasaran').forEach(e => { if (e !== kartu) e.classList.remove('sasaran'); });
   if (kartu) kartu.classList.add('sasaran');
 }
 function tautMulai() {
@@ -2737,7 +2803,7 @@ function tautMulai() {
     if (!seret.gerak && Math.hypot(seret.x - seret.sx, seret.y - seret.sy) > 8) seret.gerak = true;
     if (seret.gerak) {
       const k = kartuDi(e.clientX, e.clientY);
-      tandaiSasaran(k && k.dataset.id !== seret.id ? k : null);
+      tandaiSasaran(k && idKartu(k) !== seret.id ? k : null);
       gambarGaris();
     }
   });
@@ -2747,7 +2813,7 @@ function tautMulai() {
     tandaiSasaran(null);
     if (s.gerak) {
       const k = kartuDi(e.clientX, e.clientY);
-      if (k && k.dataset.id !== s.id) sambung(s.id, k.dataset.id); else { seret = null; render(); }
+      if (k && idKartu(k) !== s.id) sambung(s.id, idKartu(k)); else { seret = null; render(); }
     } else {   // hanya ketuk: masuk mode pilih, lalu ketuk kartu tujuan
       s.mode = 'pilih'; render();
       toast('Ketuk kartu tujuan (Esc untuk batal).');
@@ -2757,13 +2823,13 @@ function tautMulai() {
     if (!seret || seret.mode !== 'pilih') return;
     if (e.target.closest && e.target.closest('.tt')) return;   // klik yang menyertai ketukan pada titik
     e.stopPropagation(); e.preventDefault();
-    const k = e.target.closest && e.target.closest('article.kartu[data-id]');
-    if (k && k.dataset.id !== seret.id) sambung(seret.id, k.dataset.id); else { seret = null; render(); }
+    const k = e.target.closest && e.target.closest(SEL_KARTU);
+    if (k && idKartu(k) !== seret.id) sambung(seret.id, idKartu(k)); else { seret = null; render(); }
   }, true);
   addEventListener('keydown', e => { if (e.key === 'Escape' && seret) { seret = null; tandaiSasaran(null); render(); } });
   // sorot garis milik kartu yang sedang ditunjuk kursor
   document.addEventListener('mouseover', e => {
-    const k = e.target.closest && e.target.closest('article.kartu[data-id]'); const id = k ? k.dataset.id : null;
+    const k = e.target.closest && e.target.closest(SEL_KARTU); const id = idKartu(k);
     if (id !== sorot) { sorot = id; if (garisData.length) gambarGaris(); }
   });
   addEventListener('resize', gambarGaris);
@@ -2828,14 +2894,15 @@ function render() {
   utama.sort((a, b) => (polaktif(b) ? 1 : 0) - (polaktif(a) ? 1 : 0));   // polling yang berjalan selalu di posisi pertama (urutan lain tetap)
   const anak = {};
   all.filter(p => p.parent).forEach(p => (anak[p.parent] = anak[p.parent] || []).push(p));
-  petaTaut = {}; namaPost = {}; warnaPost = {};
+  petaTaut = {}; namaPost = {}; warnaPost = {}; indukPost = {};
   utama.forEach(p => { namaPost[p.id] = p.username; warnaPost[p.id] = p.poll ? '#E8590C' : p.tmr ? '#C81D25' : (KARTU[p.kartu] || KUNING_GARIS); });
-  utama.forEach(p => p.tautan.forEach(t => {
+  all.filter(p => p.parent).forEach(p => { namaPost[p.id] = p.username; warnaPost[p.id] = KARTU[p.kartu] || KUNING_GARIS; indukPost[p.id] = p.parent; });
+  all.forEach(p => p.tautan.forEach(t => {
     if (!namaPost[t]) return;
     (petaTaut[p.id] = petaTaut[p.id] || new Set()).add(t);
     (petaTaut[t] = petaTaut[t] || new Set()).add(p.id);
   }));
-  garisData = utama.flatMap(p => p.tautan.filter(t => namaPost[t]).map(t => [p.id, t]));
+  garisData = all.flatMap(p => p.tautan.filter(t => namaPost[t]).map(t => [p.id, t]));
   utama.forEach(p => dek.append(p.poll ? kartuPolling(p) : kartuUtama(p, (anak[p.id] || []).sort(urut))));
   statKartu = utama.length; statBalasan = all.length - utama.length;
   gambarBingkai();
@@ -3100,6 +3167,7 @@ function petaMulai() {
   tickTimer(); setInterval(tickTimer, 1000);
   setInterval(() => { const el = document.getElementById('timer'); if (el) el.textContent = '[' + teksReset(sisaReset(waktuServer())) + ']'; }, 250);   // angka detik tidak melompat
   titikMulai(); tautMulai(); statMulai(); petaMulai();
+  purgeMulai();
   addEventListener('resize', gambarBingkai);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(gambarBingkai);
   bantuanMulai();

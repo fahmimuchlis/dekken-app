@@ -6,7 +6,7 @@
 <title>Dekken</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Broken+Fax&family=Shantell+Sans:wght@400;700&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#FEE440">
 <meta name="description" content="Dekken: papan kartu tempel untuk kelas paralel. Tumpuk, balas, dan naikkan!">
 <link rel="manifest" href="manifest.webmanifest">
@@ -543,14 +543,18 @@
   #baca .kursor-suara { outline:5px solid #1a73e8; outline-offset:4px; }
   #baca details.catatan summary { cursor:pointer; font-weight:700; color:var(--h); }
 
-  #gerbang { position:fixed; inset:0; z-index:100000; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3vmin; padding:2vmin; }
-  #gerbang-btn { width:min(88vw,80vh); aspect-ratio:1000/980; border:0; padding:0; cursor:pointer; background:none; }
+  #gerbang { position:fixed; inset:0; z-index:100000; background:#000; color:#fff; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; padding:0 var(--kiri,16px) clamp(16px,4vh,40px); overflow:auto; }
+  #gerbang-btn { align-self:center; margin:auto 0; border:0; padding:0 0 .05em; cursor:pointer; background:none; color:#ffee58; font:400 clamp(44px,17vw,36vh)/1 'Rubik Broken Fax',system-ui,sans-serif; text-transform:uppercase; letter-spacing:.02em; max-width:100%; }
   #gerbang-btn:focus { outline:none; }
-  #gerbang-btn svg { display:block; width:100%; height:auto; overflow:visible; }
-  #gerbang-btn polygon { fill:#ffff00; stroke:#000; stroke-width:3; stroke-linejoin:miter; }
-  #gerbang-btn .gk { animation:gkJatuh .4s ease-out both; animation-delay:calc(var(--i) * .5s); }
-  @keyframes gkJatuh { from { opacity:0; transform:translateY(-70px); } to { opacity:1; transform:none; } }
-  #gerbang .gerbang-ket { color:#fff; margin:0; text-align:center; text-transform:uppercase; font:500 16px/1.4 system-ui,sans-serif; max-width:34em; }
+  #gerbang-btn:focus-visible { outline:3px solid #fff; outline-offset:8px; }
+  #gerbang-btn:hover { filter:brightness(1.12); }
+  #gerbang .gerbang-teks { margin:0 0 20px; font:400 16px/1.1 system-ui,sans-serif; max-width:24em; }
+  #gerbang .gerbang-ket { margin:-8px 0 18px; font:500 12px/1.4 system-ui,sans-serif; text-transform:uppercase; opacity:.75; max-width:34em; }
+  #gerbang-langsung { font:500 16px system-ui,sans-serif; text-transform:uppercase; color:#fff; background:transparent; border:1px solid #fff; border-radius:4px; padding:10px 14px; cursor:pointer; }
+  #gerbang-langsung:hover { background:#fff; color:#000; }
+  #gerbang-langsung:focus-visible { outline:3px solid #ffee58; outline-offset:3px; }
+  h1 b.buka-intro { cursor:pointer; }
+  h1 b.buka-intro:hover { text-decoration:underline; }
   @media (prefers-reduced-motion: reduce) { #gerbang-btn .gk { animation:none !important; opacity:1; } }
   #btn-purge { border:2px solid var(--h); font-size:18px; line-height:1; }
   #btn-purge[hidden] { display:none !important; }
@@ -573,6 +577,15 @@
   .intro-isi { text-align:center; }
   .intro-nama { font:800 clamp(48px,12vw,120px)/1.1 system-ui,sans-serif; letter-spacing:.02em; }
   .intro-tag { margin-top:18px; font:500 clamp(18px,3.4vw,32px)/1.3 system-ui,sans-serif; color:#ffff00; }
+  .link-gambar { display:flex; flex-direction:column; gap:3px; font-size:12px; margin-top:6px; }
+  .link-gambar .in-link { font:inherit; font-size:13px; padding:5px 7px; border:1px solid #888; background:#fff; color:#000; width:100%; box-sizing:border-box; }
+  .link-gambar small { opacity:.75; }
+  .gambar-kotak { margin:8px 0 4px; }
+  .gambar-kotak img { display:block; max-width:100%; max-height:170px; object-fit:contain; background:#fff; border:1px solid rgba(0,0,0,.35); }
+  .gambar-muat { font-size:12px; padding:5px 10px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
+  .gambar-gagal { font-size:12px; }
+  #baca .gambar-kotak img { max-height:260px; }
+  #baca .gambar-muat { font-size:16px; min-height:40px; border:2px solid var(--h); }
 </style>
 </head>
 <body>
@@ -725,7 +738,7 @@ const getWarna = () => cekWarna(localStorage.getItem('deck_warna'));
 const getKartu = () => cekKartu(localStorage.getItem('deck_kartu'));
 const getBentuk = () => { const b = cekBentuk(localStorage.getItem('deck_bentuk')); return b === 'waktu' ? 'persegi' : b; };
 function ambilDraft(kunci) {
-  return draft[kunci] = draft[kunci] || { u: getUser(), t: '', w: getWarna(), k: getKartu(), b: getBentuk(), j: 15 };
+  return draft[kunci] = draft[kunci] || { u: getUser(), t: '', w: getWarna(), k: getKartu(), b: getBentuk(), j: 15, g: '' };
 }
 function ubahBentuk(d, b) {
   d.b = b; d.t = d.t.slice(0, BENTUK[b].maks);
@@ -767,7 +780,7 @@ function normal(o) {
            tautan: (Array.isArray(o.tautan) ? o.tautan : String(o.tautan || '').split(',')).map(x => String(x).trim()).filter(Boolean).slice(0, MAKS_TAUTAN),
            poll: bacaPoll(o.polling), tmr: String(o.bentuk || '').toLowerCase() === 'waktu', habis: Number(o.habis) > 0 && String(o.bentuk || '').toLowerCase() === 'waktu' ? Number(o.habis) : 0,
            game: Number(o.game) > 0 ? Number(o.game) : 0,
-           ruang: String(o.ruang_id || '') };   // game: 0 tidak ada, 1 berjalan/tersegel, 2 sudah ditampilkan
+           ruang: String(o.ruang_id || ''), gambar: /^https:\/\/[^\s"'<>]+$/.test(String(o.gambar || '')) ? String(o.gambar) : '' };   // game: 0 tidak ada, 1 berjalan/tersegel, 2 sudah ditampilkan
 }
 
 /* ================== MUAT DATA ================== */
@@ -897,7 +910,7 @@ const RPC = {
   buatRuang: i => ['buat_ruang', { p: { awalan: i.awalan, jumlah: i.jumlah } }],
   tutupRuang: i => ['tutup_ruang', { p_id: i.id || null }],
   purge: () => ['purge_semua', {}],
-  post:    i => ['kirim', { p: { username: i.username, teks: i.teks, parent: i.parent || '', membalas: i.membalas || '', warna: i.warna, kartu: i.kartu, bentuk: i.bentuk, menit: i.menit, game: i.game ? 'true' : '', ruang: ruangSaya } }]
+  post:    i => ['kirim', { p: { username: i.username, teks: i.teks, parent: i.parent || '', membalas: i.membalas || '', warna: i.warna, kartu: i.kartu, bentuk: i.bentuk, menit: i.menit, game: i.game ? 'true' : '', ruang: ruangSaya, gambar: i.gambar || '' } }]
 };
 async function panggilInti(isi) {
   if (!sb) throw new Error('Pustaka Supabase belum termuat. Muat ulang halaman.');
@@ -1030,9 +1043,14 @@ async function kirim(kunci, parent, btn, ke) {
   if (!u) return toast('Isi username dulu.');
   if (!t) return toast('Tulis sesuatu dulu.');
   if (t.length > BENTUK[d.b].maks) return toast(`Teks terlalu panjang untuk bentuk ini (maks ${BENTUK[d.b].maks}).`);
+  const g = (d.g || '').trim();
+  if (g && !/^https:\/\/[^\s"'<>]{4,}$/.test(g)) return toast('Link gambar harus diawali https:// dan tanpa spasi.');
+  if (g && g.length > 500) return toast('Link gambar terlalu panjang (maks 500 huruf).');
+  if (g && d.b === 'waktu') return toast('Kartu timer tidak bisa memuat gambar.');
+  if (g && parent && !ke && gameBisa(parent)) return toast('Kartu game tidak bisa memuat gambar.');
   btn.disabled = true;
   try {
-    const j = await panggil({ aksi: 'post', username: u, teks: t, parent: parent || '', membalas: ke ? ke.id : '', warna: d.w, kartu: d.k, bentuk: d.b, menit: d.b === 'waktu' ? d.j : undefined, game: (parent && !ke && gameBisa(parent)) ? true : undefined });
+    const j = await panggil({ aksi: 'post', username: u, teks: t, parent: parent || '', membalas: ke ? ke.id : '', warna: d.w, kartu: d.k, bentuk: d.b, menit: d.b === 'waktu' ? d.j : undefined, game: (parent && !ke && gameBisa(parent)) ? true : undefined, gambar: g || undefined });
     lokal.push(normal(j.post)); milikSaya.add(j.post.id); setUser(u);
     if (j.segel) segelSaya[j.post.id] = j.segel;
     if (d.b !== 'waktu') { localStorage.setItem('deck_warna', d.w); localStorage.setItem('deck_kartu', d.k); localStorage.setItem('deck_bentuk', d.b); }
@@ -1329,11 +1347,15 @@ function kompos(kunci, parent, ke) {
 
   const mik = tombolDikte(t);
   const bisaGame = !!(parent && !ke && gameBisa(parent));
+  const kolomGambar = (timer || bisaGame) ? null : h('label', { class: 'link-gambar' }, h('span', {}, 'Gambar dari link (opsional):'),
+    h('input', { type: 'url', class: 'in-link', placeholder: 'https://\u2026 (tautan langsung ke gambar)', value: d.g || '', maxlength: 500, autocomplete: 'off', spellcheck: 'false',
+      'aria-label': 'Link gambar, opsional. Teks kartu dipakai sebagai deskripsi gambar.', oninput: e => { d.g = e.target.value; } }),
+    h('small', {}, 'Gambar tidak disimpan di sini, hanya tautannya. Kartu bergambar selalu berbentuk persegi. Teks kartu = deskripsi gambar.'));
   const kirimBtn = h('button', { class: 'btn', type: 'button', onclick: () => kirim(kunci, parent, kirimBtn, ke) }, 'Kirim');
   const batal = h('button', { class: 'btn garis', type: 'button',
     onclick: () => { if (parent) { balasTerbuka = null; balasKe = null; } else komposBuka = false; renderAlat(); render(); } }, 'Batal');
   const infoGame = !bisaGame ? null : h('div', { class: 'game-toggle' }, h('span', {}, 'Kartu game: jawabanmu tersegel, hanya kamu yang melihat sampai pembuat kartu menekan ikon mata. Satu jawaban per akun.'));
-  const kontrol = h('div', { class: 'kontrol' }, infoGame, pilihanBentuk, pilihanTeks, pilihanKartu,
+  const kontrol = h('div', { class: 'kontrol' }, infoGame, pilihanBentuk, pilihanTeks, pilihanKartu, kolomGambar,
     h('div', { class: 'baris' }, h('span', { class: 'kiri' }, mik, hitung), h('span', { class: 'tombol' }, batal, kirimBtn)));
   if (timer) {
     const pil = h('select', { 'aria-label': 'Umur kartu', onchange: e => { d.j = Number(e.target.value); } }, DURASI_TIMER.map(([n, tx]) => h('option', { value: n }, tx)));
@@ -1427,12 +1449,28 @@ function blokSegel(p) {
     saya ? h('p', { class: 'teks', style: 'color:' + p.warna }, segelSaya[p.id])
          : [70, 95, 55].map((w, i) => h('div', { class: 'garis-semu', style: 'width:' + Math.round(w * (.8 + acak(p.id, 'sg' + i) * .2)) + '%' })));
 }
+const gambarMuat = new Set();   // id kartu yang gambarnya sudah diklik untuk dimuat (selama halaman terbuka)
+function hostGambar(u) { try { return new URL(u).hostname; } catch (e) { return ''; } }
+function kotakGambar(p) {   // gambar dari link: baru dimuat setelah diklik (IP tidak terkirim ke situs lain sebelum itu)
+  if (!p.gambar || tersegel(p)) return null;
+  const host = hostGambar(p.gambar), wadah = h('div', { class: 'gambar-kotak', onclick: e => e.stopPropagation() });
+  const tampil = () => {
+    const img = h('img', { src: p.gambar, alt: p.teks, loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
+    img.addEventListener('error', () => wadah.replaceChildren(h('span', { class: 'gambar-gagal' }, 'Gambar tidak bisa dimuat. ', h('a', { href: p.gambar, target: '_blank', rel: 'noopener noreferrer' }, 'Buka tautan'))));
+    wadah.replaceChildren(h('a', { href: p.gambar, target: '_blank', rel: 'noopener noreferrer', 'aria-label': 'Buka gambar penuh di tab baru. ' + p.teks }, img));
+  };
+  if (gambarMuat.has(p.id)) { tampil(); return wadah; }
+  wadah.append(h('button', { type: 'button', class: 'btn gambar-muat', 'aria-label': 'Muat gambar dari ' + host + '. Teks kartu adalah deskripsinya.',
+    onclick: e => { e.stopPropagation(); gambarMuat.add(p.id); tampil(); } }, '\uD83D\uDDBC Muat gambar \u00B7 ' + host));
+  return wadah;
+}
 const isiKartu = p => [
   h('div', { class: 'kepala' },
     h('div', {}, h('div', { class: 'nama' }, p.username, p.dosen ? h('span', { class: 'lencana', title: 'Dosen terverifikasi', 'aria-label': 'Dosen terverifikasi' }, '✓') : null), h('div', { class: 'waktu' }, fmt(p.waktu))),
     tersegel(p) ? null : tombolVote(p)),
   p.membalas ? h('div', { class: 'membalas' }, '↳ membalas @' + p.membalas) : null,
-  tersegel(p) ? blokSegel(p) : h('p', { class: 'teks', style: 'color:' + p.warna }, p.teks === TANDA_SEGEL && p.parent && p.game === 2 ? 'Membuka\u2026' : p.teks)
+  tersegel(p) ? blokSegel(p) : h('p', { class: 'teks', style: 'color:' + p.warna }, p.teks === TANDA_SEGEL && p.parent && p.game === 2 ? 'Membuka\u2026' : p.teks),
+  kotakGambar(p)
 ];
 function gulirKompos() {
   requestAnimationFrame(() => { const k = document.querySelector('.kompos'); if (k) k.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
@@ -1800,8 +1838,8 @@ function bacaanSatu(p) {
     return 'Polling dari ' + dari + '. ' + akhiri(p.teks) + ' Pilihan: ' + pl.o.map((o, i) => (i + 1) + ', ' + o + ', ' + pl.h[i] + ' suara').join('. ') + '. ' + (aktif ? 'Polling masih berjalan.' : 'Polling sudah selesai.');
   }
   if (tersegel(p)) return 'Balasan tersegel dari ' + p.username + '.';
-  if (p.parent) return 'Balasan dari ' + dari + (p.membalas ? ' kepada ' + p.membalas : '') + ': ' + akhiri(p.teks);
-  return dari + ' menulis: ' + akhiri(p.teks);
+  if (p.parent) return 'Balasan dari ' + dari + (p.membalas ? ' kepada ' + p.membalas : '') + ': ' + akhiri(p.teks) + (p.gambar ? ' Menyertakan gambar dari ' + hostGambar(p.gambar) + '.' : '');
+  return dari + ' menulis: ' + akhiri(p.teks) + (p.gambar ? ' Menyertakan gambar dari ' + hostGambar(p.gambar) + '. Teks tadi adalah deskripsi gambarnya.' : '');
 }
 function bacaanKartu(p, balasan) {
   const hasil = [{ teks: bacaanSatu(p) }];
@@ -1859,6 +1897,8 @@ function formBaca(kunci, parent, ke, judul) {
     h('h3', {}, judul), game,
     h('label', { for: 'fu-' + kunci }, 'Username'), u,
     h('label', { for: 'ft-' + kunci }, 'Isi kartu (maksimal ' + maks + ' huruf)'), t,
+    (parent && !ke && gameBisa(parent)) ? null : h('label', { for: 'fg-' + kunci }, 'Link gambar (opsional, https). Isi kartu dipakai sebagai deskripsi gambar.'),
+    (parent && !ke && gameBisa(parent)) ? null : fk(h('input', { type: 'url', id: 'fg-' + kunci, maxlength: 500, value: d.g || '', autocomplete: 'off', oninput: e => { d.g = e.target.value; } }), 'fg-' + kunci),
     h('div', { class: 'baris' }, h('span', { class: 'kiri' }, tombolDikte(t), hitung), h('span', { class: 'tombol' }, batal, ' ', kb)));
   return form;
 }
@@ -1889,6 +1929,7 @@ function kartuBaca(p, balasan, peta, sebagaiBalasan) {
     kids.push(h('p', { class: 'meta' }, total + ' suara · ' + (aktif ? 'polling masih berjalan, ' + sisaPoll(pl.akhir) : 'polling sudah selesai')));
   } else {
     kids.push(h('p', { class: 'teks-b' }, p.teks === TANDA_SEGEL ? 'Membuka…' : p.teks));
+    const kg = kotakGambar(p); if (kg) kids.push(kg);
   }
   const aksi = h('div', { class: 'aksi-b', role: 'group', 'aria-label': 'Aksi untuk kartu dari ' + p.username });
   if (!tersegel(p) && !p.poll) aksi.append(...voteBaca(p));
@@ -2038,45 +2079,46 @@ function introDekken(lanjut) {
 }
 
 /* ---- Gerbang Mode Netra: lingkaran kuning saat aplikasi dibuka; 20 detik tanpa klik = tampilan normal ---- */
-function gerbangNetra() {
+function gerbangNetra(manual) {
   let sudah = false; try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
-  if (sudah || document.getElementById('gerbang')) return;
-  let usai = false, akhir = false, wkt = null, ulang = null;
-  const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Pilih tampilan' });
-  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': 'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.' });
-  // tumpukan kartu: 40 kartu rapat, tiap 0,5 detik satu kartu mendarat di atas tumpukan (bawah dulu); tidak diulang
-  (() => {
-    const N = 40, DY = 17; let g = '';
-    for (let k = N - 1; k >= 0; k--) {
-      const y0 = 55 + DY * k, y1 = y0 + 236, d = .6 * k;   // simetris terhadap x=500; kartu bawah sedikit lebih sempit
-      g += '<g class="gk" style="--i:' + (N - 1 - k) + '"><polygon points="' + [187.5 + d, y0, 812.5 - d, y0, 871 - d, y1, 129 + d, y1].map(v => +v.toFixed(1)).join(' ').replace(/(\S+ \S+) /g, '$1,').replace(/,$/, '') + '"/></g>';
-    }
-    btn.innerHTML = '<svg viewBox="0 0 1000 ' + (55 + 236 + DY * (N - 1) + 20) + '" aria-hidden="true" focusable="false">' + g + '</svg>';
-  })();
-  const ket = h('p', { class: 'gerbang-ket', 'aria-hidden': 'true' }, 'Mode papan akan otomatis aktif bila mengabaikan perintah audio ini.');
-  ov.append(btn, ket);
+  if ((sudah && !manual) || document.getElementById('gerbang')) return;
+  let usai = false, akhir = false, wkt = null, ucapUsai = false;
+  const EN = ['Welcome to Dekken. A collaborative discussion platform designed to structure thought and meaningful dialogue.', 'Stack, Reply, Rise.',
+    'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.'];
+  const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Selamat datang di Dekken' });
+  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[2] }, 'Dekken');
+  const teks = h('p', { class: 'gerbang-teks', 'aria-hidden': 'true' }, EN[0], h('br'), EN[1], h('br'), EN[2]);
+  const langsung = h('button', { type: 'button', id: 'gerbang-langsung' }, 'Masuk ke papan');
+  ov.append(btn, teks);
+  if (!manual) ov.append(h('p', { class: 'gerbang-ket', 'aria-hidden': 'true' }, 'Mode papan akan otomatis aktif bila mengabaikan perintah audio ini.'));
+  ov.append(langsung);
   try {   // judul Dekken tetap tampak di tempat semula (putih di atas latar hitam)
     const asli = document.querySelector('header h1');
     if (asli) {
       const r = asli.getBoundingClientRect(), c = asli.cloneNode(true), cs = getComputedStyle(asli);
       c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(x => x.remove()); c.setAttribute('aria-hidden', 'true'); c.className = 'gerbang-judul';
+      c.querySelectorAll('b').forEach(x => { x.classList.remove('buka-intro'); x.removeAttribute('role'); x.removeAttribute('tabindex'); });
       c.style.cssText = 'position:absolute;left:' + r.left + 'px;top:' + r.top + 'px;margin:0;color:#fff;font:' + cs.font + ';letter-spacing:' + cs.letterSpacing + ';';
+      ov.style.setProperty('--kiri', Math.max(16, r.left) + 'px');
       ov.append(c);
     }
   } catch (e) {}
   document.body.append(ov);
-  // kalimat Inggris diucapkan satu kali saja
-  const EN = 'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.';
-  const ucap = () => {
+  const ucap = i => {   // tiga kalimat Inggris, masing-masing sekali, berurutan
+    if (usai) return;
+    if (i >= EN.length) { ucapUsai = true; return; }
+    const maju = () => { if (!usai) setTimeout(() => ucap(i + 1), 350); };
     try {
-      if (!(window.speechSynthesis && window.SpeechSynthesisUtterance)) return;
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(EN); u.lang = 'en-US'; u.rate = .95;
+      const u = new SpeechSynthesisUtterance(EN[i]); u.lang = 'en-US'; u.rate = i === 1 ? 1 : .95;
+      u.onend = maju; u.onerror = maju;
+      if (i === 0) speechSynthesis.cancel();
       speechSynthesis.speak(u);
-    } catch (e) {}
+    } catch (e) { ucapUsai = true; }
   };
+  const tombolKbd = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); tutup(false); } };
   const tutup = masuk => {
-    if (usai) return; usai = true; clearTimeout(wkt); clearTimeout(ulang);
+    if (usai) return; usai = true; clearTimeout(wkt);
+    document.removeEventListener('keydown', tombolKbd, true);
     try { speechSynthesis.cancel(); } catch (e) {}
     ov.remove();
     if (masuk) {
@@ -2085,24 +2127,28 @@ function gerbangNetra() {
       bicaraDaftar(PANDUAN_MASUK());
     }
   };
-  // waktu habis: kalimat yang sedang diucapkan diselesaikan dulu, lalu bip panjang, baru masuk tampilan normal
+  // waktu habis: ucapan diselesaikan dulu, lalu bip panjang, baru masuk tampilan normal
   const habis = () => {
-    if (usai || akhir) return; akhir = true; clearTimeout(ulang);
+    if (usai || akhir) return; akhir = true;
     const mulai = Date.now();
     const tunggu = () => {
       if (usai) return;
       let bicaraAda = false; try { bicaraAda = !!speechSynthesis.speaking; } catch (e) {}
-      if (bicaraAda && Date.now() - mulai < 7000) { setTimeout(tunggu, 150); return; }
+      if ((bicaraAda || !ucapUsai) && Date.now() - mulai < 8000) { setTimeout(tunggu, 150); return; }
       try { speechSynthesis.cancel(); } catch (e) {}
+      document.removeEventListener('keydown', tombolKbd, true);
       bip(520, 1.2);
       setTimeout(() => { if (!usai) { usai = true; ov.remove(); } }, 1300);   // tampilan normal setelah bip panjang selesai
     };
     tunggu();
   };
   btn.addEventListener('click', () => { if (!akhir) tutup(true); });
-  wkt = setTimeout(habis, 20000);
-  try { btn.focus(); } catch (e) {}
-  ucap();
+  langsung.addEventListener('click', () => tutup(false));
+  document.addEventListener('keydown', tombolKbd, true);
+  if (!manual) wkt = setTimeout(habis, 25000);
+  try { btn.focus({ focusVisible: false }); } catch (e) { try { btn.focus(); } catch (e2) {} }
+  let adaTTS = false; try { adaTTS = !!(window.speechSynthesis && window.SpeechSynthesisUtterance); } catch (e) {}
+  if (adaTTS) ucap(0); else ucapUsai = true;
 }
 function PANDUAN_MASUK() {
   if (!SR) return [{ teks: 'Mode baca aktif. Browser ini tidak mendukung perintah suara. Gunakan tombol Tab untuk berpindah, dan Enter untuk memilih. Gunakan Chrome untuk perintah suara.' }];
@@ -3257,7 +3303,12 @@ function petaMulai() {
     b.append(h('div', {}, 'Pustaka Supabase gagal dimuat. Periksa koneksi lalu muat ulang halaman.'));
   }
   renderAlat(); render(); muat();
-  introDekken(gerbangNetra);
+  gerbangNetra();
+  try {   // klik kata Dekken di kiri atas membuka layar sambutan
+    const jd = document.querySelector('header h1 b');
+    if (jd) { jd.classList.add('buka-intro'); jd.setAttribute('role', 'button'); jd.setAttribute('tabindex', '0'); jd.setAttribute('aria-label', 'Dekken, buka layar sambutan'); jd.title = 'Buka layar sambutan';
+      jd.addEventListener('click', () => gerbangNetra(true)); jd.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gerbangNetra(true); } }); }
+  } catch (e) {}
   tickTimer(); setInterval(tickTimer, 1000);
   setInterval(() => { const el = document.getElementById('timer'); if (el) el.textContent = '[' + teksReset(sisaReset(waktuServer())) + ']'; }, 250);   // angka detik tidak melompat
   titikMulai(); tautMulai(); statMulai(); petaMulai();

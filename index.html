@@ -2415,7 +2415,7 @@ function renderBaca() {
   const nama = namaRuang(ruangSaya);
   const judul = h('h2', { id: 'baca-judul', tabindex: '-1' }, 'Mode Baca · ' + nama + ' · ' + utama.length + ' kartu' + (jumlah > utama.length ? ', ' + (jumlah - utama.length) + ' balasan' : ''));
   const bar = h('div', { class: 'bar', role: 'group', 'aria-label': 'Pengaturan Mode Baca' });
-  if (SR) bar.append(fk(h('button', { type: 'button', class: 'btn bicara' + (sv.jalan ? ' dengar' : ''), id: 'btn-bicara', 'aria-pressed': sv.jalan ? 'true' : 'false', 'aria-label': 'Bicara: ucapkan satu perintah. Pintasan: tekan spasi dan Z bersamaan', title: 'Ucapkan satu perintah (Spasi+Z)', onclick: () => svTekan() }, sv.jalan ? '\uD83C\uDF99 Mendengarkan\u2026' : '\uD83C\uDF99 Bicara (Spasi+Z)'), 'bicara'));
+  if (SR) bar.append(fk(h('button', { type: 'button', class: 'btn bicara' + (sv.jalan ? ' dengar' : ''), id: 'btn-bicara', 'aria-pressed': sv.jalan ? 'true' : 'false', 'aria-label': 'Bicara: ucapkan satu perintah. Pintasan: tekan spasi', title: 'Ucapkan satu perintah (Spasi)', onclick: () => svTekan() }, sv.jalan ? '\uD83C\uDF99 Mendengarkan\u2026' : '\uD83C\uDF99 Bicara (Spasi)'), 'bicara'));
   bar.append(fk(h('button', { type: 'button', class: 'btn', onclick: () => { if (!butuhLogin()) return; bacaBaru = !bacaBaru; bacaBalas = null; bacaFokusKey = bacaBaru ? 'ft-baru' : 'baru'; render(); } }, bacaBaru ? 'Tutup form kartu baru' : 'Tulis kartu baru'), 'baru'));
   if (TTS) {
     const sem = h('button', { type: 'button', class: 'btn garis teks-tb', 'data-baca': '*semua', 'data-label': 'Bacakan semua kartu', 'aria-pressed': bacaGrup === '*semua' ? 'true' : 'false',
@@ -2484,7 +2484,7 @@ function aturBaca(on) {
   komposBuka = false; pollBuka = false; balasTerbuka = null; balasKe = null; bacaBaru = false; bacaBalas = null; hapusKonfirm = null;
   render();
   if (bacaAktif) {
-    umumkan('Mode Baca aktif. Kartu ditampilkan sebagai daftar. Gunakan navigasi judul untuk berpindah antar kartu.' + (SR ? ' Tekan spasi dan Z bersamaan untuk memberi perintah suara.' : ''));
+    umumkan('Mode Baca aktif. Kartu ditampilkan sebagai daftar. Gunakan navigasi judul untuk berpindah antar kartu.' + (SR ? ' Tekan spasi untuk memberi perintah suara.' : ''));
     const j = document.getElementById('baca-judul'); if (j) j.focus();
   } else { umumkan('Kembali ke tampilan papan.'); const t = document.getElementById('btn-baca'); if (t) t.focus(); }
 }
@@ -2541,7 +2541,7 @@ function gerbangNetra(manual) {
   if ((sudah && !manual) || document.getElementById('gerbang')) return;
   let usai = false, wkt = null;
   const EN = ['Selamat datang di Dekken, platform diskusi kolaboratif yang dirancang untuk menata pemikiran dan dialog yang bermakna.',
-    'Jika Anda penyandang disabilitas netra, tekan Enter sekarang untuk mengaktifkan Mode Baca.', 'Opsi ini akan tertutup dalam 5 detik.'];
+    'Jika Anda penyandang disabilitas netra, tekan Spasi sekarang untuk mengaktifkan Mode Baca.', 'Opsi ini akan tertutup dalam 5 detik.'];
   const ANGKA = ['', 'one', 'two', 'three', 'four', 'five'];
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Selamat datang di Dekken' });
   const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[0] + ' ' + EN[1] + ' Escape atau tombol Mulai untuk langsung ke papan.' }, 'Dekken');
@@ -2568,7 +2568,7 @@ function gerbangNetra(manual) {
   };
   const tombolKbd = e => {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); tutup(false); }
-    else if (e.key === 'Enter' && e.target !== langsung) { e.preventDefault(); e.stopPropagation(); tutup(true); }   // Enter di mana pun = aktifkan Mode Baca
+    else if (e.key === ' ' && e.target !== langsung) { e.preventDefault(); e.stopPropagation(); tutup(true); }   // Spasi di mana pun = aktifkan Mode Baca
   };
   const tutup = masuk => {
     if (usai) return; usai = true; clearTimeout(wkt);
@@ -2602,7 +2602,7 @@ function gerbangNetra(manual) {
 }
 function PANDUAN_MASUK() {
   if (!SR) return [{ teks: 'Browser ini tidak mendukung perintah suara. Gunakan tombol Tab untuk berpindah, dan Enter untuk memilih. Gunakan Chrome untuk perintah suara.' }];
-  return [{ teks: 'Untuk memberi perintah, tekan spasi dan Z bersamaan, tunggu bunyi bip, lalu ucapkan satu perintah.' }, { jeda: JEDA_GRUP }]
+  return [{ teks: 'Untuk memberi perintah, tekan spasi, tunggu bunyi bip, lalu ucapkan satu perintah.' }, { jeda: JEDA_GRUP }]
     .concat(daftarKata([['Contoh perintah.', ['berikutnya', 'sebelumnya', 'baca', 'baca semua', 'naikkan', 'turunkan', 'balas', 'kartu baru', 'ruang nomor satu', 'papan utama']]]))
     .concat([{ jeda: JEDA_GRUP }, { teks: 'Ucapkan bantuan untuk daftar lengkap. Untuk berhenti bicara, ucapkan berhenti. Bisa juga memakai tombol Tab dan Enter.' }]);
 }
@@ -2649,7 +2649,7 @@ function svStatus(t) {
   if (t !== undefined) sv.status = t;
   const el = document.getElementById('sv-status'); if (el) el.textContent = sv.status;
   const b = document.getElementById('btn-bicara');
-  if (b) { b.classList.toggle('dengar', sv.jalan); b.setAttribute('aria-pressed', sv.jalan ? 'true' : 'false'); b.textContent = sv.jalan ? '🎙 Mendengarkan…' : '🎙 Bicara (Spasi+Z)'; }
+  if (b) { b.classList.toggle('dengar', sv.jalan); b.setAttribute('aria-pressed', sv.jalan ? 'true' : 'false'); b.textContent = sv.jalan ? '🎙 Mendengarkan…' : '🎙 Bicara (Spasi)'; }
 }
 function svReset() {
   if (sv.rec) { try { sv.rec.abort ? sv.rec.abort() : sv.rec.stop(); } catch (e) {} }
@@ -2840,23 +2840,20 @@ async function svJalankan(alts) {
   bicara('Perintah tidak dikenal. Ucapkan bantuan untuk daftar perintah.');
 }
 (function pintasanSuara() {
-  // Spasi+Z bersamaan = tombol Bicara. Diabaikan saat mengetik di kotak tulis.
-  const tahan = { Space: false, KeyZ: false }; let dipakai = false;
-  const mengetik = t => t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) && !/^(checkbox|radio|button|submit)$/.test(t.type || ''));
+  // Spasi = tombol Bicara (hanya dalam Mode Baca). Diabaikan saat mengetik di kotak tulis, pada kotak centang/pilihan, dan bila ada tombol modifier.
+  let dipakai = false;
+  const mengetik = t => t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) && !/^(button|submit)$/.test(t.type || ''));
   document.addEventListener('keydown', e => {
-    if (!(e.code in tahan)) return;
-    if (mengetik(e.target)) return;
-    tahan[e.code] = true;
-    if (bacaAktif && SR && !e.ctrlKey && !e.metaKey && !e.altKey && tahan.Space && tahan.KeyZ) {
-      e.preventDefault(); if (!e.repeat && !dipakai) { dipakai = true; svTekan(); } else e.preventDefault();
+    if (e.code !== 'Space' || mengetik(e.target)) return;
+    if (bacaAktif && SR && !e.ctrlKey && !e.metaKey && !e.altKey && !document.getElementById('gerbang')) {
+      e.preventDefault(); if (!e.repeat && !dipakai) { dipakai = true; svTekan(); }
     }
   }, true);
   document.addEventListener('keyup', e => {
-    if (!(e.code in tahan)) return;
-    if (dipakai && e.code === 'Space') e.preventDefault();   // cegah klik tombol yang sedang fokus
-    tahan[e.code] = false; if (!tahan.Space && !tahan.KeyZ) dipakai = false;
+    if (e.code !== 'Space') return;
+    if (dipakai) { e.preventDefault(); dipakai = false; }   // cegah klik tombol yang sedang fokus
   }, true);
-  addEventListener('blur', () => { tahan.Space = tahan.KeyZ = false; dipakai = false; });
+  addEventListener('blur', () => { dipakai = false; });
 })();
 
 /* ================== STIKER TEMPEL ================== */
@@ -2983,7 +2980,7 @@ function isiBantuan() {
     ...bagian('Polling', 'Kartu oranye bertanda POLLING berisi satu pertanyaan dengan 2 sampai 5 pilihan. Semua akun terdaftar yang sudah masuk boleh memilih: klik satu pilihan (satu akun satu pilihan), klik pilihan lain untuk mengganti, atau klik pilihan yang sama lagi untuk membatalkan. Hasil berupa persentase dan jumlah suara langsung terlihat oleh semua orang, juga oleh yang belum masuk. Tiap polling punya hitung mundur sendiri di bagian bawah kartu; setelah selesai pilihan terkunci dan pilihan terbanyak diberi bingkai. Polling yang sedang berjalan selalu di posisi pertama, hanya satu polling berjalan pada satu waktu, warnanya oranye di semua tampilan (juga monokrom), tidak bisa dibalas, dan bisa disambungkan seperti kartu biasa. Polling hanya bisa dibuat oleh dosen: setelah masuk, tombol polling di ujung kanan deretan bentuk di bawah layar membuka kartu pembuat polling (pertanyaan, pilihan, dan lama polling: 15 menit, 30 menit, 1 jam, 2 jam, 4 jam, atau 8 jam). Polling ikut dikosongkan oleh reset harian.'),
     ...bagian('Stiker', 'Tombol ☺ Stiker di kanan atas membuka koleksi 12 stiker (senyum, jempol, hati, api, ide, dan lainnya). Pilih satu, lalu ketuk di mana saja pada kartu mana pun untuk menempelkannya. Satu akun hanya bisa satu stiker per kartu: menempel lagi di kartu yang sama memindahkan atau mengganti stikermu. Tombol ✕ Cabut membiarkanmu mencabut stiker dengan mengetuknya, dan siapa pun yang sudah masuk boleh mencabut stiker mana pun. Stiker ikut terhapus saat kartunya dihapus atau papan di-reset. Jawaban kartu game yang masih tersegel tidak bisa distiker. Tutup koleksi dengan Selesai atau tombol Esc.'),
     ...bagian('Ruang (breakout)', 'Dosen dapat membagi kelas ke beberapa ruang: tombol ▣ Ruang di kanan atas, isi awalan dan jumlah, lalu Buat. Setiap orang memilih ruangnya lewat tombol yang sama dan hanya melihat kartu, balasan, dan stiker di ruang itu; kartu baru otomatis masuk ke ruang yang sedang dipilih. Boleh pindah ruang kapan saja, dan angka di samping nama ruang menunjukkan berapa orang yang sedang aktif di sana. Papan utama tetap ada dan tidak terpengaruh. Polling dosen masuk ke ruang tempat dosen berada. Setelah selesai, dosen menutup ruang (satu per satu atau semuanya) dan semua kartunya otomatis digabung ke papan utama. Reset harian juga menutup semua ruang.'),
-    ...bagian('Suara dan Mode Baca', 'Tombol 🎤 di kotak tulis memungkinkan kamu berbicara dan ucapanmu menjadi teks (dikte, bahasa Indonesia); tekan lagi untuk berhenti, lalu periksa teksnya sebelum Kirim. Dikte butuh izin mikrofon dan internet, dan tidak muncul bila browser tidak mendukung. Tombol speaker pada kartu membacakan kartu beserta balasannya. Tombol ☰ Baca di kanan atas membuka Mode Baca: semua kartu ruangmu ditampilkan sebagai daftar berurutan yang mudah dijelajahi dengan pembaca layar dan keyboard, lengkap dengan suara naik/turun, balasan, polling, tulis kartu, dan pembacaan semua kartu (kecepatan bisa diatur, kartu baru bisa dibacakan otomatis). Tekan ☰ Papan untuk kembali ke tampilan papan. Di Mode Baca ada juga perintah suara: tekan tombol Bicara (atau tekan Spasi dan Z bersamaan, di luar kotak tulis), ucapkan satu perintah seperti berikutnya, baca, naikkan, balas, atau kartu baru, dan Dekken menjawab dengan suara. Saat menulis, Dekken membacakan ulang isinya dan menunggu kata kirim sebelum mengirim. Ucapkan bantuan untuk daftar lengkap.'),
+    ...bagian('Suara dan Mode Baca', 'Tombol 🎤 di kotak tulis memungkinkan kamu berbicara dan ucapanmu menjadi teks (dikte, bahasa Indonesia); tekan lagi untuk berhenti, lalu periksa teksnya sebelum Kirim. Dikte butuh izin mikrofon dan internet, dan tidak muncul bila browser tidak mendukung. Tombol speaker pada kartu membacakan kartu beserta balasannya. Tombol ☰ Baca di kanan atas membuka Mode Baca: semua kartu ruangmu ditampilkan sebagai daftar berurutan yang mudah dijelajahi dengan pembaca layar dan keyboard, lengkap dengan suara naik/turun, balasan, polling, tulis kartu, dan pembacaan semua kartu (kecepatan bisa diatur, kartu baru bisa dibacakan otomatis). Tekan ☰ Papan untuk kembali ke tampilan papan. Di Mode Baca ada juga perintah suara: tekan tombol Bicara (atau tekan Spasi, di luar kotak tulis), ucapkan satu perintah seperti berikutnya, baca, naikkan, balas, atau kartu baru, dan Dekken menjawab dengan suara. Saat menulis, Dekken membacakan ulang isinya dan menunggu kata kirim sebelum mengirim. Ucapkan bantuan untuk daftar lengkap.'),
     ...bagian('Urut dan Rapi/Acak', 'Di kanan atas, pilihan "Urut" mengurutkan kartu menurut suara, yang terbaru, atau nama username A–Z. Tombol di sebelahnya menunjukkan kondisi tampilan: "Acak" (kartu tertempel miring seperti biasa) atau "Rapi" (semua kartu tersusun dalam kolom rapi dan semua balasan terbuka); klik untuk berganti. Keduanya hanya mengubah tampilanmu sendiri dan diingat di browser ini; orang lain tidak terpengaruh dan isi papan tidak berubah.'),
     ...bagian('Statistik', 'Kotak "Statistik" di kanan bawah menampilkan jumlah pengguna aktif, kartu, balasan, dan koneksi, serta username yang sedang aktif. Klik judulnya untuk menyembunyikan atau menampilkannya. Yang tampil hanya username, bukan email; pengunjung yang belum masuk hanya terhitung di angka.'),
     ...bagian('Tampilan', 'Tombol ikon di kanan atas (di samping tombol ?) membuka pilihan: ☀ terang, ☾ gelap, ○ monokrom terang, ● monokrom gelap, dan ⊘ untuk mematikan atau menyalakan latar tanda ^ (lihat "Latar tanda ^"). Mode monokrom hanya memakai hitam dan putih (kontras penuh): kartu dan balasan saling berlawanan warna. Pilihan pertama mengikuti pengaturan perangkatmu, lalu diingat di browser ini dan tidak mengubah isi kartu.'),

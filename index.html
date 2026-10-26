@@ -668,6 +668,7 @@
   .pes-baris { border-bottom:1px solid var(--gx) !important; opacity:1; }
   header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-purge, header #btn-foto, header #btn-rapi, header #urut, header #btn-lipat { border:1px solid var(--gx) !important; }
   #menu-bentuk { border:1px solid var(--gx) !important; }
+  #gerbang .kata.hitung { font-size:64px; font-weight:700; line-height:1.1; animation:kataMasuk .25s ease-out both; }
 </style>
 </head>
 <body>
@@ -2032,7 +2033,7 @@ function pesertaMulai() {
 }
 (function lipatMulai() {   // menu header bisa disembunyikan; pilihan diingat di browser ini
   const tb = document.getElementById('btn-lipat'), k = document.querySelector('header .kanan'); if (!tb || !k) return;
-  let lipat = false; try { lipat = localStorage.getItem('deck-menu') === 'lipat'; } catch (e) {}
+  let lipat = true; try { if (localStorage.getItem('deck-menu') === 'buka') lipat = false; } catch (e) {}   // bawaan: menu header terlipat
   const pasang = () => {
     k.classList.toggle('lipat', lipat); tb.textContent = lipat ? '\u00AB' : '\u00BB';
     tb.setAttribute('aria-expanded', lipat ? 'false' : 'true'); const t = lipat ? 'Tampilkan menu' : 'Sembunyikan menu'; tb.setAttribute('aria-label', t); tb.title = t;
@@ -2450,11 +2451,12 @@ function introDekken(lanjut) {
 function gerbangNetra(manual) {
   let sudah = false; try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
   if ((sudah && !manual) || document.getElementById('gerbang')) return;
-  let usai = false, akhir = false, wkt = null, ucapUsai = false;
-  const EN = ['Welcome to Dekken. A collaborative discussion platform designed to structure thought and meaningful dialogue.', 'Stack, Reply, Rise.',
-    'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.'];
+  let usai = false, wkt = null;
+  const EN = ['Welcome to Dekken.', 'A collaborative discussion platform designed to structure thought and meaningful dialogue.',
+    'If you have a visual impairment, enter reading mode by clicking the yellow area.', 'This feature will disappear in'];
+  const ANGKA = ['', 'one', 'two', 'three', 'four', 'five'];
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Selamat datang di Dekken' });
-  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[2] }, 'Dekken');
+  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[2] + ' Escape atau tombol Mulai untuk langsung ke papan.' }, 'Dekken');
   const cap = h('p', { class: 'gerbang-cap', 'aria-hidden': 'true' });
   const langsung = h('button', { type: 'button', id: 'gerbang-langsung', title: 'Mulai: masuk ke papan' }, 'Mulai');
   ov.append(btn, cap);
@@ -2462,31 +2464,19 @@ function gerbangNetra(manual) {
   try { const asli = document.querySelector('header h1'); if (asli) { const r = asli.getBoundingClientRect(); ov.style.setProperty('--kiri', Math.max(16, r.left) + 'px'); ov.style.setProperty('--atas', Math.max(40, (document.querySelector('header') || asli).getBoundingClientRect().bottom + 12) + 'px'); } } catch (e) {}   // judul asli di header tetap terlihat tembus latar
   document.body.append(ov);
   let adaTTS = false; try { adaTTS = !!(window.speechSynthesis && window.SpeechSynthesisUtterance); } catch (e) {}
-  const ucap = i => {   // tiga kalimat Inggris berurutan; satu baris keterangan, kata muncul satu per satu, hilang begitu kalimat penuh
-    if (usai) return;
-    if (i >= EN.length) { cap.textContent = ''; ucapUsai = true; return; }
-    const kata = EN[i].split(' '); let n = 0, selesai = false, pewaktu = null;
-    cap.textContent = '';
-    const spans = kata.map((k, x) => h('span', { class: 'kata' }, k + (x < kata.length - 1 ? ' ' : '')));
-    const tampil = sampai => { while (n < sampai && n < spans.length) cap.append(spans[n++]); };
-    const akhir = () => {   // kalimat penuh: tampilkan sisa kata, tahan sebentar, hapus, lanjut
-      if (selesai || usai) return; selesai = true; clearInterval(pewaktu); tampil(spans.length);
-      setTimeout(() => { if (usai) return; cap.textContent = ''; setTimeout(() => ucap(i + 1), 300); }, 650);
-    };
-    let bicaraUsai = !adaTTS, katanyaUsai = false;
-    const cek = () => { if (bicaraUsai && katanyaUsai) akhir(); };
-    const langkah = i === 1 ? 330 : 370;   // irama kata kira-kira mengikuti kecepatan bicara
-    tampil(1);
-    pewaktu = setInterval(() => { tampil(n + 1); if (n >= spans.length) { clearInterval(pewaktu); katanyaUsai = true; cek(); } }, langkah);
-    if (adaTTS) {
-      try {
-        const u = new SpeechSynthesisUtterance(EN[i]); u.lang = 'en-US'; u.rate = i === 1 ? 1 : .95;
-        u.onboundary = e => { if (typeof e.charIndex === 'number') tampil(EN[i].slice(0, e.charIndex).split(' ').length); };   // bila perangkat memberi penanda kata, ikuti
-        u.onend = u.onerror = () => { bicaraUsai = true; katanyaUsai = true; akhir(); };
-        if (i === 0) speechSynthesis.cancel();
-        speechSynthesis.speak(u);
-      } catch (e) { bicaraUsai = true; cek(); }
-    }
+  const tidur = ms => new Promise(r => setTimeout(r, ms));
+  const bicara = (t, rate) => new Promise(res => {   // ucapkan satu bagian; selesai bila suara selesai (atau 12 detik, jaga-jaga)
+    if (!adaTTS || usai) { res(); return; }
+    let beres = false; const f = () => { if (!beres) { beres = true; res(); } };
+    try { const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; u.rate = rate || 1; u.onend = u.onerror = f; setTimeout(f, 12000); speechSynthesis.speak(u); } catch (e) { f(); }
+  });
+  const kalimat = async t => {   // keterangan satu baris: kata muncul satu per satu, hilang begitu kalimat penuh dan suara selesai
+    if (usai) return; cap.textContent = '';
+    const kata = t.split(' '), spans = kata.map((k, x) => h('span', { class: 'kata' }, k + (x < kata.length - 1 ? ' ' : '')));
+    const suara = bicara(t, .95);
+    for (let n = 0; n < spans.length && !usai; n++) { cap.append(spans[n]); await tidur(360); }
+    await suara; if (usai) return;
+    await tidur(650); cap.textContent = ''; await tidur(300);
   };
   const tombolKbd = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); tutup(false); } };
   const tutup = masuk => {
@@ -2500,28 +2490,24 @@ function gerbangNetra(manual) {
       bicaraDaftar(PANDUAN_MASUK());
     }
   };
-  // waktu habis: ucapan diselesaikan dulu, lalu bip panjang, baru masuk tampilan normal
-  const habis = () => {
-    if (usai || akhir) return; akhir = true;
-    const mulai = Date.now();
-    const tunggu = () => {
-      if (usai) return;
-      let bicaraAda = false; try { bicaraAda = !!speechSynthesis.speaking; } catch (e) {}
-      if ((bicaraAda || !ucapUsai) && Date.now() - mulai < 8000) { setTimeout(tunggu, 150); return; }
-      try { speechSynthesis.cancel(); } catch (e) {}
-      document.removeEventListener('keydown', tombolKbd, true);
-      bip(520, 1.2);
-      setTimeout(() => { if (!usai) { usai = true; ov.remove(); } }, 1300);   // tampilan normal setelah bip panjang selesai
-    };
-    tunggu();
+  const jalan = async () => {
+    try { speechSynthesis.cancel(); } catch (e) {}
+    const bagian = manual ? EN.slice(0, 3) : EN;
+    for (const t of bagian) { await kalimat(t); if (usai) return; }
+    if (manual) return;
+    for (let n = 5; n >= 1; n--) {   // hitung mundur: 5 4 3 2 1 START, tiap angka tampil besar dan diucapkan
+      if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, String(n))); bicara(ANGKA[n], 1); await tidur(1000);
+    }
+    if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, 'START'));
+    await Promise.all([bicara('Start', 1), tidur(900)]); if (!usai) tutup(false);
   };
-  btn.addEventListener('click', () => { if (!akhir) tutup(true); });
+  btn.addEventListener('click', () => tutup(true));
   langsung.addEventListener('click', () => tutup(false));
   document.addEventListener('keydown', tombolKbd, true);
   ov.addEventListener('keydown', () => ov.classList.add('kbd'), { once: true });
-  if (!manual) wkt = setTimeout(habis, 25000);
+  if (!manual) wkt = setTimeout(() => tutup(false), 70000);   // jaga-jaga bila suara macet
   try { btn.focus({ focusVisible: false }); } catch (e) { try { btn.focus(); } catch (e2) {} }
-  ucap(0);
+  jalan();
 }
 function PANDUAN_MASUK() {
   if (!SR) return [{ teks: 'Mode baca aktif. Browser ini tidak mendukung perintah suara. Gunakan tombol Tab untuk berpindah, dan Enter untuk memilih. Gunakan Chrome untuk perintah suara.' }];
@@ -3399,7 +3385,7 @@ function hadirMulai() {
 function hadir() { hadirKirim(); }
 function statMulai() {
   const kotak = document.getElementById('statistik'), tb = document.getElementById('stat-judul');
-  let buka = !matchMedia('(max-width:640px)').matches;   // bawaan: terbuka di layar lebar, tertutup di HP
+  let buka = false;   // bawaan: tertutup pada kunjungan pertama
   try { const v = localStorage.getItem('deck-stat'); if (v === 'buka') buka = true; else if (v === 'tutup') buka = false; } catch (e) {}
   const pasang = () => { kotak.classList.toggle('tutup', !buka); tb.setAttribute('aria-expanded', buka ? 'true' : 'false'); document.getElementById('stat-panah').textContent = buka ? '▾' : '▴'; };
   tb.addEventListener('click', () => { buka = !buka; try { localStorage.setItem('deck-stat', buka ? 'buka' : 'tutup'); } catch (e) {} pasang(); });
@@ -3504,7 +3490,8 @@ function petaMulai() {
   const kv = document.getElementById('peta-kanvas'), cv = kv.querySelector('canvas'), kt = document.getElementById('peta-kotak');
   const LEBAR = 190, MAKS_T = 0.4;
   let skala = 1, ttl = 0, zoom = 1, sudahTengah = false;
-  try { if (localStorage.getItem('deck-peta') === '0') kotakPeta.classList.add('tutup'); } catch (e) {}
+  kotakPeta.classList.add('tutup');   // pertama kali dibuka: tertutup, kecuali pernah dibuka sendiri
+  try { if (localStorage.getItem('deck-peta') === '1') kotakPeta.classList.remove('tutup'); } catch (e) {}
   const lipat = () => tb.setAttribute('aria-expanded', kotakPeta.classList.contains('tutup') ? 'false' : 'true');
   lipat();
   tb.addEventListener('click', () => {
@@ -3613,7 +3600,7 @@ function petaMulai() {
   const PIL = [['terang', '☀', 'Terang'], ['gelap', '☾', 'Gelap'], ['mono-terang', '○', 'Monokrom terang'], ['mono-gelap', '●', 'Monokrom gelap']];
   let t = null;
   try { t = localStorage.getItem('deck-tema'); } catch (e) {}
-  if (!PIL.some(x => x[0] === t)) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'gelap' : 'terang';
+  if (!PIL.some(x => x[0] === t)) t = 'gelap';   // pertama kali dibuka: latar hitam dengan kartu berwarna
   const tombol = PIL.map(([k, ik, nm]) => {
     const b = document.createElement('button'); b.type = 'button'; b.textContent = ik; b.title = nm; b.setAttribute('aria-label', nm); b.setAttribute('role', 'menuitemradio');
     b.addEventListener('click', () => { t = k; try { localStorage.setItem('deck-tema', t); } catch (e) {} pasang(); tutup(); });

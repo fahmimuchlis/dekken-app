@@ -2188,7 +2188,7 @@ function bacaLanjut(token) {
   if (!x) { bacaGrup = ''; bacaSegarkan(); return; }
   if (x.jeda) { setTimeout(() => bacaLanjut(token), x.jeda); return; }   // jeda hening antar kata
   const u = new SpeechSynthesisUtterance(x.teks); bacaUtt = u;
-  u.lang = 'id-ID'; u.rate = bacaLaju; const v = suaraId(); if (v) u.voice = v;
+  u.lang = x.bhs || 'id-ID'; u.rate = x.bhs ? 1 : bacaLaju; const v = x.bhs ? null : suaraId(); if (v) u.voice = v;
   u.onend = () => { if (token === bacaToken && x.lalu) x.lalu(); bacaLanjut(token); };
   u.onerror = () => { if (token === bacaToken) { bacaGrup = ''; bacaAntri = []; bacaSegarkan(); } };
   try { TTS.speak(u); } catch (e) { bacaGrup = ''; bacaSegarkan(); }
@@ -2456,11 +2456,11 @@ function gerbangNetra(manual) {
   let sudah = false; try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
   if ((sudah && !manual) || document.getElementById('gerbang')) return;
   let usai = false, wkt = null;
-  const EN = ['Welcome to Dekken.', 'A collaborative discussion platform designed to structure thought and meaningful dialogue.',
-    'If you have a visual impairment, enter reading mode by clicking the yellow area.', 'This feature will disappear in'];
+  const EN = ['Welcome to Dekken, a collaborative discussion platform designed for structured thought and meaningful dialogue.',
+    'If you have a visual impairment, press Enter now to turn on Reading Mode.', 'This option will close in 5 seconds.'];
   const ANGKA = ['', 'one', 'two', 'three', 'four', 'five'];
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Selamat datang di Dekken' });
-  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[2] + ' Escape atau tombol Mulai untuk langsung ke papan.' }, 'Dekken');
+  const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[0] + ' ' + EN[1] + ' Escape atau tombol Mulai untuk langsung ke papan.' }, 'Dekken');
   const cap = h('p', { class: 'gerbang-cap', 'aria-hidden': 'true' });
   const langsung = h('button', { type: 'button', id: 'gerbang-langsung', title: 'Mulai: masuk ke papan' }, 'Mulai');
   ov.append(btn, cap);
@@ -2482,7 +2482,10 @@ function gerbangNetra(manual) {
     await suara; if (usai) return;
     await tidur(650); cap.textContent = ''; await tidur(300);
   };
-  const tombolKbd = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); tutup(false); } };
+  const tombolKbd = e => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); tutup(false); }
+    else if (e.key === 'Enter' && e.target !== langsung) { e.preventDefault(); e.stopPropagation(); tutup(true); }   // Enter di mana pun = aktifkan Mode Baca
+  };
   const tutup = masuk => {
     if (usai) return; usai = true; clearTimeout(wkt);
     document.removeEventListener('keydown', tombolKbd, true);
@@ -2491,19 +2494,19 @@ function gerbangNetra(manual) {
     if (masuk) {
       if (window.setTemaNetra) setTemaNetra();
       if (!bacaAktif) aturBaca(true);
-      bicaraDaftar(PANDUAN_MASUK());
+      bicaraDaftar([{ teks: 'Reading Mode activated. Please listen to the following instructions to navigate Dekken.', bhs: 'en-US' }, { jeda: 700 }].concat(PANDUAN_MASUK()));
     }
   };
   const jalan = async () => {
     try { speechSynthesis.cancel(); } catch (e) {}
-    const bagian = manual ? EN.slice(0, 3) : EN;
+    const bagian = manual ? EN.slice(0, 2) : EN;
     for (const t of bagian) { await kalimat(t); if (usai) return; }
     if (manual) return;
     for (let n = 5; n >= 1; n--) {   // hitung mundur: 5 4 3 2 1 START, tiap angka tampil besar dan diucapkan
-      if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, String(n))); bicara(ANGKA[n], 1); await tidur(1000);
+      if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, String(n))); await tidur(1000);
     }
     if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, 'START'));
-    await Promise.all([bicara('Start', 1), tidur(900)]); if (!usai) tutup(false);
+    await tidur(900); if (!usai) tutup(false);
   };
   btn.addEventListener('click', () => tutup(true));
   langsung.addEventListener('click', () => tutup(false));

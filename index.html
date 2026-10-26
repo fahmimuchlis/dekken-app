@@ -636,8 +636,8 @@
   .pes-baris { display:flex; align-items:center; gap:8px; padding:5px 12px; border-bottom:1px solid #eee; }
   .pes-nama { display:flex; flex-direction:column; min-width:0; } .pes-nama b { font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .pes-nama small { color:#5f6368; font-size:11px; }
   .pes-st { margin-left:auto; font-size:12px; color:#5f6368; white-space:nowrap; }
-  .pes-sw { margin-left:auto; border:1px solid #333; border-radius:12px; padding:2px 9px; font-size:12px; background:#fff; color:#000; cursor:pointer; min-height:26px; white-space:nowrap; }
-  .pes-sw.on { background:#2e7d32; border-color:#2e7d32; color:#fff; }
+  .pes-sw { display:inline-flex; align-items:center; justify-content:center; margin-left:auto; border:1px solid #333; border-radius:12px; padding:2px 9px; font-size:12px; background:#fff; color:#000; cursor:pointer; min-height:26px; white-space:nowrap; }
+  .pes-sw.on { background:#2e7d32; border-color:#2e7d32; color:#fff; } .pes-sw { padding:3px 12px !important; } .pes-st { display:inline-flex; align-items:center; }
   .pes-sw:focus-visible, #pes-judul:focus-visible, .pes-massal .btn:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
   .pes-massal { display:flex; gap:5px; flex-wrap:wrap; padding:7px 10px; background:#f6f6f6; }
   .pes-massal .btn { font-size:12px; padding:3px 8px; border:1px solid #333; background:#fff; color:#000; cursor:pointer; }
@@ -680,7 +680,7 @@
   <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><span id="ruang-wrap" hidden><button type="button" id="btn-ruang" class="btn garis" aria-haspopup="true" aria-expanded="false" title="Pilih ruang (breakout)">▣ Ruang</button><div id="menu-ruang" role="menu" hidden></div></span><button type="button" id="btn-baca" class="btn garis" aria-pressed="false" title="Mode Baca: daftar kartu berurutan yang ramah pembaca layar">☰ Baca</button><button type="button" id="btn-purge" class="btn garis" hidden aria-label="Purge: hapus bersih semua kartu di semua ruang (khusus dosen)" title="Purge: hapus bersih semua kartu (khusus dosen)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M13.2 12.0 L13.3 12.3 L13.4 12.8 L13.3 13.2 L13.0 13.6 L12.7 14.0 L12.1 14.3 L11.5 14.5 L10.9 14.4 L10.2 14.2 L9.5 13.8 L9.0 13.2 L8.6 12.4 L8.4 11.5 L8.5 10.6 L8.8 9.7 L9.3 8.8 L10.1 8.1 L11.1 7.5 L12.3 7.3 L13.5 7.3 L14.7 7.7 L15.9 8.4 L16.8 9.4 L17.5 10.6 L17.9 12.0 L17.8 13.5 L17.5 15.0 L16.7 16.4 L15.5 17.6 L14.1 18.4 L12.4 19.0 L10.7 19.0 L8.9 18.6 L7.2 17.8 L5.8 16.5 L4.7 14.9 L4.0 13.0 L3.8 11.0 L4.1 8.9 L5.0 6.9 L6.4 5.2 L8.2 3.8 L10.3 3.0 L12.6 2.6 L15.0 2.9 L17.2 3.8 L19.2 5.2 L20.9 7.1 L22.0 9.4 L22.5 12.0"/></svg></button><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><button type="button" id="btn-lipat" class="btn garis" aria-expanded="true" aria-controls="login" aria-label="Sembunyikan menu" title="Sembunyikan menu">»</button><div id="login"></div></div>
 </header>
 <aside id="statistik"><button type="button" id="stat-judul" aria-expanded="true"><span>Statistik</span><span id="stat-panah">▾</span></button><div id="stat-isi"></div></aside>
-<aside id="peserta" class="tutup" hidden><button type="button" id="pes-judul" aria-expanded="false" aria-controls="pes-isi"><span id="pes-teks">Peserta</span><span id="pes-panah">▴</span></button><div id="pes-isi"></div></aside>
+<aside id="peserta" class="tutup" hidden><button type="button" id="pes-judul" aria-expanded="false" aria-controls="pes-isi"><span id="pes-teks">Akses</span><span id="pes-panah">▴</span></button><div id="pes-isi"></div></aside>
 <aside id="peta" hidden><button type="button" id="peta-judul" aria-expanded="true"><span>Peta kartu</span><span id="peta-panah">▾</span></button><div id="peta-isi"><div id="peta-kanvas" role="presentation" title="Klik atau seret untuk berpindah"><canvas></canvas><div id="peta-kotak"></div></div></div><div id="peta-zoom"><button type="button" id="pz-min" aria-label="Perkecil" title="Perkecil (Ctrl + gulir)">−</button><button type="button" id="pz-nilai" title="Kembali ke 100%">100%</button><button type="button" id="pz-plus" aria-label="Perbesar" title="Perbesar (Ctrl + gulir)">+</button></div></aside>
 <nav id="alat"><div id="bentuk-baris"></div></nav>
 <div id="banner"></div>
@@ -1998,6 +1998,11 @@ function posPeserta() {
   const p = document.getElementById('peserta'), st = document.getElementById('statistik'); if (!p || !st) return;
   const r = st.getBoundingClientRect(); p.style.bottom = Math.max(8, Math.round(innerHeight - r.top + 8)) + 'px';
 }
+function ikPensil(aktif) {   // ikon pensil = boleh mencoret; pensil dicoret = tidak boleh
+  const w = document.createElement('span'); w.setAttribute('role', 'img'); w.setAttribute('aria-label', aktif ? 'boleh mencoret' : 'tidak boleh mencoret'); w.style.display = 'inline-flex';
+  w.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/><path d="M14.5 6.5l3 3"/>' + (aktif ? '' : '<path d="M3 3l18 18"/>') + '</svg>';
+  return w;
+}
 function renderPeserta() {
   const p = document.getElementById('peserta'), isi = document.getElementById('pes-isi'); if (!p || !isi) return;
   p.hidden = !(tokenHidup() && orangOnline.length);
@@ -2005,13 +2010,13 @@ function renderPeserta() {
   const unik = [], lihat = new Set();
   orangOnline.forEach(o => { const k = o.uid || ('t' + o.id); if (lihat.has(k)) return; lihat.add(k); unik.push(o); });
   unik.sort((a, b) => (a.dos === b.dos ? 0 : a.dos ? -1 : 1) || (a.ruang || '').localeCompare(b.ruang || '') || (a.nama || '').localeCompare(b.nama || ''));
-  document.getElementById('pes-teks').textContent = 'Peserta (' + unik.length + ')';
+  document.getElementById('pes-teks').textContent = 'Akses (' + unik.length + ')';
   const sayaU = uidSaya(), rows = unik.slice(0, 200).map(o => {
     const sw = o.dos ? h('span', { class: 'pes-st' }, 'dosen')
       : !o.uid ? h('span', { class: 'pes-st' }, '–')
-      : dosenSaya ? h('button', { type: 'button', class: 'pes-sw' + (izinKanvas.has(o.uid) ? ' on' : ''), 'aria-pressed': izinKanvas.has(o.uid) ? 'true' : 'false', 'aria-label': 'Izin mencoret untuk ' + (o.nama || 'peserta tanpa nama'),
-          onclick: () => { if (izinKanvas.has(o.uid)) izinKanvas.delete(o.uid); else izinKanvas.add(o.uid); simpanIzin(); hadirKirim(); renderPeserta(); } }, izinKanvas.has(o.uid) ? '✏ boleh' : '✏ tidak')
-      : h('span', { class: 'pes-st' }, izinDosen.has(o.uid) ? '✏ boleh' : '–');
+      : dosenSaya ? h('button', { type: 'button', class: 'pes-sw' + (izinKanvas.has(o.uid) ? ' on' : ''), 'aria-pressed': izinKanvas.has(o.uid) ? 'true' : 'false', 'aria-label': 'Izin mencoret untuk ' + (o.nama || 'peserta tanpa nama') + ': ' + (izinKanvas.has(o.uid) ? 'aktif' : 'tidak aktif'), title: izinKanvas.has(o.uid) ? 'Boleh mencoret (klik untuk mencabut)' : 'Tidak boleh mencoret (klik untuk mengizinkan)',
+          onclick: () => { if (izinKanvas.has(o.uid)) izinKanvas.delete(o.uid); else izinKanvas.add(o.uid); simpanIzin(); hadirKirim(); renderPeserta(); } }, ikPensil(izinKanvas.has(o.uid)))
+      : h('span', { class: 'pes-st' }, izinDosen.has(o.uid) ? ikPensil(true) : '–');
     return h('div', { class: 'pes-baris' }, h('div', { class: 'pes-nama' }, h('b', {}, (o.nama || 'Tanpa nama') + (o.uid && o.uid === sayaU ? ' (kamu)' : '')),
       h('small', {}, (o.uid ? '#' + o.uid.slice(0, 4) + ' · ' : '') + namaRuang(o.ruang))), sw);
   });

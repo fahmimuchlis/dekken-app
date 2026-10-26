@@ -543,20 +543,20 @@
   #baca .kursor-suara { outline:5px solid #1a73e8; outline-offset:4px; }
   #baca details.catatan summary { cursor:pointer; font-weight:700; color:var(--h); }
 
-  #gerbang { position:fixed; inset:0; z-index:100000; background:rgba(0,0,0,.5); color:#fff; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; padding:0 var(--kiri,16px) clamp(16px,4vh,40px); overflow:auto; }
+  #gerbang { position:fixed; inset:0; z-index:100000; background:rgba(0,0,0,.5); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:0 var(--kiri,16px) clamp(16px,4vh,40px); overflow:auto; }
   #gerbang-btn { align-self:center; margin:auto 0; border:0; padding:0 0 .05em; cursor:pointer; background:none; color:#ffee58; font:400 clamp(44px,17vw,36vh)/1 'Rubik Broken Fax',system-ui,sans-serif; text-transform:uppercase; letter-spacing:.02em; max-width:100%; }
   #gerbang-btn:focus { outline:none; }
   #gerbang.kbd #gerbang-btn:focus-visible { outline:3px solid #fff; outline-offset:8px; }
   #gerbang-btn:hover { filter:brightness(1.12); }
-  #gerbang .gerbang-teks { margin:0 0 20px; font:400 16px/1.25 system-ui,sans-serif; max-width:24em; text-shadow:0 1px 3px #000, 0 0 8px #000; }
-  #gerbang .kal { display:block; opacity:.3; transition:opacity .4s; }
-  #gerbang .kal.on { opacity:1; animation:kalMasuk .7s ease-out both; }
-  @keyframes kalMasuk { from { transform:translateY(14px); clip-path:inset(0 100% 0 0); } to { transform:none; clip-path:inset(0 0 0 0); } }
-  @media (prefers-reduced-motion: reduce) { #gerbang .kal.on { animation:none; } }
-  #gerbang .gerbang-ket { margin:-8px 0 18px; font:500 12px/1.4 system-ui,sans-serif; text-transform:uppercase; opacity:.75; max-width:34em; }
+  #gerbang .gerbang-cap { position:absolute; left:var(--kiri,16px); top:var(--atas,56px); right:16px; max-width:min(34em,calc(100vw - 32px)); margin:0; text-align:left; font:400 17px/1.35 system-ui,sans-serif; text-shadow:0 1px 3px #000, 0 0 8px #000; min-height:1.35em; }
+  #gerbang .kata { display:inline-block; white-space:pre; animation:kataMasuk .28s ease-out both; }
+  @keyframes kataMasuk { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) { #gerbang .kata { animation:none; } }
+  #gerbang .gerbang-ket { margin:0 0 14px; text-align:center; font:500 12px/1.4 system-ui,sans-serif; text-transform:uppercase; opacity:.8; max-width:34em; text-shadow:0 1px 3px #000; }
   #gerbang-langsung { font:500 16px system-ui,sans-serif; text-transform:uppercase; color:#fff; background:transparent; border:1px solid #fff; border-radius:4px; padding:10px 14px; cursor:pointer; }
   #gerbang-langsung:hover { background:#fff; color:#000; }
   #gerbang-langsung:focus-visible { outline:3px solid #ffee58; outline-offset:3px; }
+  #gerbang, #gerbang * { cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23ffee00' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E") 14 14, pointer !important; }   /* penunjuk berupa bulatan kuning di layar sambutan */
   h1 b.buka-intro { cursor:pointer; }
   h1 b.buka-intro:hover { text-decoration:underline; }
   @media (prefers-reduced-motion: reduce) { #gerbang-btn .gk { animation:none !important; opacity:1; } }
@@ -2091,24 +2091,39 @@ function gerbangNetra(manual) {
     'If you have a visual impairment, enter reading mode by clicking the yellow area. This feature will disappear after a long beep.'];
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Selamat datang di Dekken' });
   const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[2] }, 'Dekken');
-  const teks = h('p', { class: 'gerbang-teks', 'aria-hidden': 'true' }, ...EN.map(t => h('span', { class: 'kal' }, t)));
+  const cap = h('p', { class: 'gerbang-cap', 'aria-hidden': 'true' });
   const langsung = h('button', { type: 'button', id: 'gerbang-langsung' }, 'Masuk ke papan');
-  ov.append(btn, teks);
+  ov.append(cap, btn);
   if (!manual) ov.append(h('p', { class: 'gerbang-ket', 'aria-hidden': 'true' }, 'Mode papan akan otomatis aktif bila mengabaikan perintah audio ini.'));
   ov.append(langsung);
-  try { const asli = document.querySelector('header h1'); if (asli) ov.style.setProperty('--kiri', Math.max(16, asli.getBoundingClientRect().left) + 'px'); } catch (e) {}   // judul asli di header tetap terlihat tembus latar
+  try { const asli = document.querySelector('header h1'); if (asli) { const r = asli.getBoundingClientRect(); ov.style.setProperty('--kiri', Math.max(16, r.left) + 'px'); ov.style.setProperty('--atas', Math.max(40, (document.querySelector('header') || asli).getBoundingClientRect().bottom + 12) + 'px'); } } catch (e) {}   // judul asli di header tetap terlihat tembus latar
   document.body.append(ov);
-  const ucap = i => {   // tiga kalimat Inggris, masing-masing sekali, berurutan
+  let adaTTS = false; try { adaTTS = !!(window.speechSynthesis && window.SpeechSynthesisUtterance); } catch (e) {}
+  const ucap = i => {   // tiga kalimat Inggris berurutan; satu baris keterangan, kata muncul satu per satu, hilang begitu kalimat penuh
     if (usai) return;
-    if (i >= EN.length) { ucapUsai = true; return; }
-    const maju = () => { if (!usai) setTimeout(() => ucap(i + 1), 350); };
-    try {
-      const kal = teks.children[i]; if (kal) kal.classList.add('on');   // kalimat muncul beranimasi saat mulai dibacakan
-      const u = new SpeechSynthesisUtterance(EN[i]); u.lang = 'en-US'; u.rate = i === 1 ? 1 : .95;
-      u.onend = maju; u.onerror = maju;
-      if (i === 0) speechSynthesis.cancel();
-      speechSynthesis.speak(u);
-    } catch (e) { ucapUsai = true; }
+    if (i >= EN.length) { cap.textContent = ''; ucapUsai = true; return; }
+    const kata = EN[i].split(' '); let n = 0, selesai = false, pewaktu = null;
+    cap.textContent = '';
+    const spans = kata.map((k, x) => h('span', { class: 'kata' }, k + (x < kata.length - 1 ? ' ' : '')));
+    const tampil = sampai => { while (n < sampai && n < spans.length) cap.append(spans[n++]); };
+    const akhir = () => {   // kalimat penuh: tampilkan sisa kata, tahan sebentar, hapus, lanjut
+      if (selesai || usai) return; selesai = true; clearInterval(pewaktu); tampil(spans.length);
+      setTimeout(() => { if (usai) return; cap.textContent = ''; setTimeout(() => ucap(i + 1), 300); }, 650);
+    };
+    let bicaraUsai = !adaTTS, katanyaUsai = false;
+    const cek = () => { if (bicaraUsai && katanyaUsai) akhir(); };
+    const langkah = i === 1 ? 330 : 370;   // irama kata kira-kira mengikuti kecepatan bicara
+    tampil(1);
+    pewaktu = setInterval(() => { tampil(n + 1); if (n >= spans.length) { clearInterval(pewaktu); katanyaUsai = true; cek(); } }, langkah);
+    if (adaTTS) {
+      try {
+        const u = new SpeechSynthesisUtterance(EN[i]); u.lang = 'en-US'; u.rate = i === 1 ? 1 : .95;
+        u.onboundary = e => { if (typeof e.charIndex === 'number') tampil(EN[i].slice(0, e.charIndex).split(' ').length); };   // bila perangkat memberi penanda kata, ikuti
+        u.onend = u.onerror = () => { bicaraUsai = true; katanyaUsai = true; akhir(); };
+        if (i === 0) speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      } catch (e) { bicaraUsai = true; cek(); }
+    }
   };
   const tombolKbd = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); tutup(false); } };
   const tutup = masuk => {
@@ -2143,8 +2158,7 @@ function gerbangNetra(manual) {
   ov.addEventListener('keydown', () => ov.classList.add('kbd'), { once: true });
   if (!manual) wkt = setTimeout(habis, 25000);
   try { btn.focus({ focusVisible: false }); } catch (e) { try { btn.focus(); } catch (e2) {} }
-  let adaTTS = false; try { adaTTS = !!(window.speechSynthesis && window.SpeechSynthesisUtterance); } catch (e) {}
-  if (adaTTS) ucap(0); else { ucapUsai = true; teks.querySelectorAll('.kal').forEach(x => x.classList.add('on')); }
+  ucap(0);
 }
 function PANDUAN_MASUK() {
   if (!SR) return [{ teks: 'Mode baca aktif. Browser ini tidak mendukung perintah suara. Gunakan tombol Tab untuk berpindah, dan Enter untuk memilih. Gunakan Chrome untuk perintah suara.' }];

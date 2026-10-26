@@ -2456,8 +2456,8 @@ function gerbangNetra(manual) {
   let sudah = false; try { sudah = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
   if ((sudah && !manual) || document.getElementById('gerbang')) return;
   let usai = false, wkt = null;
-  const EN = ['Welcome to Dekken, a collaborative discussion platform designed for structured thought and meaningful dialogue.',
-    'If you have a visual impairment, press Enter now to turn on Reading Mode.', 'This option will close in 5 seconds.'];
+  const EN = ['Selamat datang di Dekken, platform diskusi kolaboratif yang dirancang untuk menata pemikiran dan dialog yang bermakna.',
+    'Jika Anda penyandang disabilitas netra, tekan Enter sekarang untuk mengaktifkan Mode Baca.', 'Opsi ini akan tertutup dalam 5 detik.'];
   const ANGKA = ['', 'one', 'two', 'three', 'four', 'five'];
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Selamat datang di Dekken' });
   const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[0] + ' ' + EN[1] + ' Escape atau tombol Mulai untuk langsung ke papan.' }, 'Dekken');
@@ -2472,7 +2472,7 @@ function gerbangNetra(manual) {
   const bicara = (t, rate) => new Promise(res => {   // ucapkan satu bagian; selesai bila suara selesai (atau 12 detik, jaga-jaga)
     if (!adaTTS || usai) { res(); return; }
     let beres = false; const f = () => { if (!beres) { beres = true; res(); } };
-    try { const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; u.rate = rate || 1; u.onend = u.onerror = f; setTimeout(f, 2500 + t.length * 80); speechSynthesis.speak(u); } catch (e) { f(); }
+    try { const u = new SpeechSynthesisUtterance(t); u.lang = 'id-ID'; u.rate = rate || 1; u.onend = u.onerror = f; setTimeout(f, 2500 + t.length * 80); speechSynthesis.speak(u); } catch (e) { f(); }
   });
   const kalimat = async t => {   // keterangan satu baris: kata muncul satu per satu, hilang begitu kalimat penuh dan suara selesai
     if (usai) return; cap.textContent = '';
@@ -2494,7 +2494,7 @@ function gerbangNetra(manual) {
     if (masuk) {
       if (window.setTemaNetra) setTemaNetra();
       if (!bacaAktif) aturBaca(true);
-      bicaraDaftar([{ teks: 'Reading Mode activated. Please listen to the following instructions to navigate Dekken.', bhs: 'en-US' }, { jeda: 700 }].concat(PANDUAN_MASUK()));
+      bicaraDaftar([{ teks: 'Mode Baca aktif. Dengarkan panduan berikut untuk menavigasi Dekken.' }, { jeda: 700 }].concat(PANDUAN_MASUK()));
     }
   };
   const jalan = async () => {
@@ -2505,7 +2505,7 @@ function gerbangNetra(manual) {
     for (let n = 5; n >= 1; n--) {   // hitung mundur: 5 4 3 2 1 START, tiap angka tampil besar dan diucapkan
       if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, String(n))); await tidur(1000);
     }
-    if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, 'START'));
+    if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, 'MULAI'));
     await tidur(900); if (!usai) tutup(false);
   };
   btn.addEventListener('click', () => tutup(true));
@@ -2517,8 +2517,8 @@ function gerbangNetra(manual) {
   jalan();
 }
 function PANDUAN_MASUK() {
-  if (!SR) return [{ teks: 'Mode baca aktif. Browser ini tidak mendukung perintah suara. Gunakan tombol Tab untuk berpindah, dan Enter untuk memilih. Gunakan Chrome untuk perintah suara.' }];
-  return [{ teks: 'Mode baca aktif. Untuk memberi perintah, tekan spasi dan Z bersamaan, tunggu bunyi bip, lalu ucapkan satu perintah.' }, { jeda: JEDA_GRUP }]
+  if (!SR) return [{ teks: 'Browser ini tidak mendukung perintah suara. Gunakan tombol Tab untuk berpindah, dan Enter untuk memilih. Gunakan Chrome untuk perintah suara.' }];
+  return [{ teks: 'Untuk memberi perintah, tekan spasi dan Z bersamaan, tunggu bunyi bip, lalu ucapkan satu perintah.' }, { jeda: JEDA_GRUP }]
     .concat(daftarKata([['Contoh perintah.', ['berikutnya', 'sebelumnya', 'baca', 'baca semua', 'naikkan', 'turunkan', 'balas', 'kartu baru', 'ruang nomor satu', 'papan utama']]]))
     .concat([{ jeda: JEDA_GRUP }, { teks: 'Ucapkan bantuan untuk daftar lengkap. Untuk berhenti bicara, ucapkan berhenti. Bisa juga memakai tombol Tab dan Enter.' }]);
 }

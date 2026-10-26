@@ -555,7 +555,8 @@
   @keyframes kataMasuk { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
   @media (prefers-reduced-motion: reduce) { #gerbang .kata { animation:none; } }
   #gerbang .gerbang-ket { margin:0 0 14px; text-align:center; font:500 12px/1.4 system-ui,sans-serif; text-transform:uppercase; opacity:.8; max-width:34em; text-shadow:0 1px 3px #000; }
-  #gerbang-langsung { font:500 16px system-ui,sans-serif; text-transform:uppercase; color:#ffee58; background:transparent; border:1px solid #ffee58; border-radius:4px; padding:10px 14px; cursor:pointer; }
+  #gerbang-langsung { height:40px; min-width:40px; box-sizing:border-box; font:500 14px/1 "Google Sans", Roboto, Arial, sans-serif; letter-spacing:.2px; text-transform:uppercase; color:#ffee58; background:transparent; border:1px solid #ffee58; border-radius:4px; padding:0 14px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+  @media (max-width:640px) { #gerbang-langsung { height:34px; font-size:12px; padding:0 8px; } }
   #gerbang-langsung:hover { background:#ffee58; color:#000; }
   #gerbang-langsung:focus-visible { outline:3px solid #ffee58; outline-offset:3px; }
   #gerbang, #gerbang * { cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23ffee00' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E") 14 14, pointer !important; }   /* penunjuk berupa bulatan kuning di layar sambutan */
@@ -2455,7 +2456,7 @@ function gerbangNetra(manual) {
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Selamat datang di Dekken' });
   const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[2] }, 'Dekken');
   const cap = h('p', { class: 'gerbang-cap', 'aria-hidden': 'true' });
-  const langsung = h('button', { type: 'button', id: 'gerbang-langsung' }, 'Masuk ke papan');
+  const langsung = h('button', { type: 'button', id: 'gerbang-langsung', title: 'Mulai: masuk ke papan' }, 'Mulai');
   ov.append(btn, cap);
   ov.append(langsung);
   try { const asli = document.querySelector('header h1'); if (asli) { const r = asli.getBoundingClientRect(); ov.style.setProperty('--kiri', Math.max(16, r.left) + 'px'); ov.style.setProperty('--atas', Math.max(40, (document.querySelector('header') || asli).getBoundingClientRect().bottom + 12) + 'px'); } } catch (e) {}   // judul asli di header tetap terlihat tembus latar

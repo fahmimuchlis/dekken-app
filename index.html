@@ -714,6 +714,10 @@
   .purge-aksi .btn { font-size:12px; font-weight:500; padding:0 12px; min-height:28px; height:28px; border:1px solid #000; border-radius:8px; background:#fff; color:#000; }
   .purge-aksi .btn#purge-ya { background:#f00; border-color:#f00; color:#fff; font-weight:500; }
   .purge-kotak input:focus-visible, .purge-kotak .btn:focus-visible { outline:2px solid #000; outline-offset:2px; }
+  /* ruang escape: pembuat hanya kartu timer, anggota hanya membalas */
+  #bentuk-baris.esc .tumpuk, #bentuk-baris.esc .gbr, #bentuk-baris.esc .kvs, #bentuk-baris.esc .poll { display:none !important; }
+  #bentuk-baris.esc-anggota .b-waktu { display:none !important; }
+  #menu-ruang .esc-kode { padding:6px 12px; font-size:14px; } #menu-ruang .esc-kode b { letter-spacing:.12em; }
 </style>
 </head>
 <body>
@@ -775,6 +779,16 @@ let ruangData = [];          // [{id, nama, urut}] dari server
 let ruangSaya = '';          // '' = papan utama
 try { ruangSaya = localStorage.getItem('deck-ruang') || ''; } catch (e) {}
 let ruangBuka = false, ruangKonfirm = '';
+let escapeSaya = { milik: null, anggota: [] };   // ruang escape milikku (id + kode) dan ruang escape yang kuikuti
+let escMasuk = '', escKode = '', escNama = '', escAnggotaBuka = false, escAnggota = [];
+const infoRuang = id => ruangData.find(r => r.id === id) || null;
+const adalahEscape = id => { const r = infoRuang(id); return !!(r && r.jenis === 'escape'); };
+const escapeBoleh = id => { const r = infoRuang(id); return !r || r.jenis !== 'escape' || !r.terkunci || !!dosenSaya || (escapeSaya.milik && escapeSaya.milik.id === id) || escapeSaya.anggota.includes(id); };
+const escapeMilikku = id => !!(escapeSaya.milik && escapeSaya.milik.id === id);
+async function muatEscape() {
+  if (!sb || !tokenHidup()) { escapeSaya = { milik: null, anggota: [] }; return; }
+  try { const { data, error } = await sb.rpc('escape_saya'); if (!error && data) escapeSaya = { milik: data.milik || null, anggota: Array.isArray(data.anggota) ? data.anggota : [] }; } catch (e) {}
+}
 let bacaAktif = false;       // Mode Baca: tampilan daftar lurus untuk pembaca layar (tersimpan di browser ini)
 try { bacaAktif = localStorage.getItem('deck-baca') === '1'; } catch (e) {}
 let bacaBaru = false, bacaBalas = null, bacaFokusKey = '';   // bacaBalas: { parent, ke }
@@ -933,6 +947,8 @@ async function muat(otomatis) {
     dataServer = (r.data || []).map(normal).filter(p => p.id && p.teks);
     if (!rg.error && Array.isArray(rg.data)) {   // tabel ruang belum ada / gagal dibaca: pertahankan yang lama
       ruangData = rg.data;
+      if (tokenHidup() && ruangData.some(x => x.jenis === 'escape')) await muatEscape();
+      if (ruangSaya && ruangData.some(x => x.id === ruangSaya) && !escapeBoleh(ruangSaya)) { ruangSaya = ''; simpanRuang(); hadirKirim(); toast('Kamu tidak punya akses ke ruang escape itu lagi.'); }
       if (ruangSaya && !ruangData.some(x => x.id === ruangSaya)) { ruangSaya = ''; simpanRuang(); hadirKirim(); toast('Ruang ini ditutup. Kartunya digabung ke papan utama.'); }
       renderRuang();
     }
@@ -1039,6 +1055,11 @@ const RPC = {
   buatRuang: i => ['buat_ruang', { p: { awalan: i.awalan, jumlah: i.jumlah } }],
   tutupRuang: i => ['tutup_ruang', { p_id: i.id || null }],
   purge: () => ['purge_semua', {}],
+  buatEscape: i => ['buat_escape', { p_nama: i.nama }],
+  kunciEscape: i => ['kunci_escape', { p_id: i.id, p_kunci: !!i.kunci, p_ganti: !!i.ganti }],
+  masukEscape: i => ['masuk_escape', { p_id: i.id, p_kode: i.kode, p_nama: getUser() || '' }],
+  keluarkanEscape: i => ['keluarkan_escape', { p_id: i.id, p_uid: i.uid }],
+  anggotaEscape: i => ['anggota_escape', { p_id: i.id }],
   post:    i => ['kirim', { p: { username: i.username, teks: i.teks, parent: i.parent || '', membalas: i.membalas || '', warna: i.warna, kartu: i.kartu, bentuk: i.bentuk, menit: i.menit, game: i.game ? 'true' : '', ruang: ruangSaya, gambar: i.gambar || '' } }]
 };
 async function panggilInti(isi) {
@@ -1430,6 +1451,10 @@ function renderAlat() {
     return;
   }
   const aktif = komposBuka ? ambilDraft('baru').b : null;   // (tombol polling dikelola di bawah)
+  const dalamEsc = adalahEscape(ruangSaya) && !dosenSaya;   // ruang escape: pembuat hanya timer, anggota hanya membalas
+  el.classList.toggle('esc', dalamEsc); el.classList.toggle('esc-anggota', dalamEsc && !escapeMilikku(ruangSaya));
+  if (dalamEsc && komposBuka && (!escapeMilikku(ruangSaya) || ambilDraft('baru').b !== 'waktu')) { komposBuka = false; }
+  if (dalamEsc) pollBuka = false;
   // tombol dibuat sekali lalu hanya diubah kelasnya, supaya perubahan ukuran teranimasi
   if (!el.querySelector('.ikon')) {
     const tumpuk = h('button', { type: 'button', class: 'ikon tumpuk', title: 'Kartu baru: pilih bentuk', 'aria-label': 'Kartu baru, pilih bentuk', 'aria-haspopup': 'true', 'aria-expanded': 'false', onclick: e => { e.stopPropagation(); menuBentuk(tumpuk); } });
@@ -1451,6 +1476,7 @@ function renderAlat() {
   el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.classList.contains('tumpuk') ? (!!aktif && aktif !== 'waktu') : k.classList.contains('gbr') ? !!document.getElementById('gambar-ov') : k.classList.contains('kvs') ? !!document.getElementById('kanvas-ov') : k.dataset.bentuk === aktif));
   const lama = el.querySelector('.petunjuk'); if (lama) lama.remove();
   if (aktif) el.append(h('span', { class: 'petunjuk' }, `${BENTUK[aktif].label} \u00b7 maks ${BENTUK[aktif].maks} huruf`));
+  else if (dalamEsc && !escapeMilikku(ruangSaya)) el.append(h('span', { class: 'petunjuk' }, 'Ruang escape: kamu bisa membalas kartu timer.'));
 }
 
 /* ================== RENDER ================== */
@@ -1800,6 +1826,7 @@ const simpanRuang = () => { try { localStorage.setItem('deck-ruang', ruangSaya);
 const namaRuang = id => id ? ((ruangData.find(r => r.id === id) || {}).nama || 'Ruang') : 'Papan utama';
 function pilihRuang(id) {
   if (id === ruangSaya) { tutupMenuRuang(); return; }
+  if (id && !escapeBoleh(id)) { escMasuk = id; escKode = ''; renderRuang(); return; }
   ruangSaya = id; simpanRuang();
   komposBuka = false; pollBuka = false; balasTerbuka = null; balasKe = null; dekBuka = null;
   suaraKead.dikenal = new Set(dataServer.filter(p => p.ruang === ruangSaya).map(p => p.id));
@@ -1815,8 +1842,40 @@ async function buatRuangAksi(awalan, jumlah, btn) {
   catch (e) { toast(e.message); }
   btn.disabled = false; renderRuang();
 }
+async function buatEscapeAksi(nama, btn) {
+  if (!butuhLogin()) return;
+  btn.disabled = true;
+  try { await panggil({ aksi: 'buatEscape', nama: nama.trim() }); escNama = ''; await muatEscape(); await muat(); toast('Ruang escape dibuat. Kunci dan bagikan kodenya.'); }
+  catch (e) { toast(e.message); }
+  btn.disabled = false; renderRuang();
+}
+async function kunciEscapeAksi(id, kunci, ganti) {
+  try { const j = await panggil({ aksi: 'kunciEscape', id, kunci, ganti }); await muatEscape(); await muat(); toast(ganti ? 'Kode baru: ' + (j.kode || '') : (kunci ? 'Ruang dikunci' : 'Kunci dibuka')); }
+  catch (e) { toast(e.message); }
+  renderRuang();
+}
+async function masukEscapeAksi(id, kode, btn) {
+  if (!butuhLogin()) return;
+  btn.disabled = true;
+  try {
+    const j = await panggil({ aksi: 'masukEscape', id, kode: String(kode || '').trim() });
+    if (j && j.ok) { escMasuk = ''; escKode = ''; await muatEscape(); await muat(); pilihRuang(id); }
+    else { toast((j && j.pesan) || 'Kode salah.'); }
+  } catch (e) { toast(e.message); }
+  btn.disabled = false; renderRuang();
+}
+async function anggotaEscapeAksi(id) {
+  escAnggotaBuka = !escAnggotaBuka;
+  if (escAnggotaBuka) { try { const j = await panggil({ aksi: 'anggotaEscape', id }); escAnggota = Array.isArray(j) ? j : []; } catch (e) { toast(e.message); escAnggotaBuka = false; } }
+  renderRuang();
+}
+async function keluarkanEscapeAksi(id, uid) {
+  try { await panggil({ aksi: 'keluarkanEscape', id, uid }); const j = await panggil({ aksi: 'anggotaEscape', id }); escAnggota = Array.isArray(j) ? j : []; toast('Anggota dikeluarkan'); }
+  catch (e) { toast(e.message); }
+  renderRuang();
+}
 async function tutupRuangAksi(id) {
-  try { const j = await panggil({ aksi: 'tutupRuang', id }); ruangKonfirm = ''; await muat(); toast('Ruang ditutup' + (j.kartu_digabung ? ' · ' + j.kartu_digabung + ' kartu digabung ke papan utama' : '')); }
+  try { const j = await panggil({ aksi: 'tutupRuang', id }); ruangKonfirm = ''; await muat(); toast('Ruang ditutup' + (j.kartu_digabung ? ' · ' + j.kartu_digabung + ' kartu digabung ke papan utama' : '') + (j.kartu_escape_dihapus ? ' · ' + j.kartu_escape_dihapus + ' kartu ruang escape dihapus' : '')); }
   catch (e) { toast(e.message); }
   renderRuang();
 }
@@ -2174,7 +2233,7 @@ function renderRuang() {
   if (kv && kv.ruang !== ruangSaya) tutupKanvas();
   const wrap = document.getElementById('ruang-wrap'), tb = document.getElementById('btn-ruang'), menu = document.getElementById('menu-ruang');
   if (!wrap || !tb || !menu) return;
-  const tampak = dosenSaya || ruangData.length > 0;
+  const tampak = dosenSaya || ruangData.length > 0 || tokenHidup();
   wrap.hidden = !tampak;
   tb.replaceChildren(h('span', { class: 't' }, '▣ ' + (ruangSaya ? namaRuang(ruangSaya) : 'Ruang')));
   tb.title = 'Ruang saat ini: ' + namaRuang(ruangSaya);
@@ -2183,17 +2242,43 @@ function renderRuang() {
   if (menu.hidden) return;
   const per = (hadirData && hadirData.per) || {};
   const baris = (id, nama) => h('button', { type: 'button', role: 'menuitemradio', class: id === ruangSaya ? 'aktif' : '', 'aria-checked': id === ruangSaya ? 'true' : 'false', onclick: () => pilihRuang(id) },
-    h('span', {}, nama), h('span', { class: 'n', title: 'Orang yang sedang aktif di sini' }, per[id] ? String(per[id]) : ''));
+    h('span', {}, (adalahEscape(id) ? ((infoRuang(id).terkunci ? '\u{1F512} ' : '\u{1F513} ') + nama + (escapeMilikku(id) ? ' (milikmu)' : '')) : nama)), h('span', { class: 'n', title: 'Orang yang sedang aktif di sini' }, per[id] ? String(per[id]) : ''));
   const aktifInput = document.activeElement && menu.contains(document.activeElement) ? document.activeElement : null;
   if (aktifInput && aktifInput.tagName === 'INPUT') return;   // jangan membongkar form saat sedang diketik
   const kids = [h('div', { class: 'jdl' }, 'Pilih ruang'), baris('', 'Papan utama'), ...ruangData.map(r => baris(r.id, r.nama))];
   if (!ruangData.length) kids.push(h('div', { class: 'kosong' }, 'Belum ada ruang.'));
+  if (escMasuk && infoRuang(escMasuk)) {   // masukkan kode untuk ruang escape terkunci
+    const iK = h('input', { type: 'text', maxlength: '8', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', value: escKode, 'aria-label': 'Kode ruang ' + infoRuang(escMasuk).nama, placeholder: 'Kode' });
+    iK.addEventListener('input', () => { escKode = iK.value; });
+    const bM = h('button', { type: 'button', onclick: () => masukEscapeAksi(escMasuk, iK.value, bM) }, 'Masuk');
+    iK.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); bM.click(); } });
+    kids.push(h('div', { class: 'jdl' }, 'Kode untuk ' + infoRuang(escMasuk).nama), h('div', { class: 'buat' }, iK, bM));
+  }
+  if (tokenHidup()) {   // ruang escape: siapa pun bisa membuat satu
+    if (!escapeSaya.milik) {
+      const iE = h('input', { type: 'text', maxlength: '30', value: escNama, 'aria-label': 'Nama ruang escape', placeholder: 'Nama ruang escape' });
+      iE.addEventListener('input', () => { escNama = iE.value; });
+      const bE = h('button', { type: 'button', onclick: () => buatEscapeAksi(iE.value, bE) }, 'Buat');
+      kids.push(h('div', { class: 'jdl' }, 'Ruang escape milikmu'), h('div', { class: 'buat' }, iE, bE));
+    } else {
+      const m = escapeSaya.milik, r = infoRuang(m.id);
+      kids.push(h('div', { class: 'jdl' }, 'Ruang escape milikmu: ' + (r ? r.nama : '')),
+        h('div', { class: 'esc-kode' }, 'Kode: ', h('b', {}, m.kode), r && r.terkunci ? ' \u{1F512}' : ' (belum dikunci)'),
+        h('button', { type: 'button', onclick: () => kunciEscapeAksi(m.id, !(r && r.terkunci), false) }, r && r.terkunci ? 'Buka kunci' : 'Kunci ruang'),
+        h('button', { type: 'button', onclick: () => kunciEscapeAksi(m.id, !!(r && r.terkunci), true) }, 'Ganti kode'),
+        h('button', { type: 'button', onclick: () => anggotaEscapeAksi(m.id) }, escAnggotaBuka ? 'Sembunyikan anggota' : 'Anggota'));
+      if (escAnggotaBuka) {
+        if (!escAnggota.length) kids.push(h('div', { class: 'kosong' }, 'Belum ada anggota.'));
+        escAnggota.forEach(a => kids.push(h('button', { type: 'button', class: 'bahaya', title: 'Keluarkan dari ruang', onclick: () => keluarkanEscapeAksi(m.id, a.uid) }, 'Keluarkan ' + (a.nama || 'tanpa nama'))));
+      }
+    }
+  }
   if (dosenSaya) {
     const iA = h('input', { type: 'text', value: 'Ruang', maxlength: '24', 'aria-label': 'Awalan nama ruang' });
     const iN = h('input', { type: 'number', value: '4', min: '1', max: '20', 'aria-label': 'Jumlah ruang' });
     const bB = h('button', { type: 'button', onclick: () => buatRuangAksi(iA.value, iN.value, bB) }, 'Buat');
     kids.push(h('div', { class: 'jdl' }, 'Dosen: buat set ruang'), h('div', { class: 'buat' }, iA, iN, bB));
-    if (ruangSaya) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === ruangSaya) tutupRuangAksi(ruangSaya); else { ruangKonfirm = ruangSaya; renderRuang(); } } }, ruangKonfirm === ruangSaya ? 'Yakin? Klik lagi untuk menutup' : 'Tutup ruang ini (gabung ke utama)'));
+    if (ruangSaya) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === ruangSaya) tutupRuangAksi(ruangSaya); else { ruangKonfirm = ruangSaya; renderRuang(); } } }, ruangKonfirm === ruangSaya ? 'Yakin? Klik lagi untuk menutup' : (adalahEscape(ruangSaya) ? 'Tutup dan hapus ruang escape ini' : 'Tutup ruang ini (gabung ke utama)')));
     if (ruangData.length) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === '*') tutupRuangAksi(null); else { ruangKonfirm = '*'; renderRuang(); } } }, ruangKonfirm === '*' ? 'Yakin? Klik lagi untuk menutup semua' : 'Tutup semua ruang'));
   }
   menu.replaceChildren(...kids);

@@ -781,6 +781,8 @@ try { ruangSaya = localStorage.getItem('deck-ruang') || ''; } catch (e) {}
 let ruangBuka = false, ruangKonfirm = '';
 let escapeSaya = { milik: null, anggota: [] };   // ruang escape milikku (id + kode) dan ruang escape yang kuikuti
 let escMasuk = '', escKode = '', escNama = '', escAnggotaBuka = false, escAnggota = [];
+let escBatas = 0;   // jatah ruang escape yang diatur dosen (0 = belum dibuka)
+async function muatEscapeBatas() { if (!sb) return; try { const { data, error } = await sb.from('escape_atur').select('batas').maybeSingle(); if (!error && data) escBatas = Number(data.batas) || 0; } catch (e) {} }
 const infoRuang = id => ruangData.find(r => r.id === id) || null;
 const adalahEscape = id => { const r = infoRuang(id); return !!(r && r.jenis === 'escape'); };
 const escapeBoleh = id => { const r = infoRuang(id); return !r || r.jenis !== 'escape' || !r.terkunci || !!dosenSaya || (escapeSaya.milik && escapeSaya.milik.id === id) || escapeSaya.anggota.includes(id); };
@@ -947,6 +949,7 @@ async function muat(otomatis) {
     dataServer = (r.data || []).map(normal).filter(p => p.id && p.teks);
     if (!rg.error && Array.isArray(rg.data)) {   // tabel ruang belum ada / gagal dibaca: pertahankan yang lama
       ruangData = rg.data;
+      await muatEscapeBatas();
       if (tokenHidup() && ruangData.some(x => x.jenis === 'escape')) await muatEscape();
       if (ruangSaya && ruangData.some(x => x.id === ruangSaya) && !escapeBoleh(ruangSaya)) { ruangSaya = ''; simpanRuang(); hadirKirim(); toast('Kamu tidak punya akses ke ruang escape itu lagi.'); }
       if (ruangSaya && !ruangData.some(x => x.id === ruangSaya)) { ruangSaya = ''; simpanRuang(); hadirKirim(); toast('Ruang ini ditutup. Kartunya digabung ke papan utama.'); }
@@ -1055,6 +1058,7 @@ const RPC = {
   buatRuang: i => ['buat_ruang', { p: { awalan: i.awalan, jumlah: i.jumlah } }],
   tutupRuang: i => ['tutup_ruang', { p_id: i.id || null }],
   purge: () => ['purge_semua', {}],
+  aturEscape: i => ['atur_escape', { p_batas: i.batas }],
   buatEscape: i => ['buat_escape', { p_nama: i.nama }],
   kunciEscape: i => ['kunci_escape', { p_id: i.id, p_kunci: !!i.kunci, p_ganti: !!i.ganti }],
   masukEscape: i => ['masuk_escape', { p_id: i.id, p_kode: i.kode, p_nama: getUser() || '' }],
@@ -1842,6 +1846,12 @@ async function buatRuangAksi(awalan, jumlah, btn) {
   catch (e) { toast(e.message); }
   btn.disabled = false; renderRuang();
 }
+async function aturEscapeAksi(n, btn) {
+  btn.disabled = true;
+  try { const j = await panggil({ aksi: 'aturEscape', batas: Math.max(0, Math.min(30, parseInt(n) || 0)) }); escBatas = Number(j.batas) || 0; toast('Jatah ruang escape: ' + escBatas); }
+  catch (e) { toast(e.message); }
+  btn.disabled = false; renderRuang();
+}
 async function buatEscapeAksi(nama, btn) {
   if (!butuhLogin()) return;
   btn.disabled = true;
@@ -2255,7 +2265,10 @@ function renderRuang() {
     kids.push(h('div', { class: 'jdl' }, 'Kode untuk ' + infoRuang(escMasuk).nama), h('div', { class: 'buat' }, iK, bM));
   }
   if (tokenHidup()) {   // ruang escape: siapa pun bisa membuat satu
-    if (!escapeSaya.milik) {
+    const nEsc = ruangData.filter(x => x.jenis === 'escape').length;
+    if (!escapeSaya.milik && !dosenSaya && (escBatas <= 0 || nEsc >= escBatas)) {
+      kids.push(h('div', { class: 'jdl' }, 'Ruang escape'), h('div', { class: 'kosong' }, escBatas <= 0 ? 'Belum dibuka oleh dosen.' : 'Jatah penuh (' + nEsc + ' dari ' + escBatas + ').'));
+    } else if (!escapeSaya.milik) {
       const iE = h('input', { type: 'text', maxlength: '30', value: escNama, 'aria-label': 'Nama ruang escape', placeholder: 'Nama ruang escape' });
       iE.addEventListener('input', () => { escNama = iE.value; });
       const bE = h('button', { type: 'button', onclick: () => buatEscapeAksi(iE.value, bE) }, 'Buat');
@@ -2278,6 +2291,9 @@ function renderRuang() {
     const iN = h('input', { type: 'number', value: '4', min: '1', max: '20', 'aria-label': 'Jumlah ruang' });
     const bB = h('button', { type: 'button', onclick: () => buatRuangAksi(iA.value, iN.value, bB) }, 'Buat');
     kids.push(h('div', { class: 'jdl' }, 'Dosen: buat set ruang'), h('div', { class: 'buat' }, iA, iN, bB));
+    const iB = h('input', { type: 'number', value: String(escBatas), min: '0', max: '30', 'aria-label': 'Jatah ruang escape' });
+    const bBt = h('button', { type: 'button', onclick: () => aturEscapeAksi(iB.value, bBt) }, 'Atur');
+    kids.push(h('div', { class: 'jdl' }, 'Dosen: jatah ruang escape (0 = tutup), terpakai ' + ruangData.filter(x => x.jenis === 'escape').length), h('div', { class: 'buat esc-batas' }, iB, bBt));
     if (ruangSaya) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === ruangSaya) tutupRuangAksi(ruangSaya); else { ruangKonfirm = ruangSaya; renderRuang(); } } }, ruangKonfirm === ruangSaya ? 'Yakin? Klik lagi untuk menutup' : (adalahEscape(ruangSaya) ? 'Tutup dan hapus ruang escape ini' : 'Tutup ruang ini (gabung ke utama)')));
     if (ruangData.length) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === '*') tutupRuangAksi(null); else { ruangKonfirm = '*'; renderRuang(); } } }, ruangKonfirm === '*' ? 'Yakin? Klik lagi untuk menutup semua' : 'Tutup semua ruang'));
   }

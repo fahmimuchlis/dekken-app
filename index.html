@@ -668,6 +668,12 @@
   .pes-baris { border-bottom:1px solid var(--gx) !important; opacity:1; }
   header .kanan .btn, header .kanan select, header #btn-akun, header #btn-tema, header #btn-help, header #btn-suara, header #btn-ruang, header #btn-baca, header #btn-purge, header #btn-foto, header #btn-rapi, header #urut, header #btn-lipat { border:1px solid var(--gx) !important; }
   #menu-bentuk { border:1px solid var(--gx) !important; }
+  /* rapi: panel Akses & Statistik sejajar, sama lebar/tinggi/tepi kanan saat tertutup maupun terbuka */
+  #statistik, #peserta { right:12px !important; box-sizing:border-box; }
+  @media (max-width:640px) { #statistik, #peserta { right:8px !important; } }
+  #statistik.tutup, #peserta.tutup { width:128px !important; }
+  #stat-judul, #pes-judul { min-height:40px; box-sizing:border-box; font:500 14px/1.2 "Google Sans", Roboto, Arial, sans-serif; padding:0 12px; gap:10px; }
+  @media (max-width:420px) { #statistik:not(.tutup), #peserta:not(.tutup) { width:min(240px, calc(100vw - 16px)) !important; } }
 </style>
 </head>
 <body>

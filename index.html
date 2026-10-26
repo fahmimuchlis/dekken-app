@@ -139,7 +139,7 @@
   :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu.b-ledak { background:#fff !important; box-shadow:none; isolation:isolate; }
   :root[data-mono="1"][data-tema="gelap"] .dek .lapis.kartu.b-ledak::before { content:""; position:absolute; inset:1px; z-index:-1; background:#000; clip-path:var(--c-ledak); }
   #btn-foto { border:2px solid var(--h); padding:4px 10px; min-width:34px; display:inline-flex; align-items:center; justify-content:center; }
-  html.foto header, html.foto #alat, html.foto #statistik, html.foto footer, html.foto #titik, html.foto #banner, html.foto #toast { visibility:hidden !important; }
+  html.foto header, html.foto #alat, html.foto #statistik, html.foto #kanvas-mini, html.foto footer, html.foto #titik, html.foto #banner, html.foto #toast { visibility:hidden !important; }
   html.foto { background:#fff !important; }
   html.foto body { background:transparent !important; }
   html.foto .dek, html.foto .dek.rapi { zoom:1 !important; }
@@ -503,7 +503,7 @@
   .btn.mik.rekam { background:#c81d25 !important; color:#fff !important; border-color:#c81d25 !important; animation:rekam 1.2s ease-in-out infinite; }
   @keyframes rekam { 50% { opacity:.6; } }
   .btn.ikon-btn[aria-pressed="true"] { box-shadow:0 0 0 3px #1a73e8; }
-  html.mode-baca #dek, html.mode-baca #peta, html.mode-baca #statistik, html.mode-baca #titik, html.mode-baca #garis,
+  html.mode-baca #dek, html.mode-baca #peta, html.mode-baca #statistik, html.mode-baca #kanvas-mini, html.mode-baca #titik, html.mode-baca #garis,
   html.mode-baca #btn-rapi, html.mode-baca #btn-stiker, html.mode-baca #palet-stiker, html.mode-baca #peserta, html.mode-baca #alat .ikon, html.mode-baca #alat .petunjuk { display:none !important; }
   #baca { display:none; }
   html.mode-baca #baca { display:block; max-width:820px; margin:0 auto; padding:14px 16px 120px; font-size:18px; line-height:1.55; color:var(--h); }
@@ -674,6 +674,25 @@
   #statistik.tutup, #peserta.tutup { width:128px !important; }
   #stat-judul, #pes-judul { min-height:40px; box-sizing:border-box; font:500 14px/1.2 "Google Sans", Roboto, Arial, sans-serif; padding:0 12px; gap:10px; }
   @media (max-width:420px) { #statistik:not(.tutup), #peserta:not(.tutup) { width:min(240px, calc(100vw - 16px)) !important; } }
+  /* tumpukan menempel di kanan bawah: kanvas mini, Akses, Statistik; semua selebar 240px */
+  #statistik.tutup, #peserta.tutup { width:240px !important; }
+  #statistik, #peserta, #kanvas-mini { border-radius:0 !important; }
+  @media (max-width:420px) { #statistik.tutup, #peserta.tutup, #statistik:not(.tutup), #peserta:not(.tutup), #kanvas-mini { width:min(240px, calc(100vw - 16px)) !important; } }
+  #kanvas-mini { position:fixed; right:12px; z-index:26; width:240px; box-sizing:border-box; background:#fff; color:#3c4043; border:1px solid var(--gx); font:500 14px "Google Sans", Roboto, Arial, sans-serif; }
+  @media (max-width:640px) { #kanvas-mini { right:8px; } }
+  :root[data-tema="gelap"] #kanvas-mini { background:#131314; color:#e3e3e3; }
+  .km-bar { display:flex; border-bottom:1px solid var(--gx); }
+  #km-judul { flex:1; display:flex; justify-content:space-between; align-items:center; min-height:40px; padding:0 12px; font:inherit; background:transparent; color:inherit; border:0; cursor:pointer; }
+  #km-tutup { width:40px; background:transparent; color:inherit; border:0; border-left:1px solid var(--gx); cursor:pointer; font:inherit; }
+  #km-judul:hover, #km-tutup:hover { background:rgba(128,128,128,.15); }
+  #km-judul:focus-visible, #km-tutup:focus-visible { outline:3px solid #ffee58; outline-offset:-3px; }
+  .km-cv { display:block; width:100%; height:auto; aspect-ratio:5/3; background:#fff; cursor:pointer; }
+  .kv-cvw { position:relative; display:inline-block; line-height:0; max-width:100%; }
+  .kv-grid { position:absolute; inset:0; pointer-events:none; display:none; background-image:linear-gradient(to right, rgba(0,0,0,.22) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,.22) 1px, transparent 1px); background-size:5% 8.3333%; }
+  .kv-bt { display:flex; gap:6px; }
+  .kv-tr { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#333; }
+  .kv-tr input { width:90px; } .kv-nt { min-width:30px; }
+  .kv-kotak { background:transparent !important; } .kv-bawah { background:#fff; }
 </style>
 </head>
 <body>
@@ -1856,6 +1875,7 @@ function bukaLihatGambar(p) {
 const KV_W = 1000, KV_H = 600;
 const KV_WARNA = ['#111111', '#d32f2f', '#1565c0', '#2e7d32', '#f9a825'], KV_TEBAL = [3, 6, 12];
 let kv = null;   // keadaan kanvas yang sedang terbuka
+let kvAlfa = 1, kvGrid = false;   // transparansi (1 = pekat) dan tampilan grid, diingat selama halaman terbuka
 const kvBisaTulis = () => bolehCoret();
 const kvKanal = r => 'kanvas-' + (r || 'utama');
 function kvGambarSatu(ctx, s, skala) {
@@ -1871,6 +1891,30 @@ function kvUlang() {
   if (!kv) return; const c = kv.cv, ctx = c.getContext('2d'), skala = c.width / KV_W;
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
   kv.strokes.forEach(s => kvGambarSatu(ctx, s, skala));
+  kvMiniSegar();
+}
+function kvMiniSegar() {   // pratinjau kecil di tumpukan kanan bawah, digambar ulang paling sering sekali per frame
+  if (!kv || !kv.mc || kv.mcT) return;
+  kv.mcT = requestAnimationFrame(() => { if (!kv || !kv.mc) return; kv.mcT = 0; const c = kv.mc, ctx = c.getContext('2d'), k = c.width / KV_W; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); kv.strokes.forEach(x => kvGambarSatu(ctx, x, k)); });
+}
+function kvTampil() {   // terapkan transparansi dan grid
+  const o = document.getElementById('kanvas-ov'); if (!o || !kv) return;
+  kv.cv.style.opacity = kvAlfa; kv.wadah.style.background = 'rgba(230,230,230,' + kvAlfa + ')'; o.style.background = 'rgba(0,0,0,' + (0.5 * kvAlfa) + ')';
+  kv.grid.style.display = kvGrid ? 'block' : 'none';
+}
+function kvMinim(ya) {   // perkecil ke tumpukan kanan bawah, atau buka kembali
+  const o = document.getElementById('kanvas-ov'); if (!o || !kv) return;
+  if (ya) {
+    if (kv.mini) return; lepasEsc(); o.style.display = 'none'; kv.mini = true;
+    const mc = h('canvas', { class: 'km-cv', width: 480, height: 288, role: 'img', 'aria-label': 'Pratinjau kanvas coret bersama', onclick: () => kvMinim(false) });
+    const judul = h('button', { type: 'button', id: 'km-judul', 'aria-label': 'Buka kembali kanvas', title: 'Buka kembali kanvas', onclick: () => kvMinim(false) }, h('span', {}, '\u{1F3A8} Kanvas'), h('span', { 'aria-hidden': 'true' }, '\u2922'));
+    const tutup = h('button', { type: 'button', id: 'km-tutup', 'aria-label': 'Tutup kanvas', title: 'Tutup kanvas', onclick: tutupKanvas }, '\u2715');
+    kv.mc = mc; document.body.append(h('aside', { id: 'kanvas-mini' }, h('div', { class: 'km-bar' }, judul, tutup), mc));
+    kvMiniSegar(); posPeserta(); umumkan('Kanvas diperkecil di kanan bawah. Pilih Kanvas untuk membuka kembali.');
+  } else {
+    if (!kv.mini) return; const m = document.getElementById('kanvas-mini'); if (m) m.remove(); kv.mc = null; kv.mini = false;
+    o.style.display = ''; pasangEsc(tutupKanvas); kvUkur(); kvTampil();
+  }
 }
 function kvUkur() {
   if (!kv) return; const w = kv.wadah.clientWidth, h2 = kv.wadah.clientHeight, r = window.devicePixelRatio || 1;
@@ -1915,16 +1959,17 @@ function kvTerima(ev, d) {
 }
 function tutupKanvas() {
   const o = document.getElementById('kanvas-ov'); if (!o) return;
-  lepasEsc(); o.remove();
+  lepasEsc(); o.remove(); const mm = document.getElementById('kanvas-mini'); if (mm) mm.remove();
   if (kv) { try { sb.removeChannel(kv.kanal); sb.removeChannel(kv.kanalSemua); } catch (e) {} window.removeEventListener('resize', kv.onResize); clearTimeout(kv.jawab); kv = null; }
   const b = document.querySelector('#bentuk-baris .ikon.kvs'); if (b) { b.classList.remove('pilih'); b.focus(); }
 }
-function kvBangunUlang() { if (!kv) return; const simpan = kv.strokes; tutupKanvas(); bukaKanvas(simpan); }
+function kvBangunUlang() { if (!kv) return; const simpan = kv.strokes, mini = kv.mini; tutupKanvas(); bukaKanvas(simpan); if (mini) kvMinim(true); }
 function bukaKanvas(simpan) {
-  if (document.getElementById('kanvas-ov') || !sb || !butuhLogin()) return;
+  if (document.getElementById('kanvas-ov')) { if (kv && kv.mini) kvMinim(false); return; }
+  if (!sb || !butuhLogin()) return;
   const bisa = kvBisaTulis(), cv = h('canvas', { class: 'kv-cv', role: 'img', 'aria-label': 'Kanvas coret bersama, visual saja' });
-  const wadah = h('div', { class: 'kv-wadah' }, cv), status = h('span', { class: 'kv-status', 'aria-live': 'off' }, 'Menyambung…');
-  kv = { cv, wadah, status, bisa, strokes: Array.isArray(simpan) ? simpan : [], tersambung: false, warna: KV_WARNA[0], tebal: KV_TEBAL[1], hapusMode: false, ruang: ruangSaya, pena: '', penaT: 0, sedang: null, antre: [], kunciHapus: false };
+  const grid = h('div', { class: 'kv-grid', 'aria-hidden': 'true' }), wadah = h('div', { class: 'kv-wadah' }, h('div', { class: 'kv-cvw' }, cv, grid)), status = h('span', { class: 'kv-status', 'aria-live': 'off' }, 'Menyambung…');
+  kv = { cv, wadah, grid, status, bisa, strokes: Array.isArray(simpan) ? simpan : [], tersambung: false, warna: KV_WARNA[0], tebal: KV_TEBAL[1], hapusMode: false, ruang: ruangSaya, pena: '', penaT: 0, sedang: null, antre: [], kunciHapus: false };
   kv.onResize = () => kvUkur();
   const alat = h('div', { class: 'kv-alat' });
   const tombol = (teks, judul, fn, kelas) => h('button', { type: 'button', class: 'btn kv-t ' + (kelas || ''), title: judul, 'aria-label': judul, onclick: fn }, teks);
@@ -1943,6 +1988,12 @@ function bukaKanvas(simpan) {
       alat.append(kos);
     }
   } else alat.append(h('span', { class: 'kv-ban' }, 'Kamu belum diizinkan mencoret. Minta izin dosen. Kamu tetap bisa melihat dan menyimpan PNG.'));
+  const gridBtn = tombol('▦ Grid', 'Tampilkan atau sembunyikan garis grid', () => { kvGrid = !kvGrid; gridBtn.classList.toggle('on', kvGrid); gridBtn.setAttribute('aria-pressed', kvGrid ? 'true' : 'false'); kvTampil(); });
+  gridBtn.classList.toggle('on', kvGrid); gridBtn.setAttribute('aria-pressed', kvGrid ? 'true' : 'false');
+  const nilaiT = h('span', { class: 'kv-nt' }, Math.round((1 - kvAlfa) * 100) + '%');
+  const geser = h('input', { type: 'range', min: 0, max: 80, step: 5, value: Math.round((1 - kvAlfa) * 100), 'aria-label': 'Transparansi kanvas', title: 'Transparansi kanvas: makin tinggi, papan di belakang makin terlihat' });
+  geser.addEventListener('input', () => { kvAlfa = 1 - (+geser.value) / 100; nilaiT.textContent = geser.value + '%'; kvTampil(); });
+  alat.append(gridBtn, h('label', { class: 'kv-tr' }, 'Transparan', geser, nilaiT));
   alat.append(tombol('💾 Simpan PNG', 'Simpan kanvas sebagai gambar PNG', () => {
     const t = document.createElement('canvas'); t.width = 1600; t.height = Math.round(1600 * KV_H / KV_W); const ctx = t.getContext('2d');
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, t.width, t.height); kv.strokes.forEach(s => kvGambarSatu(ctx, s, t.width / KV_W));
@@ -1971,7 +2022,7 @@ function bukaKanvas(simpan) {
     cv.addEventListener('pointerup', selesai); cv.addEventListener('pointercancel', selesai);
   }
   const kotak = h('div', { class: 'gb-kotak kv-kotak', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'kv-judul' },
-    h('div', { class: 'gb-bar' }, h('h2', { id: 'kv-judul' }, '🎨 Kanvas · ' + namaRuang(ruangSaya)), h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup', onclick: tutupKanvas }, '✕')),
+    h('div', { class: 'gb-bar' }, h('h2', { id: 'kv-judul' }, '🎨 Kanvas · ' + namaRuang(ruangSaya)), h('span', { class: 'kv-bt' }, h('button', { type: 'button', class: 'btn', 'aria-label': 'Perkecil kanvas ke kanan bawah', title: 'Perkecil ke kanan bawah', onclick: () => kvMinim(true) }, '–'), h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup', onclick: tutupKanvas }, '✕'))),
     alat, wadah,
     h('div', { class: 'kv-bawah' }, status, h('span', {}, 'Tidak disimpan di server. Hilang bila semua orang menutup kanvas.')));
   const ov = h('div', { id: 'kanvas-ov' }, kotak);
@@ -1979,7 +2030,7 @@ function bukaKanvas(simpan) {
   document.body.append(ov); pasangEsc(tutupKanvas);
   if (bisa && typeof segarAlat === 'function') segarAlat();
   const bt = document.querySelector('#bentuk-baris .ikon.kvs'); if (bt) bt.classList.add('pilih');
-  kvUkur(); window.addEventListener('resize', kv.onResize); if (simpan) kvUlang();
+  kvUkur(); kvTampil(); window.addEventListener('resize', kv.onResize); if (simpan) kvUlang();
   // kanal Realtime Broadcast: satu per ruang, satu untuk perintah kosongkan (Purge)
   const kn = sb.channel(kvKanal(ruangSaya), { config: { broadcast: { self: false } } });
   ['g', 'u', 'x', 'minta', 'isi'].forEach(ev => kn.on('broadcast', { event: ev }, m => kvTerima(ev, m.payload)));
@@ -2001,8 +2052,10 @@ function kvKosongkanSemua() {   // dipanggil setelah Purge: beri tahu semua kanv
 
 /* ================== PANEL PESERTA (izin mencoret) ================== */
 function posPeserta() {
-  const p = document.getElementById('peserta'), st = document.getElementById('statistik'); if (!p || !st) return;
-  const r = st.getBoundingClientRect(); p.style.bottom = Math.max(8, Math.round(innerHeight - r.top + 8)) + 'px';
+  const p = document.getElementById('peserta'), st = document.getElementById('statistik'), m = document.getElementById('kanvas-mini'); if (!st) return;
+  let atas = st.getBoundingClientRect().top;   // tumpukan menempel: Statistik, Akses, lalu kanvas mini (garis tepi saling tumpang 1px)
+  if (p) { p.style.bottom = Math.round(innerHeight - atas - 1) + 'px'; const rp = p.getBoundingClientRect(); if (rp.height > 0) atas = rp.top; }
+  if (m) m.style.bottom = Math.round(innerHeight - atas - 1) + 'px';
 }
 function ikPensil(aktif) {   // ikon pensil = boleh mencoret; pensil dicoret = tidak boleh
   const w = document.createElement('span'); w.setAttribute('role', 'img'); w.setAttribute('aria-label', aktif ? 'boleh mencoret' : 'tidak boleh mencoret'); w.style.display = 'inline-flex';
@@ -2039,7 +2092,7 @@ function pesertaMulai() {
   const pasang = () => { p.classList.toggle('tutup', !buka); tb.setAttribute('aria-expanded', buka ? 'true' : 'false'); document.getElementById('pes-panah').textContent = buka ? '▾' : '▴'; posPeserta(); };
   tb.addEventListener('click', () => { buka = !buka; try { localStorage.setItem('deck-peserta', buka ? 'buka' : 'tutup'); } catch (e) {} pasang(); });
   pasang(); addEventListener('resize', posPeserta);
-  try { new ResizeObserver(posPeserta).observe(document.getElementById('statistik')); } catch (e) {}
+  try { const ro = new ResizeObserver(posPeserta); ro.observe(document.getElementById('statistik')); ro.observe(document.getElementById('peserta')); } catch (e) {}
 }
 (function lipatMulai() {   // menu header bisa disembunyikan; pilihan diingat di browser ini
   const tb = document.getElementById('btn-lipat'), k = document.querySelector('header .kanan'); if (!tb || !k) return;

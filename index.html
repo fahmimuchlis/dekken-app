@@ -2094,7 +2094,6 @@ function gerbangNetra(manual) {
   const cap = h('p', { class: 'gerbang-cap', 'aria-hidden': 'true' });
   const langsung = h('button', { type: 'button', id: 'gerbang-langsung' }, 'Masuk ke papan');
   ov.append(cap, btn);
-  if (!manual) ov.append(h('p', { class: 'gerbang-ket', 'aria-hidden': 'true' }, 'Mode papan akan otomatis aktif bila mengabaikan perintah audio ini.'));
   ov.append(langsung);
   try { const asli = document.querySelector('header h1'); if (asli) { const r = asli.getBoundingClientRect(); ov.style.setProperty('--kiri', Math.max(16, r.left) + 'px'); ov.style.setProperty('--atas', Math.max(40, (document.querySelector('header') || asli).getBoundingClientRect().bottom + 12) + 'px'); } } catch (e) {}   // judul asli di header tetap terlihat tembus latar
   document.body.append(ov);

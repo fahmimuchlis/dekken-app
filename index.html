@@ -693,6 +693,16 @@
   .kv-tr { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#333; }
   .kv-tr input { width:90px; } .kv-nt { min-width:30px; }
   .kv-kotak { background:transparent !important; } .kv-bawah { background:#fff; }
+  /* satu kolom kanan: akun, lalu (dari atas) kanvas mini, Akses, Statistik, Peta kartu; semua selebar 240px dan saling menempel */
+  #peta { left:auto !important; right:12px !important; border-radius:0 !important; }
+  #peta.tutup { width:240px !important; }
+  #peta-judul { min-height:40px; box-sizing:border-box; font:500 14px/1.2 "Google Sans", Roboto, Arial, sans-serif; padding:0 12px; }
+  @media (max-width:640px) { #peta { right:8px !important; } }
+  @media (max-width:420px) { #peta, #peta.tutup { width:min(240px, calc(100vw - 16px)) !important; } }
+  header #login .btn, header #btn-akun, #login > button { width:240px !important; max-width:none !important; box-sizing:border-box; }
+  @media (max-width:420px) { header #login .btn, header #btn-akun, #login > button { width:min(240px, calc(100vw - 80px)) !important; } }
+  header { padding-right:12px !important; } header .kanan { margin-left:auto; }
+  @media (max-width:640px) { header { padding-right:8px !important; } }
 </style>
 </head>
 <body>
@@ -2053,11 +2063,13 @@ function kvKosongkanSemua() {   // dipanggil setelah Purge: beri tahu semua kanv
 }
 
 /* ================== PANEL PESERTA (izin mencoret) ================== */
-function posPeserta() {
-  const p = document.getElementById('peserta'), st = document.getElementById('statistik'), m = document.getElementById('kanvas-mini'); if (!st) return;
-  let atas = st.getBoundingClientRect().top;   // tumpukan menempel: Statistik, Akses, lalu kanvas mini (garis tepi saling tumpang 1px)
-  if (p) { p.style.bottom = Math.round(innerHeight - atas - 1) + 'px'; const rp = p.getBoundingClientRect(); if (rp.height > 0) atas = rp.top; }
-  if (m) m.style.bottom = Math.round(innerHeight - atas - 1) + 'px';
+function posPeserta() {   // kolom kanan menempel tanpa jarak, dari bawah ke atas: Peta kartu, Statistik, Akses, kanvas mini (tepi saling tumpang 1px)
+  let dasar = innerWidth <= 640 ? 58 : 12;
+  ['peta', 'statistik', 'peserta', 'kanvas-mini'].forEach(id => {
+    const e = document.getElementById(id); if (!e) return;
+    if (e.hidden || getComputedStyle(e).display === 'none') return;
+    e.style.bottom = dasar + 'px'; dasar += Math.max(0, e.offsetHeight - 1);
+  });
 }
 function ikPensil(aktif) {   // ikon pensil = boleh mencoret; pensil dicoret = tidak boleh
   const w = document.createElement('span'); w.setAttribute('role', 'img'); w.setAttribute('aria-label', aktif ? 'boleh mencoret' : 'tidak boleh mencoret'); w.style.display = 'inline-flex';
@@ -2094,7 +2106,7 @@ function pesertaMulai() {
   const pasang = () => { p.classList.toggle('tutup', !buka); tb.setAttribute('aria-expanded', buka ? 'true' : 'false'); document.getElementById('pes-panah').textContent = buka ? '▾' : '▴'; posPeserta(); };
   tb.addEventListener('click', () => { buka = !buka; try { localStorage.setItem('deck-peserta', buka ? 'buka' : 'tutup'); } catch (e) {} pasang(); });
   pasang(); addEventListener('resize', posPeserta);
-  try { const ro = new ResizeObserver(posPeserta); ro.observe(document.getElementById('statistik')); ro.observe(document.getElementById('peserta')); } catch (e) {}
+  try { const ro = new ResizeObserver(posPeserta); ['statistik', 'peserta', 'peta'].forEach(i => { const e = document.getElementById(i); if (e) ro.observe(e); }); const mo = new MutationObserver(posPeserta); const pt = document.getElementById('peta'); if (pt) mo.observe(pt, { attributes: true, attributeFilter: ['hidden', 'class'] }); } catch (e) {}
 }
 (function lipatMulai() {   // menu header bisa disembunyikan; pilihan diingat di browser ini
   const tb = document.getElementById('btn-lipat'), k = document.querySelector('header .kanan'); if (!tb || !k) return;

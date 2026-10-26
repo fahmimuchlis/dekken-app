@@ -590,7 +590,7 @@
   .gambar-gagal { font-size:12px; }
   #baca .gambar-kotak img { max-height:260px; }
   #baca .gambar-muat { font-size:16px; min-height:40px; border:2px solid var(--h); }
-  .ikon.gbr { position:relative; color:var(--p,#fff); font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; }
+  .ikon.gbr, .ikon.kvs { position:relative; color:var(--p,#fff); font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; }
   #gambar-ov, #lihat-ov { position:fixed; inset:0; z-index:99985; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:16px; }
   .gb-kotak { background:#fff; color:#000; border:2px solid #111; width:100%; max-width:480px; max-height:94vh; overflow:auto; box-shadow:6px 6px 0 rgba(0,0,0,.35); }
   .gb-kotak.lihat { max-width:min(900px,96vw); }
@@ -611,6 +611,19 @@
   .lh-gambar { text-align:center; background:#f3f3f3; border:1px solid #bbb; }
   .lh-gambar img { max-height:68vh; margin:0 auto; }
   .lh-teks { margin:0; font-size:16px; line-height:1.45; }
+  #kanvas-ov { position:fixed; inset:0; z-index:99985; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:12px; }
+  .kv-kotak { max-width:min(1100px,98vw); height:min(760px,96vh); display:flex; flex-direction:column; overflow:hidden; }
+  .kv-alat { display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding:7px 10px; border-bottom:1px solid #bbb; background:#f4f4f4; }
+  .kv-t { border:1px solid #333; background:#fff; color:#000; padding:3px 9px; cursor:pointer; min-height:32px; }
+  .kv-t.on { background:#ffee58; font-weight:700; }
+  .kv-t.bahaya { border-color:#a00; color:#a00; } .kv-t.kanan { margin-left:auto; }
+  .kv-w { width:26px; height:26px; border-radius:50%; border:2px solid #fff; outline:1px solid #333; cursor:pointer; padding:0; }
+  .kv-w.on { outline:3px solid #1a73e8; }
+  .kv-alat button:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+  .kv-ban { font-weight:600; color:#7a5b00; }
+  .kv-wadah { flex:1; min-height:200px; display:flex; align-items:center; justify-content:center; background:#e6e6e6; overflow:hidden; }
+  .kv-cv { background:#fff; box-shadow:0 0 0 1px #999; max-width:100%; }
+  .kv-bawah { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:5px 10px; border-top:1px solid #bbb; font-size:12px; color:#555; }
 </style>
 </head>
 <body>
@@ -1319,6 +1332,7 @@ function renderAlat() {
     })));
   }
   if (!el.querySelector('.ikon.gbr')) el.append(h('button', { type: 'button', class: 'ikon gbr', title: 'Kartu gambar: tempel gambar dari link', 'aria-label': 'Kartu gambar, tempel gambar dari link', onclick: bukaGambar }, '\u{1F5BC}\uFE0E'));
+  if (!el.querySelector('.ikon.kvs') && sb) el.append(h('button', { type: 'button', class: 'ikon kvs', title: 'Kanvas coret bersama', 'aria-label': 'Kanvas coret bersama, fitur visual', onclick: bukaKanvas }, '\u{1F3A8}\uFE0E'));
   // tombol polling (merah) hanya untuk dosen
   const tp = el.querySelector('.ikon.poll');
   if (dosenSaya && !tp) el.append(h('button', { type: 'button', class: 'ikon poll', title: 'Polling (khusus dosen)', 'aria-label': 'Buat polling',
@@ -1328,7 +1342,7 @@ function renderAlat() {
       if (pollBuka) requestAnimationFrame(() => { const k = document.querySelector('#dek .poll.tulis'); if (k) k.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
     } }));
   else if (!dosenSaya && tp) { tp.remove(); pollBuka = false; }
-  el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.classList.contains('gbr') ? !!document.getElementById('gambar-ov') : k.dataset.bentuk === aktif));
+  el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.classList.contains('gbr') ? !!document.getElementById('gambar-ov') : k.classList.contains('kvs') ? !!document.getElementById('kanvas-ov') : k.dataset.bentuk === aktif));
   const lama = el.querySelector('.petunjuk'); if (lama) lama.remove();
   if (aktif) el.append(h('span', { class: 'petunjuk' }, `${BENTUK[aktif].label} \u00b7 maks ${BENTUK[aktif].maks} huruf`));
 }
@@ -1772,6 +1786,152 @@ function bukaLihatGambar(p) {
   umumkan('Gambar diperbesar. ' + p.teks + '. Escape untuk menutup.');
 }
 
+/* ================== KANVAS CORET BERSAMA (Realtime Broadcast, tanpa database) ================== */
+const KV_W = 1000, KV_H = 600;
+const KV_WARNA = ['#111111', '#d32f2f', '#1565c0', '#2e7d32', '#f9a825'], KV_TEBAL = [3, 6, 12];
+let kv = null;   // keadaan kanvas yang sedang terbuka
+const kvBisaTulis = () => ruangSaya ? true : !!dosenSaya;
+const kvKanal = r => 'kanvas-' + (r || 'utama');
+function kvGambarSatu(ctx, s, skala) {
+  const p = s.p; if (!p || !p.length) return;
+  ctx.strokeStyle = s.e ? '#ffffff' : s.c; ctx.fillStyle = ctx.strokeStyle; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = (s.e ? s.w * 4 : s.w) * skala;
+  if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0][0] * skala, p[0][1] * skala, ctx.lineWidth / 2, 0, 7); ctx.fill(); return; }
+  ctx.beginPath(); ctx.moveTo(p[0][0] * skala, p[0][1] * skala);
+  for (let i = 1; i < p.length - 1; i++) { const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2; ctx.quadraticCurveTo(p[i][0] * skala, p[i][1] * skala, mx * skala, my * skala); }
+  const t = p[p.length - 1]; ctx.lineTo(t[0] * skala, t[1] * skala); ctx.stroke();
+}
+function kvUlang() {
+  if (!kv) return; const c = kv.cv, ctx = c.getContext('2d'), skala = c.width / KV_W;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  kv.strokes.forEach(s => kvGambarSatu(ctx, s, skala));
+}
+function kvUkur() {
+  if (!kv) return; const w = kv.wadah.clientWidth, h2 = kv.wadah.clientHeight, r = window.devicePixelRatio || 1;
+  const lebar = Math.max(200, Math.min(w, h2 * KV_W / KV_H));
+  kv.cv.style.width = lebar + 'px'; kv.cv.style.height = (lebar * KV_H / KV_W) + 'px';
+  kv.cv.width = Math.round(lebar * r); kv.cv.height = Math.round(lebar * KV_H / KV_W * r); kvUlang();
+}
+function kvTambah(id, nm, c, w, e, pts) {
+  let s = kv.strokes.find(x => x.id === id);
+  if (!s) { s = { id, nm, c, w, e: !!e, p: [] }; kv.strokes.push(s); }
+  const awal = s.p.length; s.p.push(...pts);
+  const ctx = kv.cv.getContext('2d'), skala = kv.cv.width / KV_W;
+  kvGambarSatu(ctx, { ...s, p: s.p.slice(Math.max(0, awal - 1)) }, skala);
+  if (kv.strokes.length > 600) { kv.strokes.splice(0, kv.strokes.length - 600); kvUlang(); }
+  if (nm) { kv.pena = nm; kv.penaT = Date.now(); kvStatus(); }
+}
+function kvStatus() {
+  if (!kv || !kv.status) return;
+  const sam = kv.tersambung ? 'Tersambung' : 'Menyambung…';
+  kv.status.textContent = sam + (kv.pena && Date.now() - kv.penaT < 4000 ? ' · ' + kv.pena + ' menggambar' : '');
+}
+function kvKirim(ev, data) { try { if (kv && kv.kanal && kv.tersambung) kv.kanal.send({ type: 'broadcast', event: ev, payload: data }); } catch (e) {} }
+function kvTerima(ev, d) {
+  if (!kv || !d || d.dari === idKlien) return;
+  if (ev === 'g') kvTambah(String(d.id), String(d.nm || '').slice(0, 20), KV_WARNA.includes(d.c) ? d.c : '#111111', Math.min(24, Math.max(1, +d.w || 3)), d.e, (Array.isArray(d.p) ? d.p : []).slice(0, 200).map(q => [Math.max(0, Math.min(KV_W, +q[0] || 0)), Math.max(0, Math.min(KV_H, +q[1] || 0))]));
+  else if (ev === 'u') { const i = kv.strokes.findIndex(x => x.id === String(d.id)); if (i >= 0) { kv.strokes.splice(i, 1); kvUlang(); } }
+  else if (ev === 'x') { kv.strokes = []; kvUlang(); toast('Kanvas dikosongkan'); }
+  else if (ev === 'minta') {   // peserta baru minta isi kanvas; satu peserta yang menjawab (acak)
+    clearTimeout(kv.jawab); kv.jawabUntuk = d.dari; kv.jawab = setTimeout(() => {
+      if (!kv || !kv.strokes.length) return;
+      const daftar = kv.strokes.map(s => ({ id: s.id, nm: s.nm, c: s.c, w: s.w, e: s.e ? 1 : 0, p: s.p })); let bag = [], n = 0;
+      const lepas = () => { if (bag.length) kvKirim('isi', { dari: idKlien, untuk: d.dari, s: bag }); bag = []; n = 0; };
+      daftar.forEach(s => { const sz = s.p.length; if (n + sz > 1500) lepas(); bag.push(s); n += sz; }); lepas();
+    }, 100 + Math.random() * 1100);
+  }
+  else if (ev === 'isi') {
+    if (d.untuk !== idKlien) { if (d.untuk && d.untuk === kv.jawabUntuk) clearTimeout(kv.jawab); return; }
+    clearTimeout(kv.jawab);
+    (Array.isArray(d.s) ? d.s : []).forEach(s => { if (!kv.strokes.some(x => x.id === String(s.id))) kv.strokes.push({ id: String(s.id), nm: String(s.nm || '').slice(0, 20), c: KV_WARNA.includes(s.c) ? s.c : '#111111', w: Math.min(24, Math.max(1, +s.w || 3)), e: !!s.e, p: (Array.isArray(s.p) ? s.p : []).map(q => [+q[0] || 0, +q[1] || 0]) }); });
+    kvUlang();
+  }
+}
+function tutupKanvas() {
+  const o = document.getElementById('kanvas-ov'); if (!o) return;
+  lepasEsc(); o.remove();
+  if (kv) { try { sb.removeChannel(kv.kanal); sb.removeChannel(kv.kanalSemua); } catch (e) {} window.removeEventListener('resize', kv.onResize); clearTimeout(kv.jawab); kv = null; }
+  const b = document.querySelector('#bentuk-baris .ikon.kvs'); if (b) { b.classList.remove('pilih'); b.focus(); }
+}
+function bukaKanvas() {
+  if (document.getElementById('kanvas-ov') || !sb || !butuhLogin()) return;
+  const bisa = kvBisaTulis(), cv = h('canvas', { class: 'kv-cv', role: 'img', 'aria-label': 'Kanvas coret bersama, visual saja' });
+  const wadah = h('div', { class: 'kv-wadah' }, cv), status = h('span', { class: 'kv-status', 'aria-live': 'off' }, 'Menyambung…');
+  kv = { cv, wadah, status, strokes: [], tersambung: false, warna: KV_WARNA[0], tebal: KV_TEBAL[1], hapusMode: false, ruang: ruangSaya, pena: '', penaT: 0, sedang: null, antre: [], kunciHapus: false };
+  kv.onResize = () => kvUkur();
+  const alat = h('div', { class: 'kv-alat' });
+  const tombol = (teks, judul, fn, kelas) => h('button', { type: 'button', class: 'btn kv-t ' + (kelas || ''), title: judul, 'aria-label': judul, onclick: fn }, teks);
+  if (bisa) {
+    const pena = tombol('✏ Pena', 'Pena', () => { kv.hapusMode = false; segarAlat(); }), hps = tombol('⌫ Penghapus', 'Penghapus', () => { kv.hapusMode = true; segarAlat(); });
+    const urung = tombol('↶ Urung', 'Urungkan goresan terakhirku', () => { for (let i = kv.strokes.length - 1; i >= 0; i--) if (kv.strokes[i].dari === 'saya') { const id = kv.strokes[i].id; kv.strokes.splice(i, 1); kvUlang(); kvKirim('u', { dari: idKlien, id }); return; } });
+    const wr = KV_WARNA.map(c => h('button', { type: 'button', class: 'kv-w', style: 'background:' + c, 'aria-label': 'Warna ' + c, title: 'Warna', onclick: () => { kv.warna = c; kv.hapusMode = false; segarAlat(); } }));
+    const tb = KV_TEBAL.map((w, i) => h('button', { type: 'button', class: 'btn kv-t', 'aria-label': 'Ketebalan ' + (i + 1), title: 'Ketebalan ' + (i + 1), onclick: () => { kv.tebal = w; segarAlat(); } }, ['•', '●', '⬤'][i]));
+    alat.append(pena, hps, urung, ...wr, ...tb);
+    var segarAlat = () => { pena.classList.toggle('on', !kv.hapusMode); hps.classList.toggle('on', kv.hapusMode); wr.forEach((b, i) => b.classList.toggle('on', KV_WARNA[i] === kv.warna && !kv.hapusMode)); tb.forEach((b, i) => b.classList.toggle('on', KV_TEBAL[i] === kv.tebal)); };
+    if (dosenSaya) {
+      const kos = tombol('🗑 Hapus semua', 'Kosongkan seluruh kanvas ini', () => {
+        if (!kv.kunciHapus) { kv.kunciHapus = true; kos.textContent = 'Yakin? Klik lagi'; setTimeout(() => { if (kv) { kv.kunciHapus = false; kos.textContent = '🗑 Hapus semua'; } }, 3000); return; }
+        kv.strokes = []; kvUlang(); kvKirim('x', { dari: idKlien }); kv.kunciHapus = false; kos.textContent = '🗑 Hapus semua';
+      }, 'bahaya');
+      alat.append(kos);
+    }
+  } else alat.append(h('span', { class: 'kv-ban' }, 'Papan utama: hanya dosen yang boleh mencoret. Kamu bisa melihat dan menyimpan gambarnya.'));
+  alat.append(tombol('💾 Simpan PNG', 'Simpan kanvas sebagai gambar PNG', () => {
+    const t = document.createElement('canvas'); t.width = 1600; t.height = Math.round(1600 * KV_H / KV_W); const ctx = t.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, t.width, t.height); kv.strokes.forEach(s => kvGambarSatu(ctx, s, t.width / KV_W));
+    t.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'kanvas-dekken.png'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); });
+  }, 'kanan'));
+  // menggambar
+  const titik = e => { const r = cv.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * KV_W), Math.round((e.clientY - r.top) / r.height * KV_H)]; };
+  const kirimBatch = (akhir) => {
+    const s = kv.sedang; if (!s) return;
+    if (s.kirim.length) { kvKirim('g', { dari: idKlien, id: s.id, nm: getUser() || '', c: s.c, w: s.w, e: s.e ? 1 : 0, p: s.kirim.splice(0, 200) }); }
+    if (akhir) { clearInterval(s.iv); kv.sedang = null; }
+  };
+  if (bisa) {
+    cv.style.touchAction = 'none'; cv.style.cursor = 'crosshair';
+    cv.addEventListener('pointerdown', e => {
+      if (e.button) return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      const p0 = titik(e), s = { id: idKlien + '-' + Date.now().toString(36) + Math.floor(Math.random() * 99), nm: getUser() || '', c: kv.warna, w: kv.tebal, e: kv.hapusMode, p: [p0], dari: 'saya', kirim: [p0] };
+      s.iv = setInterval(() => kirimBatch(false), 250); kv.strokes.push(s); kv.sedang = s; kvGambarSatu(cv.getContext('2d'), s, cv.width / KV_W);
+    });
+    cv.addEventListener('pointermove', e => {
+      const s = kv.sedang; if (!s) return; const p = titik(e), l = s.p[s.p.length - 1];
+      if (Math.abs(p[0] - l[0]) + Math.abs(p[1] - l[1]) < 3) return;
+      s.p.push(p); s.kirim.push(p); const ctx = cv.getContext('2d'); kvGambarSatu(ctx, { ...s, p: s.p.slice(-3) }, cv.width / KV_W);
+    });
+    const selesai = () => { if (kv && kv.sedang) kirimBatch(true); };
+    cv.addEventListener('pointerup', selesai); cv.addEventListener('pointercancel', selesai);
+  }
+  const kotak = h('div', { class: 'gb-kotak kv-kotak', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'kv-judul' },
+    h('div', { class: 'gb-bar' }, h('h2', { id: 'kv-judul' }, '🎨 Kanvas · ' + namaRuang(ruangSaya)), h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup', onclick: tutupKanvas }, '✕')),
+    alat, wadah,
+    h('div', { class: 'kv-bawah' }, status, h('span', {}, 'Tidak disimpan di server. Hilang bila semua orang menutup kanvas.')));
+  const ov = h('div', { id: 'kanvas-ov' }, kotak);
+  ov.addEventListener('mousedown', e => { if (e.target === ov) tutupKanvas(); });
+  document.body.append(ov); pasangEsc(tutupKanvas);
+  if (bisa && typeof segarAlat === 'function') segarAlat();
+  const bt = document.querySelector('#bentuk-baris .ikon.kvs'); if (bt) bt.classList.add('pilih');
+  kvUkur(); window.addEventListener('resize', kv.onResize);
+  // kanal Realtime Broadcast: satu per ruang, satu untuk perintah kosongkan (Purge)
+  const kn = sb.channel(kvKanal(ruangSaya), { config: { broadcast: { self: false } } });
+  ['g', 'u', 'x', 'minta', 'isi'].forEach(ev => kn.on('broadcast', { event: ev }, m => kvTerima(ev, m.payload)));
+  kn.subscribe(st => { if (!kv) return; kv.tersambung = st === 'SUBSCRIBED'; kvStatus(); if (kv.tersambung) kvKirim('minta', { dari: idKlien }); });
+  kv.kanal = kn;
+  const ks = sb.channel('kanvas-semua', { config: { broadcast: { self: false } } });
+  ks.on('broadcast', { event: 'x' }, () => { if (kv) { kv.strokes = []; kvUlang(); toast('Papan dibersihkan, kanvas ikut kosong'); } }).subscribe();
+  kv.kanalSemua = ks;
+  umumkan('Jendela kanvas coret bersama. Ini fitur visual dan tidak tersedia untuk pembaca layar. Escape untuk menutup.');
+}
+function kvKosongkanSemua() {   // dipanggil setelah Purge: beri tahu semua kanvas yang terbuka
+  if (!sb) return;
+  try {
+    if (kv && kv.kanalSemua) { kv.strokes = []; kvUlang(); kv.kanalSemua.send({ type: 'broadcast', event: 'x', payload: {} }); return; }
+    const k = sb.channel('kanvas-semua', { config: { broadcast: { self: false } } });
+    k.subscribe(st => { if (st === 'SUBSCRIBED') { k.send({ type: 'broadcast', event: 'x', payload: {} }); setTimeout(() => sb.removeChannel(k), 1500); } });
+  } catch (e) {}
+}
+
 function renderPurge() {
   const b = document.getElementById('btn-purge'); if (!b) return;
   b.hidden = !dosenSaya;
@@ -1787,7 +1947,7 @@ function bukaPurge() {
   const kirim = async () => {
     if (!ok()) return;
     ya.disabled = true; batal.disabled = true; inp.disabled = true;
-    try { const j = await panggil({ aksi: 'purge' }); await muat(); tutupPurge(); toast('Papan dibersihkan' + (j && j.dihapus != null ? ' · ' + j.dihapus + ' kartu diarsipkan' : '')); umumkan('Semua kartu sudah dihapus.'); }
+    try { const j = await panggil({ aksi: 'purge' }); kvKosongkanSemua(); await muat(); tutupPurge(); toast('Papan dibersihkan' + (j && j.dihapus != null ? ' · ' + j.dihapus + ' kartu diarsipkan' : '')); umumkan('Semua kartu sudah dihapus.'); }
     catch (e) { toast(e.message); ya.disabled = !ok(); batal.disabled = false; inp.disabled = false; inp.focus(); }
   };
   inp.addEventListener('input', () => { ya.disabled = !ok(); });
@@ -1814,6 +1974,7 @@ function purgeMulai() {
 }
 function renderRuang() {
   renderPurge();
+  if (kv && kv.ruang !== ruangSaya) tutupKanvas();
   const wrap = document.getElementById('ruang-wrap'), tb = document.getElementById('btn-ruang'), menu = document.getElementById('menu-ruang');
   if (!wrap || !tb || !menu) return;
   const tampak = dosenSaya || ruangData.length > 0;

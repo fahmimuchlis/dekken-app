@@ -625,7 +625,7 @@
   .kv-alat button:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
   .kv-ban { font-weight:600; color:#7a5b00; }
   .kv-wadah { flex:1; min-height:200px; display:flex; align-items:center; justify-content:center; background:#e6e6e6; overflow:hidden; }
-  .kv-cv { background:#fff; box-shadow:0 0 0 1px #999; max-width:100%; }
+  .kv-cv { background:transparent; box-shadow:0 0 0 1px #999; max-width:100%; }
   .kv-bawah { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:5px 10px; border-top:1px solid #bbb; font-size:12px; color:#555; }
   #peserta { position:fixed; right:12px; bottom:200px; z-index:26; width:260px; background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:4px; overflow:hidden; box-shadow:0 1px 3px rgba(60,64,67,.3); font:14px "Google Sans", Roboto, Arial, sans-serif; }
   #peserta.tutup { width:auto; } #peserta.tutup #pes-isi { display:none; }
@@ -1880,16 +1880,18 @@ const kvBisaTulis = () => bolehCoret();
 const kvKanal = r => 'kanvas-' + (r || 'utama');
 function kvGambarSatu(ctx, s, skala) {
   const p = s.p; if (!p || !p.length) return;
-  ctx.strokeStyle = s.e ? '#ffffff' : s.c; ctx.fillStyle = ctx.strokeStyle; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const tembus = !!(s.e && kv && ctx.canvas === kv.cv);   // kanvas utama transparan: penghapus benar-benar menghapus goresan, bukan menimpa putih
+  ctx.globalCompositeOperation = tembus ? 'destination-out' : 'source-over';
+  ctx.strokeStyle = s.e ? (tembus ? '#000000' : '#ffffff') : s.c; ctx.fillStyle = ctx.strokeStyle; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.lineWidth = (s.e ? s.w * 4 : s.w) * skala;
-  if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0][0] * skala, p[0][1] * skala, ctx.lineWidth / 2, 0, 7); ctx.fill(); return; }
+  if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0][0] * skala, p[0][1] * skala, ctx.lineWidth / 2, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; return; }
   ctx.beginPath(); ctx.moveTo(p[0][0] * skala, p[0][1] * skala);
   for (let i = 1; i < p.length - 1; i++) { const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2; ctx.quadraticCurveTo(p[i][0] * skala, p[i][1] * skala, mx * skala, my * skala); }
-  const t = p[p.length - 1]; ctx.lineTo(t[0] * skala, t[1] * skala); ctx.stroke();
+  const t = p[p.length - 1]; ctx.lineTo(t[0] * skala, t[1] * skala); ctx.stroke(); ctx.globalCompositeOperation = 'source-over';
 }
 function kvUlang() {
   if (!kv) return; const c = kv.cv, ctx = c.getContext('2d'), skala = c.width / KV_W;
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.clearRect(0, 0, c.width, c.height);   // latar putih ada di lapisan CSS (agar bisa transparan tanpa ikut menipiskan coretan)
   kv.strokes.forEach(s => kvGambarSatu(ctx, s, skala));
   kvMiniSegar();
 }
@@ -1899,7 +1901,7 @@ function kvMiniSegar() {   // pratinjau kecil di tumpukan kanan bawah, digambar 
 }
 function kvTampil() {   // terapkan transparansi dan grid
   const o = document.getElementById('kanvas-ov'); if (!o || !kv) return;
-  kv.cv.style.opacity = kvAlfa; kv.wadah.style.background = 'rgba(230,230,230,' + kvAlfa + ')'; o.style.background = 'rgba(0,0,0,' + (0.5 * kvAlfa) + ')';
+  kv.cv.parentNode.style.background = 'rgba(255,255,255,' + kvAlfa + ')'; kv.wadah.style.background = 'rgba(230,230,230,' + kvAlfa + ')'; o.style.background = 'rgba(0,0,0,' + (0.5 * kvAlfa) + ')';
   kv.grid.style.display = kvGrid ? 'block' : 'none';
 }
 function kvMinim(ya) {   // perkecil ke tumpukan kanan bawah, atau buka kembali

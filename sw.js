@@ -1,5 +1,5 @@
 /* Service worker Dekken: cangkang aplikasi disimpan agar cepat dibuka; data kartu selalu dari jaringan. */
-const VERSI = 'dekken-v54';
+const VERSI = 'dekken-v55';
 const CANGKANG = ['./', 'index.html', 'vendor/supabase.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => {

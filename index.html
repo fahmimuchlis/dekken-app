@@ -543,20 +543,20 @@
   #baca .kursor-suara { outline:5px solid #1a73e8; outline-offset:4px; }
   #baca details.catatan summary { cursor:pointer; font-weight:700; color:var(--h); }
 
-  #gerbang { position:fixed; inset:0; z-index:100000; background:rgba(0,0,0,.5); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:0 var(--kiri,16px) 78px; overflow:auto; }
+  #gerbang { position:fixed; inset:0; z-index:100000; background:rgba(0,0,0,.8); color:#ffee58; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:110px var(--kiri,16px) 78px; overflow:auto; }
   #gerbang-btn { align-self:center; margin:auto 0; border:0; padding:0 0 .05em; cursor:pointer; background:none; color:#ffee58; font:400 clamp(44px,17vw,36vh)/1 'Rubik Broken Fax',system-ui,sans-serif; text-transform:uppercase; letter-spacing:.02em; max-width:100%; transition:scale .25s cubic-bezier(.2,.9,.3,1.2), text-shadow .25s; }
   #gerbang-btn:hover, #gerbang.kbd #gerbang-btn:focus-visible { scale:1.1; text-shadow:0 0 18px rgba(255,238,88,.55); }   /* disentuh mouse: membesar 110% */
   @media (prefers-reduced-motion: reduce) { #gerbang-btn { transition:none; } }
   #gerbang-btn:focus { outline:none; }
   #gerbang.kbd #gerbang-btn:focus-visible { outline:3px solid #fff; outline-offset:8px; }
   #gerbang-btn:hover { filter:brightness(1.12); }
-  #gerbang .gerbang-cap { position:absolute; left:var(--kiri,16px); top:var(--atas,56px); right:16px; max-width:min(34em,calc(100vw - 32px)); margin:0; text-align:left; font:400 17px/1.35 system-ui,sans-serif; text-shadow:0 1px 3px #000, 0 0 8px #000; min-height:1.35em; }
+  #gerbang .gerbang-cap { align-self:center; margin:auto 0; width:min(40em,calc(100vw - 32px)); text-align:center; color:#ffee58; font:500 19px/1.35 system-ui,sans-serif; text-shadow:0 1px 3px #000, 0 0 8px #000; min-height:2.7em; display:block; overflow-wrap:anywhere; }
   #gerbang .kata { display:inline-block; white-space:pre; animation:kataMasuk .28s ease-out both; }
   @keyframes kataMasuk { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
   @media (prefers-reduced-motion: reduce) { #gerbang .kata { animation:none; } }
   #gerbang .gerbang-ket { margin:0 0 14px; text-align:center; font:500 12px/1.4 system-ui,sans-serif; text-transform:uppercase; opacity:.8; max-width:34em; text-shadow:0 1px 3px #000; }
-  #gerbang-langsung { font:500 16px system-ui,sans-serif; text-transform:uppercase; color:#fff; background:transparent; border:1px solid #fff; border-radius:4px; padding:10px 14px; cursor:pointer; }
-  #gerbang-langsung:hover { background:#fff; color:#000; }
+  #gerbang-langsung { font:500 16px system-ui,sans-serif; text-transform:uppercase; color:#ffee58; background:transparent; border:1px solid #ffee58; border-radius:4px; padding:10px 14px; cursor:pointer; }
+  #gerbang-langsung:hover { background:#ffee58; color:#000; }
   #gerbang-langsung:focus-visible { outline:3px solid #ffee58; outline-offset:3px; }
   #gerbang, #gerbang * { cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23ffee00' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E") 14 14, pointer !important; }   /* penunjuk berupa bulatan kuning di layar sambutan */
   h1 b.buka-intro { cursor:pointer; }
@@ -2456,7 +2456,7 @@ function gerbangNetra(manual) {
   const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[2] }, 'Dekken');
   const cap = h('p', { class: 'gerbang-cap', 'aria-hidden': 'true' });
   const langsung = h('button', { type: 'button', id: 'gerbang-langsung' }, 'Masuk ke papan');
-  ov.append(cap, btn);
+  ov.append(btn, cap);
   ov.append(langsung);
   try { const asli = document.querySelector('header h1'); if (asli) { const r = asli.getBoundingClientRect(); ov.style.setProperty('--kiri', Math.max(16, r.left) + 'px'); ov.style.setProperty('--atas', Math.max(40, (document.querySelector('header') || asli).getBoundingClientRect().bottom + 12) + 'px'); } } catch (e) {}   // judul asli di header tetap terlihat tembus latar
   document.body.append(ov);

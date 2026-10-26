@@ -642,6 +642,18 @@
   :root[data-tema="gelap"] #pes-judul:hover { background:#202124; } :root[data-tema="gelap"] #peserta:not(.tutup) #pes-judul { border-bottom-color:#5f6368; }
   :root[data-tema="gelap"] .pes-baris { border-bottom-color:#3c4043; } :root[data-tema="gelap"] .pes-nama small, :root[data-tema="gelap"] .pes-st { color:#9aa0a6; }
   :root[data-tema="gelap"] .pes-massal { background:#202124; }
+  /* ikon bar bawah: semua persegi panjang bersudut tumpul yang sama */
+  #alat .ikon { border-radius:9px; clip-path:none; width:36px; height:36px; margin:0; display:flex; align-items:center; justify-content:center; position:relative; color:var(--p,#fff); }
+  #alat .ikon.b-waktu { width:36px; height:36px; }
+  @media (max-width:640px) { #alat .ikon:not(.kecil), #alat .ikon.b-waktu { width:30px; height:30px; } }
+  #alat .ikon.poll { border-radius:9px; }
+  #menu-bentuk { position:fixed; z-index:30; display:flex; gap:8px; padding:8px 10px; background:#fff; border:1px solid #dadce0; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,.3); }
+  :root[data-tema="gelap"] #menu-bentuk { background:#131314; border-color:#5f6368; }
+  #menu-bentuk .mb { background:transparent; border:2px solid transparent; border-radius:8px; padding:4px; cursor:pointer; display:flex; }
+  #menu-bentuk .mb:hover, #menu-bentuk .mb.pilih { border-color:#1a73e8; } #menu-bentuk .mb:focus-visible { outline:3px solid #1a73e8; outline-offset:1px; }
+  #menu-bentuk .ikon { width:34px; height:34px; pointer-events:none; }
+  #menu-bentuk .ikon.b-tumpul { width:34px; height:22px; margin:6px 0; }
+  html.mode-baca #menu-bentuk { display:none !important; }
 </style>
 </head>
 <body>
@@ -1309,6 +1321,21 @@ function bunyiSebar(berkumpul) {
 })();
 
 /* ================== TOMBOL BENTUK DI ATAS ================== */
+/* menu pilihan bentuk kartu (tombol tumpukan kartu di bar bawah) */
+function tutupMenuBentuk() { const m = document.getElementById('menu-bentuk'); if (m) m.remove(); const t = document.querySelector('#alat .ikon.tumpuk'); if (t) t.setAttribute('aria-expanded', 'false'); document.removeEventListener('click', tutupMenuBentuk); document.removeEventListener('keydown', escMenuBentuk, true); }
+function escMenuBentuk(e) { if (e.key === 'Escape') { e.stopPropagation(); const t = document.querySelector('#alat .ikon.tumpuk'); tutupMenuBentuk(); if (t) t.focus(); } }
+function menuBentuk(tombol) {
+  if (document.getElementById('menu-bentuk')) { tutupMenuBentuk(); return; }
+  const aktif = komposBuka ? ambilDraft('baru').b : '';
+  const m = h('div', { id: 'menu-bentuk', role: 'menu', 'aria-label': 'Bentuk kartu' }, ...Object.keys(BENTUK).filter(b => b !== 'waktu').map(b =>
+    h('button', { type: 'button', role: 'menuitem', class: 'mb' + (aktif === b ? ' pilih' : ''), title: `${BENTUK[b].label} · maks ${BENTUK[b].maks} huruf`, 'aria-label': `${BENTUK[b].label}, maksimal ${BENTUK[b].maks} huruf`,
+      onclick: e => { e.stopPropagation(); tutupMenuBentuk(); pilihBentukBaru(b); } }, h('span', { class: 'ikon b-' + b }))));
+  document.body.append(m);
+  const r = tombol.getBoundingClientRect(); m.style.left = Math.max(8, Math.min(innerWidth - m.offsetWidth - 8, r.left + r.width / 2 - m.offsetWidth / 2)) + 'px'; m.style.bottom = Math.round(innerHeight - r.top + 10) + 'px';
+  tombol.setAttribute('aria-expanded', 'true');
+  setTimeout(() => document.addEventListener('click', tutupMenuBentuk), 0); document.addEventListener('keydown', escMenuBentuk, true);
+  const pertama = m.querySelector('.pilih') || m.querySelector('.mb'); if (pertama) pertama.focus();
+}
 function pilihBentukBaru(b) {
   const d = ambilDraft('baru');
   if (komposBuka && d.b === b) komposBuka = false;      // klik bentuk yang sama = tutup kartu penulis
@@ -1345,11 +1372,10 @@ function renderAlat() {
   const aktif = komposBuka ? ambilDraft('baru').b : null;   // (tombol polling dikelola di bawah)
   // tombol dibuat sekali lalu hanya diubah kelasnya, supaya perubahan ukuran teranimasi
   if (!el.querySelector('.ikon')) {
-    el.append(...Object.keys(BENTUK).map(b => h('button', {
-      type: 'button', class: 'ikon b-' + b, 'data-bentuk': b,
-      title: `${BENTUK[b].label} · maks ${BENTUK[b].maks} huruf`, 'aria-label': BENTUK[b].label,
-      onclick: () => pilihBentukBaru(b)
-    })));
+    const tumpuk = h('button', { type: 'button', class: 'ikon tumpuk', title: 'Kartu baru: pilih bentuk', 'aria-label': 'Kartu baru, pilih bentuk', 'aria-haspopup': 'true', 'aria-expanded': 'false', onclick: e => { e.stopPropagation(); menuBentuk(tumpuk); } });
+    tumpuk.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="14" height="14" rx="2.5"/><rect x="4.5" y="5" width="14" height="14" rx="2.5"/><rect x="2" y="7.5" width="14" height="14" rx="2.5" fill="currentColor" fill-opacity=".25"/></svg>';
+    el.append(tumpuk, h('button', { type: 'button', class: 'ikon b-waktu', 'data-bentuk': 'waktu',
+      title: `${BENTUK.waktu.label} · maks ${BENTUK.waktu.maks} huruf`, 'aria-label': BENTUK.waktu.label, onclick: () => pilihBentukBaru('waktu') }));
   }
   if (!el.querySelector('.ikon.gbr')) el.append(h('button', { type: 'button', class: 'ikon gbr', title: 'Kartu gambar: tempel gambar dari link', 'aria-label': 'Kartu gambar, tempel gambar dari link', onclick: bukaGambar }, '\u{1F5BC}\uFE0E'));
   if (!el.querySelector('.ikon.kvs') && sb) el.append(h('button', { type: 'button', class: 'ikon kvs', title: 'Kanvas coret bersama', 'aria-label': 'Kanvas coret bersama, fitur visual', onclick: bukaKanvas }, '\u{1F3A8}\uFE0E'));
@@ -1362,7 +1388,7 @@ function renderAlat() {
       if (pollBuka) requestAnimationFrame(() => { const k = document.querySelector('#dek .poll.tulis'); if (k) k.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
     } }));
   else if (!dosenSaya && tp) { tp.remove(); pollBuka = false; }
-  el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.classList.contains('gbr') ? !!document.getElementById('gambar-ov') : k.classList.contains('kvs') ? !!document.getElementById('kanvas-ov') : k.dataset.bentuk === aktif));
+  el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.classList.contains('tumpuk') ? (!!aktif && aktif !== 'waktu') : k.classList.contains('gbr') ? !!document.getElementById('gambar-ov') : k.classList.contains('kvs') ? !!document.getElementById('kanvas-ov') : k.dataset.bentuk === aktif));
   const lama = el.querySelector('.petunjuk'); if (lama) lama.remove();
   if (aktif) el.append(h('span', { class: 'petunjuk' }, `${BENTUK[aktif].label} \u00b7 maks ${BENTUK[aktif].maks} huruf`));
 }

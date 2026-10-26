@@ -590,6 +590,27 @@
   .gambar-gagal { font-size:12px; }
   #baca .gambar-kotak img { max-height:260px; }
   #baca .gambar-muat { font-size:16px; min-height:40px; border:2px solid var(--h); }
+  .ikon.gbr { position:relative; color:var(--p,#fff); font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; }
+  #gambar-ov, #lihat-ov { position:fixed; inset:0; z-index:99985; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .gb-kotak { background:#fff; color:#000; border:2px solid #111; width:100%; max-width:480px; max-height:94vh; overflow:auto; box-shadow:6px 6px 0 rgba(0,0,0,.35); }
+  .gb-kotak.lihat { max-width:min(900px,96vw); }
+  .gb-bar { display:flex; justify-content:space-between; align-items:center; background:#111; color:#fff; padding:6px 10px; }
+  .gb-bar h2 { margin:0; font-size:15px; font-weight:600; }
+  .gb-bar .btn { background:transparent; color:#fff; border:1px solid #fff; cursor:pointer; padding:2px 8px; }
+  .gb-isi { padding:12px; display:flex; flex-direction:column; gap:8px; font-size:14px; }
+  .gb-isi label { font-weight:600; font-size:13px; }
+  .gb-isi input, .gb-isi textarea { font:inherit; padding:7px 8px; border:1px solid #666; background:#fff; color:#000; width:100%; box-sizing:border-box; }
+  .gb-isi input:focus-visible, .gb-isi textarea:focus-visible, .gb-kotak .btn:focus-visible { outline:3px solid #1a73e8; outline-offset:2px; }
+  .gb-baris { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .gb-aksi { display:flex; gap:8px; }
+  .gb-isi .btn { border:2px solid #000; background:#fff; color:#000; padding:6px 12px; cursor:pointer; min-height:36px; }
+  .gb-isi .btn#gb-tempel { background:#ffee58; font-weight:700; }
+  .gb-isi .btn:disabled { opacity:.4; cursor:default; }
+  .gb-prev { min-height:110px; max-height:240px; border:1px dashed #777; background:#f3f3f3; display:flex; align-items:center; justify-content:center; text-align:center; padding:6px; color:#555; font-size:13px; overflow:hidden; }
+  .gb-prev img, .lh-gambar img { max-width:100%; max-height:230px; object-fit:contain; display:block; }
+  .lh-gambar { text-align:center; background:#f3f3f3; border:1px solid #bbb; }
+  .lh-gambar img { max-height:68vh; margin:0 auto; }
+  .lh-teks { margin:0; font-size:16px; line-height:1.45; }
 </style>
 </head>
 <body>
@@ -1297,6 +1318,7 @@ function renderAlat() {
       onclick: () => pilihBentukBaru(b)
     })));
   }
+  if (!el.querySelector('.ikon.gbr')) el.append(h('button', { type: 'button', class: 'ikon gbr', title: 'Kartu gambar: tempel gambar dari link', 'aria-label': 'Kartu gambar, tempel gambar dari link', onclick: bukaGambar }, '\u{1F5BC}\uFE0E'));
   // tombol polling (merah) hanya untuk dosen
   const tp = el.querySelector('.ikon.poll');
   if (dosenSaya && !tp) el.append(h('button', { type: 'button', class: 'ikon poll', title: 'Polling (khusus dosen)', 'aria-label': 'Buat polling',
@@ -1306,7 +1328,7 @@ function renderAlat() {
       if (pollBuka) requestAnimationFrame(() => { const k = document.querySelector('#dek .poll.tulis'); if (k) k.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
     } }));
   else if (!dosenSaya && tp) { tp.remove(); pollBuka = false; }
-  el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.dataset.bentuk === aktif));
+  el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.classList.contains('gbr') ? !!document.getElementById('gambar-ov') : k.dataset.bentuk === aktif));
   const lama = el.querySelector('.petunjuk'); if (lama) lama.remove();
   if (aktif) el.append(h('span', { class: 'petunjuk' }, `${BENTUK[aktif].label} \u00b7 maks ${BENTUK[aktif].maks} huruf`));
 }
@@ -1461,7 +1483,8 @@ function kotakGambar(p) {   // gambar dari link: baru dimuat setelah diklik (IP 
   const tampil = () => {
     const img = h('img', { src: p.gambar, alt: p.teks, loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
     img.addEventListener('error', () => wadah.replaceChildren(h('span', { class: 'gambar-gagal' }, 'Gambar tidak bisa dimuat. ', h('a', { href: p.gambar, target: '_blank', rel: 'noopener noreferrer' }, 'Buka tautan'))));
-    wadah.replaceChildren(h('a', { href: p.gambar, target: '_blank', rel: 'noopener noreferrer', 'aria-label': 'Buka gambar penuh di tab baru. ' + p.teks }, img));
+    wadah.replaceChildren(h('a', { href: p.gambar, target: '_blank', rel: 'noopener noreferrer', 'aria-label': 'Perbesar gambar. ' + p.teks,
+      onclick: e => { if (e.ctrlKey || e.metaKey || e.shiftKey || e.button) return; e.preventDefault(); e.stopPropagation(); bukaLihatGambar(p); } }, img));
   };
   if (gambarMuat.has(p.id)) { tampil(); return wadah; }
   wadah.append(h('button', { type: 'button', class: 'btn gambar-muat', 'aria-label': 'Muat gambar dari ' + host + '. Teks kartu adalah deskripsinya.',
@@ -1677,6 +1700,78 @@ async function tutupRuangAksi(id) {
   catch (e) { toast(e.message); }
   renderRuang();
 }
+/* ================== JENDELA KARTU GAMBAR (link saja, tanpa penyimpanan gambar) ================== */
+let escGambar = null;
+function pasangEsc(tutup) { lepasEsc(); escGambar = e => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); tutup(); } }; document.addEventListener('keydown', escGambar, true); }
+function lepasEsc() { if (escGambar) { document.removeEventListener('keydown', escGambar, true); escGambar = null; } }
+function tutupGambar() { const o = document.getElementById('gambar-ov'); if (o) { lepasEsc(); o.remove(); const b = document.querySelector('#bentuk-baris .ikon.gbr'); if (b) { b.classList.remove('pilih'); b.focus(); } } }
+function bukaGambar() {
+  if (document.getElementById('gambar-ov') || !butuhLogin()) return;
+  const d = ambilDraft('gbr'); d.b = 'persegi';
+  const MAKS = BENTUK.persegi.maks;
+  const nama = h('input', { type: 'text', id: 'gb-nama', maxlength: 20, value: d.u || '', autocomplete: 'off' });
+  const link = h('input', { type: 'url', id: 'gb-link', maxlength: 500, placeholder: 'https://… (tautan langsung ke gambar)', value: d.g || '', autocomplete: 'off', spellcheck: 'false' });
+  const teks = h('textarea', { id: 'gb-teks', rows: 3, maxlength: MAKS, 'aria-describedby': 'gb-hitung' }); teks.value = d.t || '';
+  const hitung = h('span', { id: 'gb-hitung', 'aria-live': 'polite' });
+  const prev = h('div', { class: 'gb-prev', role: 'img', 'aria-label': 'Pratinjau gambar' }, 'Pratinjau muncul di sini setelah tombol Pratinjau ditekan.');
+  const tombolPrev = h('button', { type: 'button', class: 'btn' }, 'Pratinjau');
+  const tempel = h('button', { type: 'button', class: 'btn', id: 'gb-tempel' }, 'Tempel ke papan');
+  const batal = h('button', { type: 'button', class: 'btn', onclick: tutupGambar }, 'Batal');
+  const linkOk = () => /^https:\/\/[^\s"'<>]{4,}$/.test(link.value.trim()) && link.value.trim().length <= 500;
+  const segar = () => { d.u = nama.value; d.g = link.value; d.t = teks.value; hitung.textContent = teks.value.length + ' / ' + MAKS + ' huruf'; tombolPrev.disabled = !linkOk(); tempel.disabled = !(linkOk() && teks.value.trim() && nama.value.trim()); };
+  [nama, link, teks].forEach(x => x.addEventListener('input', segar));
+  tombolPrev.addEventListener('click', () => {
+    const img = h('img', { src: link.value.trim(), alt: teks.value.trim() || 'Pratinjau', referrerpolicy: 'no-referrer' });
+    img.addEventListener('error', () => { prev.replaceChildren('Gambar tidak bisa dimuat dari link ini. Pastikan link langsung ke gambar dan bisa dibuka publik.'); umumkan('Gambar tidak bisa dimuat.'); });
+    prev.replaceChildren(img);
+  });
+  tempel.addEventListener('click', async () => {
+    d.u = nama.value; d.g = link.value.trim(); d.t = teks.value; d.b = 'persegi';
+    tempel.disabled = true; batal.disabled = true;
+    await kirim('gbr', '', tempel);
+    if (!draft['gbr']) tutupGambar(); else { batal.disabled = false; segar(); }
+  });
+  const kotak = h('div', { class: 'gb-kotak', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'gb-judul' },
+    h('div', { class: 'gb-bar' }, h('h2', { id: 'gb-judul' }, '\u{1F5BC} Kartu gambar baru'), h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup', onclick: tutupGambar }, '✕')),
+    h('div', { class: 'gb-isi' },
+      h('label', { for: 'gb-nama' }, 'Username'), nama,
+      h('label', { for: 'gb-link' }, 'Link gambar (https)'), link,
+      h('div', { class: 'gb-baris' }, tombolPrev, h('small', {}, 'Gambar tidak disimpan di sini, hanya tautannya.')),
+      prev,
+      h('label', { for: 'gb-teks' }, 'Penjelasan singkat (dipakai juga sebagai deskripsi gambar)'), teks,
+      h('div', { class: 'gb-baris' }, hitung, h('span', { class: 'gb-aksi' }, batal, tempel))));
+  const ov = h('div', { id: 'gambar-ov' }, kotak);
+  ov.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.stopPropagation(); tutupGambar(); return; }
+    if (e.key === 'Tab') {
+      const f = [...kotak.querySelectorAll('button:not(:disabled), input, textarea')], i = f.indexOf(document.activeElement);
+      if (!f.length) return; e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
+  });
+  ov.addEventListener('mousedown', e => { if (e.target === ov) tutupGambar(); });
+  document.body.append(ov); pasangEsc(tutupGambar); segar(); (d.u ? link : nama).focus();
+  const bt = document.querySelector('#bentuk-baris .ikon.gbr'); if (bt) bt.classList.add('pilih');
+  umumkan('Jendela kartu gambar. Isi link gambar, penjelasan singkat, lalu tekan Tempel ke papan. Escape untuk menutup.');
+}
+function tutupLihat() { const o = document.getElementById('lihat-ov'); if (o) { lepasEsc(); o.remove(); if (lihatFokus && document.contains(lihatFokus)) lihatFokus.focus(); lihatFokus = null; } }
+let lihatFokus = null;
+function bukaLihatGambar(p) {
+  if (document.getElementById('lihat-ov')) return;
+  lihatFokus = document.activeElement;
+  const img = h('img', { src: p.gambar, alt: p.teks, referrerpolicy: 'no-referrer' });
+  const tutup = h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup', onclick: tutupLihat }, '✕');
+  img.addEventListener('error', () => img.replaceWith(h('p', {}, 'Gambar tidak bisa dimuat.')));
+  const kotak = h('div', { class: 'gb-kotak lihat', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'lh-judul' },
+    h('div', { class: 'gb-bar' }, h('h2', { id: 'lh-judul' }, '\u{1F5BC} ' + p.username), tutup),
+    h('div', { class: 'gb-isi' }, h('div', { class: 'lh-gambar' }, img), h('p', { class: 'lh-teks' }, p.teks),
+      h('small', {}, 'Sumber: ' + hostGambar(p.gambar) + ' · ', h('a', { href: p.gambar, target: '_blank', rel: 'noopener noreferrer' }, 'Buka di tab baru'))));
+  const ov = h('div', { id: 'lihat-ov' }, kotak);
+  ov.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); tutupLihat(); } else if (e.key === 'Tab') { e.preventDefault(); tutup.focus(); } });
+  ov.addEventListener('mousedown', e => { if (e.target === ov) tutupLihat(); });
+  document.body.append(ov); pasangEsc(tutupLihat); tutup.focus();
+  umumkan('Gambar diperbesar. ' + p.teks + '. Escape untuk menutup.');
+}
+
 function renderPurge() {
   const b = document.getElementById('btn-purge'); if (!b) return;
   b.hidden = !dosenSaya;

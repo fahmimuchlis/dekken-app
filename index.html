@@ -714,7 +714,7 @@
   .purge-aksi .btn { font-size:12px; font-weight:500; padding:0 12px; min-height:28px; height:28px; border:1px solid #000; border-radius:8px; background:#fff; color:#000; }
   .purge-aksi .btn#purge-ya { background:#f00; border-color:#f00; color:#fff; font-weight:500; }
   .purge-kotak input:focus-visible, .purge-kotak .btn:focus-visible { outline:2px solid #000; outline-offset:2px; }
-  /* ruang escape: pembuat hanya kartu timer, anggota hanya membalas */
+  /* Ruang Privat: pembuat hanya kartu timer, anggota hanya membalas */
   #bentuk-baris.esc .tumpuk, #bentuk-baris.esc .gbr, #bentuk-baris.esc .kvs, #bentuk-baris.esc .poll { display:none !important; }
   #bentuk-baris.esc-anggota .b-waktu { display:none !important; }
   #menu-ruang .esc-kode { padding:6px 12px; font-size:14px; } #menu-ruang .esc-kode b { letter-spacing:.12em; }
@@ -779,9 +779,9 @@ let ruangData = [];          // [{id, nama, urut}] dari server
 let ruangSaya = '';          // '' = papan utama
 try { ruangSaya = localStorage.getItem('deck-ruang') || ''; } catch (e) {}
 let ruangBuka = false, ruangKonfirm = '';
-let escapeSaya = { milik: null, anggota: [] };   // ruang escape milikku (id + kode) dan ruang escape yang kuikuti
+let escapeSaya = { milik: null, anggota: [] };   // Ruang Privat milikku (id + kode) dan Ruang Privat yang kuikuti
 let escMasuk = '', escKode = '', escNama = '', escAnggotaBuka = false, escAnggota = [];
-let escBatas = 0;   // jatah ruang escape yang diatur dosen (0 = belum dibuka)
+let escBatas = 0;   // jatah Ruang Privat yang diatur dosen (0 = belum dibuka)
 async function muatEscapeBatas() { if (!sb) return; try { const { data, error } = await sb.from('escape_atur').select('batas').maybeSingle(); if (!error && data) escBatas = Number(data.batas) || 0; } catch (e) {} }
 const infoRuang = id => ruangData.find(r => r.id === id) || null;
 const adalahEscape = id => { const r = infoRuang(id); return !!(r && r.jenis === 'escape'); };
@@ -951,7 +951,7 @@ async function muat(otomatis) {
       ruangData = rg.data;
       await muatEscapeBatas();
       if (tokenHidup() && ruangData.some(x => x.jenis === 'escape')) await muatEscape();
-      if (ruangSaya && ruangData.some(x => x.id === ruangSaya) && !escapeBoleh(ruangSaya)) { ruangSaya = ''; simpanRuang(); hadirKirim(); toast('Kamu tidak punya akses ke ruang escape itu lagi.'); }
+      if (ruangSaya && ruangData.some(x => x.id === ruangSaya) && !escapeBoleh(ruangSaya)) { ruangSaya = ''; simpanRuang(); hadirKirim(); toast('Kamu tidak punya akses ke Ruang Privat itu lagi.'); }
       if (ruangSaya && !ruangData.some(x => x.id === ruangSaya)) { ruangSaya = ''; simpanRuang(); hadirKirim(); toast('Ruang ini ditutup. Kartunya digabung ke papan utama.'); }
       renderRuang();
     }
@@ -1075,7 +1075,7 @@ async function panggilInti(isi) {
     const m = String(error.message || '');
     if (m === 'LOGIN') keluar(true);
     if (/sudah ditutup/.test(m)) muat();   // ruang tutup saat mengetik: segarkan daftar ruang
-    throw new Error(PESAN[m] || m || 'Terjadi kesalahan.');
+    throw new Error((PESAN[m] || m || 'Terjadi kesalahan.').replace(/ruang escape/gi, 'Ruang Privat'));
   }
   return data || {};
 }
@@ -1455,7 +1455,7 @@ function renderAlat() {
     return;
   }
   const aktif = komposBuka ? ambilDraft('baru').b : null;   // (tombol polling dikelola di bawah)
-  const dalamEsc = adalahEscape(ruangSaya) && !dosenSaya;   // ruang escape: pembuat hanya timer, anggota hanya membalas
+  const dalamEsc = adalahEscape(ruangSaya) && !dosenSaya;   // Ruang Privat: pembuat hanya timer, anggota hanya membalas
   el.classList.toggle('esc', dalamEsc); el.classList.toggle('esc-anggota', dalamEsc && !escapeMilikku(ruangSaya));
   if (dalamEsc && komposBuka && (!escapeMilikku(ruangSaya) || ambilDraft('baru').b !== 'waktu')) { komposBuka = false; }
   if (dalamEsc) pollBuka = false;
@@ -1480,7 +1480,7 @@ function renderAlat() {
   el.querySelectorAll('.ikon').forEach(k => k.classList.toggle('pilih', k.classList.contains('poll') ? pollBuka : k.classList.contains('tumpuk') ? (!!aktif && aktif !== 'waktu') : k.classList.contains('gbr') ? !!document.getElementById('gambar-ov') : k.classList.contains('kvs') ? !!document.getElementById('kanvas-ov') : k.dataset.bentuk === aktif));
   const lama = el.querySelector('.petunjuk'); if (lama) lama.remove();
   if (aktif) el.append(h('span', { class: 'petunjuk' }, `${BENTUK[aktif].label} \u00b7 maks ${BENTUK[aktif].maks} huruf`));
-  else if (dalamEsc && !escapeMilikku(ruangSaya)) el.append(h('span', { class: 'petunjuk' }, 'Ruang escape: kamu bisa membalas kartu timer.'));
+  else if (dalamEsc && !escapeMilikku(ruangSaya)) el.append(h('span', { class: 'petunjuk' }, 'Ruang Privat: kamu bisa membalas kartu timer.'));
 }
 
 /* ================== RENDER ================== */
@@ -1848,14 +1848,14 @@ async function buatRuangAksi(awalan, jumlah, btn) {
 }
 async function aturEscapeAksi(n, btn) {
   btn.disabled = true;
-  try { const j = await panggil({ aksi: 'aturEscape', batas: Math.max(0, Math.min(30, parseInt(n) || 0)) }); escBatas = Number(j.batas) || 0; toast('Jatah ruang escape: ' + escBatas); }
+  try { const j = await panggil({ aksi: 'aturEscape', batas: Math.max(0, Math.min(30, parseInt(n) || 0)) }); escBatas = Number(j.batas) || 0; toast('Jatah Ruang Privat: ' + escBatas); }
   catch (e) { toast(e.message); }
   btn.disabled = false; renderRuang();
 }
 async function buatEscapeAksi(nama, btn) {
   if (!butuhLogin()) return;
   btn.disabled = true;
-  try { await panggil({ aksi: 'buatEscape', nama: nama.trim() }); escNama = ''; await muatEscape(); await muat(); toast('Ruang escape dibuat. Kunci dan bagikan kodenya.'); }
+  try { await panggil({ aksi: 'buatEscape', nama: nama.trim() }); escNama = ''; await muatEscape(); await muat(); toast('Ruang Privat dibuat. Kunci dan bagikan kodenya.'); }
   catch (e) { toast(e.message); }
   btn.disabled = false; renderRuang();
 }
@@ -1885,7 +1885,7 @@ async function keluarkanEscapeAksi(id, uid) {
   renderRuang();
 }
 async function tutupRuangAksi(id) {
-  try { const j = await panggil({ aksi: 'tutupRuang', id }); ruangKonfirm = ''; await muat(); toast('Ruang ditutup' + (j.kartu_digabung ? ' · ' + j.kartu_digabung + ' kartu digabung ke papan utama' : '') + (j.kartu_escape_dihapus ? ' · ' + j.kartu_escape_dihapus + ' kartu ruang escape dihapus' : '')); }
+  try { const j = await panggil({ aksi: 'tutupRuang', id }); ruangKonfirm = ''; await muat(); toast('Ruang ditutup' + (j.kartu_digabung ? ' · ' + j.kartu_digabung + ' kartu digabung ke papan utama' : '') + (j.kartu_escape_dihapus ? ' · ' + j.kartu_escape_dihapus + ' kartu Ruang Privat dihapus' : '')); }
   catch (e) { toast(e.message); }
   renderRuang();
 }
@@ -2257,25 +2257,25 @@ function renderRuang() {
   if (aktifInput && aktifInput.tagName === 'INPUT') return;   // jangan membongkar form saat sedang diketik
   const kids = [h('div', { class: 'jdl' }, 'Pilih ruang'), baris('', 'Papan utama'), ...ruangData.map(r => baris(r.id, r.nama))];
   if (!ruangData.length) kids.push(h('div', { class: 'kosong' }, 'Belum ada ruang.'));
-  if (escMasuk && infoRuang(escMasuk)) {   // masukkan kode untuk ruang escape terkunci
+  if (escMasuk && infoRuang(escMasuk)) {   // masukkan kode untuk Ruang Privat terkunci
     const iK = h('input', { type: 'text', maxlength: '8', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', value: escKode, 'aria-label': 'Kode ruang ' + infoRuang(escMasuk).nama, placeholder: 'Kode' });
     iK.addEventListener('input', () => { escKode = iK.value; });
     const bM = h('button', { type: 'button', onclick: () => masukEscapeAksi(escMasuk, iK.value, bM) }, 'Masuk');
     iK.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); bM.click(); } });
     kids.push(h('div', { class: 'jdl' }, 'Kode untuk ' + infoRuang(escMasuk).nama), h('div', { class: 'buat' }, iK, bM));
   }
-  if (tokenHidup()) {   // ruang escape: siapa pun bisa membuat satu
+  if (tokenHidup()) {   // Ruang Privat: siapa pun bisa membuat satu
     const nEsc = ruangData.filter(x => x.jenis === 'escape').length;
     if (!escapeSaya.milik && !dosenSaya && (escBatas <= 0 || nEsc >= escBatas)) {
-      kids.push(h('div', { class: 'jdl' }, 'Ruang escape'), h('div', { class: 'kosong' }, escBatas <= 0 ? 'Belum dibuka oleh dosen.' : 'Jatah penuh (' + nEsc + ' dari ' + escBatas + ').'));
+      kids.push(h('div', { class: 'jdl' }, 'Ruang Privat'), h('div', { class: 'kosong' }, escBatas <= 0 ? 'Belum dibuka oleh dosen.' : 'Jatah penuh (' + nEsc + ' dari ' + escBatas + ').'));
     } else if (!escapeSaya.milik) {
-      const iE = h('input', { type: 'text', maxlength: '30', value: escNama, 'aria-label': 'Nama ruang escape', placeholder: 'Nama ruang escape' });
+      const iE = h('input', { type: 'text', maxlength: '30', value: escNama, 'aria-label': 'Nama Ruang Privat', placeholder: 'Nama Ruang Privat' });
       iE.addEventListener('input', () => { escNama = iE.value; });
       const bE = h('button', { type: 'button', onclick: () => buatEscapeAksi(iE.value, bE) }, 'Buat');
-      kids.push(h('div', { class: 'jdl' }, 'Ruang escape milikmu'), h('div', { class: 'buat' }, iE, bE));
+      kids.push(h('div', { class: 'jdl' }, 'Ruang Privat milikmu'), h('div', { class: 'buat' }, iE, bE));
     } else {
       const m = escapeSaya.milik, r = infoRuang(m.id);
-      kids.push(h('div', { class: 'jdl' }, 'Ruang escape milikmu: ' + (r ? r.nama : '')),
+      kids.push(h('div', { class: 'jdl' }, 'Ruang Privat milikmu: ' + (r ? r.nama : '')),
         h('div', { class: 'esc-kode' }, 'Kode: ', h('b', {}, m.kode), r && r.terkunci ? ' \u{1F512}' : ' (belum dikunci)'),
         h('button', { type: 'button', onclick: () => kunciEscapeAksi(m.id, !(r && r.terkunci), false) }, r && r.terkunci ? 'Buka kunci' : 'Kunci ruang'),
         h('button', { type: 'button', onclick: () => kunciEscapeAksi(m.id, !!(r && r.terkunci), true) }, 'Ganti kode'),
@@ -2291,10 +2291,10 @@ function renderRuang() {
     const iN = h('input', { type: 'number', value: '4', min: '1', max: '20', 'aria-label': 'Jumlah ruang' });
     const bB = h('button', { type: 'button', onclick: () => buatRuangAksi(iA.value, iN.value, bB) }, 'Buat');
     kids.push(h('div', { class: 'jdl' }, 'Dosen: buat set ruang'), h('div', { class: 'buat' }, iA, iN, bB));
-    const iB = h('input', { type: 'number', value: String(escBatas), min: '0', max: '30', 'aria-label': 'Jatah ruang escape' });
+    const iB = h('input', { type: 'number', value: String(escBatas), min: '0', max: '30', 'aria-label': 'Jatah Ruang Privat' });
     const bBt = h('button', { type: 'button', onclick: () => aturEscapeAksi(iB.value, bBt) }, 'Atur');
-    kids.push(h('div', { class: 'jdl' }, 'Dosen: jatah ruang escape (0 = tutup), terpakai ' + ruangData.filter(x => x.jenis === 'escape').length), h('div', { class: 'buat esc-batas' }, iB, bBt));
-    if (ruangSaya) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === ruangSaya) tutupRuangAksi(ruangSaya); else { ruangKonfirm = ruangSaya; renderRuang(); } } }, ruangKonfirm === ruangSaya ? 'Yakin? Klik lagi untuk menutup' : (adalahEscape(ruangSaya) ? 'Tutup dan hapus ruang escape ini' : 'Tutup ruang ini (gabung ke utama)')));
+    kids.push(h('div', { class: 'jdl' }, 'Dosen: jatah Ruang Privat (0 = tutup), terpakai ' + ruangData.filter(x => x.jenis === 'escape').length), h('div', { class: 'buat esc-batas' }, iB, bBt));
+    if (ruangSaya) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === ruangSaya) tutupRuangAksi(ruangSaya); else { ruangKonfirm = ruangSaya; renderRuang(); } } }, ruangKonfirm === ruangSaya ? 'Yakin? Klik lagi untuk menutup' : (adalahEscape(ruangSaya) ? 'Tutup dan hapus Ruang Privat ini' : 'Tutup ruang ini (gabung ke utama)')));
     if (ruangData.length) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === '*') tutupRuangAksi(null); else { ruangKonfirm = '*'; renderRuang(); } } }, ruangKonfirm === '*' ? 'Yakin? Klik lagi untuk menutup semua' : 'Tutup semua ruang'));
   }
   menu.replaceChildren(...kids);

@@ -703,6 +703,17 @@
   @media (max-width:420px) { header #login .btn, header #btn-akun, #login > button { width:min(240px, calc(100vw - 80px)) !important; } }
   header { padding-right:12px !important; } header .kanan { margin-left:auto; }
   @media (max-width:640px) { header { padding-right:8px !important; } }
+  /* tampilan Purge: tepi atas dan bawah menyala merah, kotak putih di tengah */
+  #purge-ov { background:linear-gradient(to bottom, rgba(255,0,0,.95) 0, rgba(255,0,0,.35) 9%, rgba(0,0,0,.78) 24%, rgba(0,0,0,.78) 80%, rgba(255,0,0,.35) 93%, rgba(255,0,0,.95) 100%) !important; }
+  .purge-kotak { background:#fff; color:#000; border:1px solid #ddd; border-radius:10px; width:264px; max-width:calc(100vw - 24px); padding:16px 18px; box-shadow:0 8px 40px rgba(0,0,0,.6); font-family:Inter, "Google Sans", Roboto, system-ui, sans-serif; }
+  .purge-kotak h2 { margin:0 0 14px; font-size:15px; font-weight:700; text-align:center; text-transform:uppercase; color:#000; letter-spacing:.01em; }
+  .purge-kotak p { margin:0 0 14px; font-size:12px; line-height:1.4; text-align:center; }
+  .purge-kotak input { border:0; border-radius:6px; background:#f00; color:#fff; font-size:12px; font-weight:500; padding:0 10px; height:28px; text-transform:uppercase; letter-spacing:.04em; }
+  .purge-kotak input::placeholder { color:#fff; opacity:1; }
+  .purge-aksi { gap:8px; margin-top:12px; }
+  .purge-aksi .btn { font-size:12px; font-weight:500; padding:0 12px; min-height:28px; height:28px; border:1px solid #000; border-radius:8px; background:#fff; color:#000; }
+  .purge-aksi .btn#purge-ya { background:#f00; border-color:#f00; color:#fff; font-weight:500; }
+  .purge-kotak input:focus-visible, .purge-kotak .btn:focus-visible { outline:2px solid #000; outline-offset:2px; }
 </style>
 </head>
 <body>
@@ -2003,7 +2014,7 @@ function bukaKanvas(simpan) {
   const gridBtn = tombol('▦ Grid', 'Tampilkan atau sembunyikan garis grid', () => { kvGrid = !kvGrid; gridBtn.classList.toggle('on', kvGrid); gridBtn.setAttribute('aria-pressed', kvGrid ? 'true' : 'false'); kvTampil(); });
   gridBtn.classList.toggle('on', kvGrid); gridBtn.setAttribute('aria-pressed', kvGrid ? 'true' : 'false');
   const nilaiT = h('span', { class: 'kv-nt' }, Math.round((1 - kvAlfa) * 100) + '%');
-  const geser = h('input', { type: 'range', min: 0, max: 80, step: 5, value: Math.round((1 - kvAlfa) * 100), 'aria-label': 'Transparansi kanvas', title: 'Transparansi kanvas: makin tinggi, papan di belakang makin terlihat' });
+  const geser = h('input', { type: 'range', min: 0, max: 100, step: 5, value: Math.round((1 - kvAlfa) * 100), 'aria-label': 'Transparansi kanvas', title: 'Transparansi kanvas: makin tinggi, papan di belakang makin terlihat' });
   geser.addEventListener('input', () => { kvAlfa = 1 - (+geser.value) / 100; nilaiT.textContent = geser.value + '%'; kvTampil(); });
   alat.append(gridBtn, h('label', { class: 'kv-tr' }, 'Transparan', geser, nilaiT));
   alat.append(tombol('💾 Simpan PNG', 'Simpan kanvas sebagai gambar PNG', () => {
@@ -2126,7 +2137,7 @@ function renderPurge() {
 function tutupPurge() { const o = document.getElementById('purge-ov'); if (o) { o.remove(); const b = document.getElementById('btn-purge'); if (b) b.focus(); } }
 function bukaPurge() {
   if (!dosenSaya || document.getElementById('purge-ov')) return;
-  const inp = h('input', { type: 'text', id: 'purge-isi', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Ketik kata purge untuk mengonfirmasi', placeholder: 'purge' });
+  const inp = h('input', { type: 'text', id: 'purge-isi', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Ketik kata purge untuk mengonfirmasi', placeholder: 'PURGE' });
   const ya = h('button', { type: 'button', class: 'btn', id: 'purge-ya', disabled: '' }, 'Hapus semua');
   const batal = h('button', { type: 'button', class: 'btn', onclick: tutupPurge }, 'Batal');
   const ok = () => inp.value.trim().toLowerCase() === 'purge';
@@ -2140,8 +2151,8 @@ function bukaPurge() {
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); kirim(); } });
   ya.addEventListener('click', kirim);
   const kotak = h('div', { class: 'purge-kotak', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'purge-j', 'aria-describedby': 'purge-d' },
-    h('h2', { id: 'purge-j' }, 'Purge: hapus bersih semua'),
-    h('p', { id: 'purge-d' }, 'Semua kartu, balasan, polling, stiker, dan sambungan di papan utama dan semua ruang akan dihapus. Salinannya tersimpan di arsip. Ketik ', h('b', {}, 'purge'), ' untuk melanjutkan.'),
+    h('h2', { id: 'purge-j' }, 'Hapus bersih semua'),
+    h('p', { id: 'purge-d' }, 'Semua data di papan utama dan semua ruang akan dihapus (salinan tersimpan di arsip). Ketik [purge] untuk melanjutkan.'),
     inp, h('div', { class: 'purge-aksi' }, batal, ya));
   const ov = h('div', { id: 'purge-ov' }, kotak);
   ov.addEventListener('keydown', e => {

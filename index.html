@@ -726,6 +726,12 @@
   .pes-kv { flex-direction:column; align-items:stretch; border-top:1px solid var(--gx); }
   .pes-kv .btn { text-align:left; } .pes-kv .btn.on { background:#ffee58; color:#000; border-color:#ffee58; }
   .pes-kv .btn:disabled { opacity:.45; cursor:default; } .pes-kv-j { font-size:12px; font-weight:600; opacity:.85; padding:0 2px; }
+  /* banner pengumuman penutupan dari dosen, di sisi atas layar */
+  #umum { position:fixed; left:0; right:0; top:0; z-index:60; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; min-height:40px; box-sizing:border-box; padding:6px 16px; background:#ffee58; color:#000; font:600 14px/1.3 system-ui, Arial, sans-serif; border-bottom:2px solid #000; }
+  #umum .btn { font:inherit; font-size:12px; padding:3px 10px; background:#000; color:#ffee58; border:1px solid #000; border-radius:6px; cursor:pointer; }
+  html.ada-umum header { top:var(--umum-h,44px); } html.ada-umum body { padding-top:calc(var(--hh,72px) + var(--umum-h,44px)); }
+  html.foto #umum { visibility:hidden !important; }
+  .pes-kv select { font:inherit; font-size:12px; padding:3px 6px; background:transparent; color:inherit; border:1px solid var(--gx); border-radius:4px; }
 </style>
 </head>
 <body>
@@ -2207,7 +2213,17 @@ function renderPeserta() {
       h('div', { class: 'pes-kv-j' }, 'Kanvas · ' + namaRuang(ruangSaya)),
       h('button', { type: 'button', class: 'btn' + (buka ? ' on' : ''), 'aria-pressed': buka ? 'true' : 'false', onclick: () => { if (buka) { kvBukaSet.delete(rk); kvSemuaSet.delete(rk); } else kvBukaSet.add(rk); simpanKv(); } }, buka ? 'Kanvas: dibuka' : 'Kanvas: ditutup'),
       h('button', { type: 'button', class: 'btn' + (semua ? ' on' : ''), disabled: buka ? null : '', 'aria-pressed': semua ? 'true' : 'false', title: 'Bila menyala, semua orang di ruang ini boleh mencoret', onclick: () => { if (semua) kvSemuaSet.delete(rk); else kvSemuaSet.add(rk); simpanKv(); } }, semua ? 'Semua boleh mencoret: ya' : 'Semua boleh mencoret: tidak'),
-      h('button', { type: 'button', class: 'btn', onclick: () => { if (adaTutup) semuaRuangKey.forEach(k => kvBukaSet.add(k)); else { kvBukaSet.clear(); kvSemuaSet.clear(); } simpanKv(); } }, adaTutup ? 'Buka kanvas di semua ruang' : 'Tutup kanvas di semua ruang'));
+      h('button', { type: 'button', class: 'btn', onclick: () => { if (adaTutup) semuaRuangKey.forEach(k => kvBukaSet.add(k)); else { kvBukaSet.clear(); kvSemuaSet.clear(); } simpanKv(); } }, adaTutup ? 'Buka kanvas di semua ruang' : 'Tutup kanvas di semua ruang'),
+      h('div', { class: 'pes-kv-j' }, 'Umumkan penutupan (banner di semua ruang)'),
+      (() => {
+        const sel = h('select', { id: 'umum-menit', 'aria-label': 'Hitung mundur sebelum menutup' }, ...[1, 3, 5].map(m => h('option', { value: String(m), selected: m === umumMenit ? '' : null }, m + ' menit')));
+        sel.addEventListener('change', () => { umumMenit = parseInt(sel.value) || 3; });
+        return sel;
+      })(),
+      h('button', { type: 'button', class: 'btn', disabled: umumSaya ? '' : null, onclick: () => umumMulai('kanvas', umumMenit) }, 'Umumkan: tutup kanvas ruang ini'),
+      h('button', { type: 'button', class: 'btn', disabled: umumSaya ? '' : null, onclick: () => umumMulai('semua', umumMenit) }, 'Umumkan: tutup kanvas semua ruang'),
+      h('button', { type: 'button', class: 'btn', disabled: (umumSaya || !ruangSaya) ? '' : null, title: ruangSaya ? '' : 'Papan utama tidak bisa ditutup', onclick: () => umumMulai('ruang', umumMenit) }, 'Umumkan: tutup ruang ini'),
+      umumSaya ? h('button', { type: 'button', class: 'btn', onclick: umumBatal }, 'Batalkan pengumuman') : null);
   }
   isi.replaceChildren(...rows, ...(kontrolKv ? [kontrolKv] : []), ...(massal ? [massal] : []));
   posPeserta();
@@ -3588,13 +3604,59 @@ const bacaSetKv = k => { const x = new Set(); try { JSON.parse(localStorage.getI
 let kvBukaSet = bacaSetKv('deck-kv-buka'), kvSemuaSet = bacaSetKv('deck-kv-semua');   // milik dosen ini
 let kvBukaDosen = new Set(), kvSemuaDosen = new Set(), kvSigDosen = '';              // gabungan dari semua dosen yang online
 const simpanSetKv = () => { try { localStorage.setItem('deck-kv-buka', JSON.stringify([...kvBukaSet].slice(0, 60))); localStorage.setItem('deck-kv-semua', JSON.stringify([...kvSemuaSet].slice(0, 60))); } catch (e) {} };
+/* Pengumuman penutupan dari dosen: banner di atas layar dengan hitung mundur. Disebar lewat Presence (tanpa database). */
+let umumMenit = 3, umumSaya = null, umumDosen = [], umumMuncul = '';   // umumSaya: {j:'kanvas'|'semua'|'ruang', r:kunciRuang, t:waktuServer akhir}
+const idUmum = u => u.j + '|' + u.r + '|' + u.t;
+function umumMulai(j, menit) {
+  if (!dosenSaya) return;
+  if (j === 'ruang' && !ruangSaya) { toast('Papan utama tidak bisa ditutup.'); return; }
+  umumSaya = { j, r: j === 'semua' ? '*' : kunciRuangKv(ruangSaya), t: Math.round(waktuServer()) + menit * 60000 };
+  hadirSig = ''; hadirKirim(); renderUmum(); renderPeserta();
+}
+function umumBatal() { umumSaya = null; hadirSig = ''; hadirKirim(); renderUmum(); renderPeserta(); }
+async function umumJalankan() {   // dosen: waktu habis -> kanvas ditutup otomatis; ruang menunggu konfirmasi dosen
+  const u = umumSaya; if (!u || !dosenSaya) return;
+  if (u.j === 'ruang') return;
+  if (u.r === '*') { kvBukaSet.clear(); kvSemuaSet.clear(); } else { kvBukaSet.delete(u.r); kvSemuaSet.delete(u.r); }
+  simpanSetKv(); umumSaya = null; hadirSig = ''; hadirKirim(); renderAlat(); renderPeserta(); renderUmum(); toast('Kanvas ditutup.');
+}
+async function umumTutupRuang() {
+  const u = umumSaya; if (!u || u.j !== 'ruang') return;
+  const id = u.r === 'u' ? '' : u.r; if (!id) { umumBatal(); return; }
+  umumSaya = null; hadirSig = ''; hadirKirim(); renderUmum();
+  await tutupRuangAksi(id);
+}
+function umumUntukSaya() {   // pengumuman yang berlaku di ruangku sekarang
+  const rk = kunciRuangKv(ruangSaya), daftar = dosenSaya ? (umumSaya ? [umumSaya] : []) : umumDosen;
+  return daftar.filter(u => u.r === rk || u.r === '*').sort((a, b) => a.t - b.t)[0] || null;
+}
+function renderUmum() {
+  let el = document.getElementById('umum');
+  const u = umumUntukSaya(); const sisa = u ? u.t - waktuServer() : 0;
+  if (!u || (sisa < -60000)) { if (el) el.remove(); document.documentElement.classList.remove('ada-umum'); umumMuncul = ''; return; }
+  if (!el) { el = h('div', { id: 'umum', role: 'status', 'aria-live': 'off' }); document.body.append(el); }
+  document.documentElement.classList.add('ada-umum');
+  const ruangTxt = u.r === '*' ? 'semua ruang' : (adalahEscape(ruangSaya) ? 'Ruang Privat ini' : 'ruang ini');
+  const mm = Math.max(0, Math.floor(sisa / 60000)), ss = Math.max(0, Math.floor(sisa / 1000) % 60), jam = String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+  let teks;
+  if (u.j === 'ruang') teks = sisa > 0 ? 'Dosen akan menutup ' + ruangTxt + ' dalam ' + jam + '. ' + (adalahEscape(ruangSaya) ? 'Kartu akan dihapus.' : 'Kartu akan digabung ke papan utama.') + ' Salin atau foto yang perlu disimpan.' : 'Dosen sedang menutup ' + ruangTxt + '…';
+  else teks = sisa > 0 ? 'Dosen akan menutup kanvas di ' + ruangTxt + ' dalam ' + jam + '. Selesaikan coretanmu dan simpan PNG bila perlu.' : 'Kanvas ditutup.';
+  const kids = [h('span', { class: 'umum-t' }, '\u{1F4E2} ' + teks)];
+  if (dosenSaya) {
+    if (u.j === 'ruang' && sisa <= 0) kids.push(h('button', { type: 'button', class: 'btn', onclick: umumTutupRuang }, 'Tutup ruang sekarang'));
+    kids.push(h('button', { type: 'button', class: 'btn', onclick: umumBatal }, 'Batalkan'));
+  }
+  el.replaceChildren(...kids);
+  const id = idUmum(u); if (id !== umumMuncul) { umumMuncul = id; umumkan(teks); }
+}
+setInterval(() => { if (umumSaya && waktuServer() >= umumSaya.t && umumSaya.j !== 'ruang') umumJalankan(); renderUmum(); }, 500);
 const kanvasDibuka = r => !!dosenSaya || kvBukaDosen.has(kunciRuangKv(r === undefined ? ruangSaya : r));
 const semuaBolehCoret = r => kvSemuaDosen.has(kunciRuangKv(r === undefined ? ruangSaya : r));
 const bolehCoret = () => { if (dosenSaya) return true; if (!kanvasDibuka()) return false; if (semuaBolehCoret()) return true; const u = uidSaya(); return !!u && izinDosen.has(u); };
 function hadirKirim() {
   if (!kanalHadir) return;
   const info = { id: idKlien, nama: tokenHidup() ? (getUser() || '') : '', ruang: ruangSaya, uid: tokenHidup() ? uidSaya() : '', dos: !!dosenSaya };
-  if (dosenSaya) { info.izin = [...izinKanvas].slice(0, 400); info.kvb = [...kvBukaSet].slice(0, 60); info.kvs = [...kvSemuaSet].slice(0, 60); }
+  if (dosenSaya) { info.izin = [...izinKanvas].slice(0, 400); info.kvb = [...kvBukaSet].slice(0, 60); info.kvs = [...kvSemuaSet].slice(0, 60); if (umumSaya) info.um = umumSaya; }
   const sig = JSON.stringify(info); if (sig === hadirSig) return; hadirSig = sig;
   try { kanalHadir.track(info); } catch (e) {}
 }
@@ -3611,6 +3673,8 @@ function hadirMulai() {
       if (x.dos && Array.isArray(x.kvs)) x.kvs.slice(0, 60).forEach(v => { if (idOk(v)) ks.add(v); });
       orang.push({ id: String(x.id || ''), nama: String(x.nama || '').slice(0, 20), ruang: String(x.ruang || ''), uid: /^[0-9a-f]{12}$/.test(String(x.uid || '')) ? String(x.uid) : '', dos: !!x.dos }); });
     izinDosen = uni; orangOnline = orang; kvBukaDosen = kb; kvSemuaDosen = ks;
+    umumDosen = []; Object.values(st).forEach(arr => { const x = arr[arr.length - 1] || {}, u = x.um; if (x.dos && u && ['kanvas', 'semua', 'ruang'].includes(u.j) && typeof u.r === 'string' && /^(\*|[A-Za-z0-9_]{1,24})$/.test(u.r) && Number.isFinite(+u.t)) umumDosen.push({ j: u.j, r: u.r, t: +u.t }); });
+    renderUmum();
     const sigKv = [...kb].sort().join(',') + '|' + [...ks].sort().join(','); if (sigKv !== kvSigDosen) { kvSigDosen = sigKv; renderAlat(); }
     hadirData = { aktif, nama, per }; renderStat(); renderRuang(); renderPeserta();
     if (kv && !dosenSaya && !kanvasDibuka(kv.ruang)) { tutupKanvas(); toast('Dosen menutup kanvas di ruang ini.'); umumkan('Kanvas ditutup oleh dosen.'); return; }

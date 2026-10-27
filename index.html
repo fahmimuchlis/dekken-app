@@ -3703,7 +3703,7 @@ function alatOtomatis() {
   setInterval(() => { if (tahan()) { terakhir = Date.now(); nav.classList.remove('sembunyi'); } else if (Date.now() - terakhir > JEDA && nav.querySelector('.ikon')) nav.classList.add('sembunyi'); }, 400);
 }
 /* ===== Menara Bentuk: game menumpuk bentuk di Ruang Privat. Solo, atau berpasangan (satu menjatuhkan, satu menggeser tatakan). ===== */
-const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, SLOT: 100, R: 28, OXMAKS: 412, NMAKS: 36, TIPE: ['kotak', 'lingkaran', 'segienam', 'segilima', 'tumpul'], NAMA: ['persegi', 'lingkaran', 'segi enam', 'segi lima', 'persegi tumpul'], NADA: [262, 330, 392, 494, 587], WARNA: ['#FEE440', '#F15BB5', '#00F5D4', '#00BBF9', '#9B5DE5'] };   // palet kartu: kuning, pink, hijau, biru, ungu
+const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, SLOT: 108, R: 28, PERIODE: 540, NMAKS: 36, TIPE: ['kotak', 'lingkaran', 'segienam', 'segilima', 'tumpul'], NAMA: ['persegi', 'lingkaran', 'segi enam', 'segi lima', 'persegi tumpul'], NADA: [262, 330, 392, 494, 587], WARNA: ['#FEE440', '#F15BB5', '#00F5D4', '#00BBF9', '#9B5DE5'] };   // palet kartu: kuning, pink, hijau, biru, ungu
 const mnPetak = i => MN.WARNA[i];
 const mnWarnaTipe = t => t === 'duri' ? '#9aa0a6' : MN.WARNA[Math.max(0, MN.TIPE.indexOf(t))];
 let mn = null;
@@ -3717,7 +3717,8 @@ function mnJalur(c, tipe, x, y, r) {
   else { const n = tipe === 'segienam' ? 6 : 5, o = tipe === 'segienam' ? 0 : -Math.PI / 2; for (let i = 0; i < n; i++) { const a = o + i * 2 * Math.PI / n, px = x + r * 1.06 * Math.cos(a), py = y + r * 1.06 * Math.sin(a); if (i) c.lineTo(px, py); else c.moveTo(px, py); } }
   c.closePath();
 }
-const mnPusat = (v, i) => MN.W / 2 + v.ox + (i - 2) * MN.SLOT;
+const mnPutar = o => ((o % MN.PERIODE) + MN.PERIODE) % MN.PERIODE;   // tatakan berputar: yang keluar di satu sisi muncul di sisi lain
+const mnPusat = (v, i) => mnPutar(MN.W / 2 + v.ox + (i - 2) * MN.SLOT + 34) - 34;
 const mnRest = n => MN.LANTAI - MN.R - (n + 1) * MN.TEBAL;
 function mnSasaran(v, x) { let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { const e = Math.abs(x - mnPusat(v, i)); if (e < d) { d = e; k = i; } } return d <= MN.SLOT * 0.42 ? mnRest(v.t[k]) : MN.LANTAI - 4; }
 function mnGambar() {
@@ -3776,7 +3777,7 @@ function mnLangkah(dt) {
   const g = mn.g; if (g.selesai || mn.jeda) return;
   const spG = 560 * dt, spJ = 420 * dt, peran = mn.peran;   // peran saya: 'geser' | 'jatuh' | 'solo'
   const sayaGeser = mn.mode === 'solo' || peran === 'geser', sayaJatuh = mn.mode !== 'solo' && peran === 'jatuh';
-  if (sayaGeser && mn.arah) g.ox = mnJepit(g.ox + mn.arah * spG, -MN.OXMAKS, MN.OXMAKS);
+  if (sayaGeser && mn.arah) g.ox = mnPutar(g.ox + mn.arah * spG);
   if (sayaJatuh && g.b && !g.b.jatuh && mn.arah) g.b.x = mnJepit(g.b.x + mn.arah * spJ, MN.R, MN.W - MN.R);
   if (!g.b) {
     g.tunggu -= dt;
@@ -3814,7 +3815,7 @@ function mnTerimaSnap(s) {
 function mnLicin(dt) {   // sisi tamu: haluskan kiriman 10 Hz dari host
   const s = mn.snap, v = mn.v; if (!s) return; const f = 1 - Math.exp(-dt * 18);
   v.t = s.t.slice(); v.skor = s.skor; v.selesai = !!s.selesai;
-  v.ox = mn.peran === 'geser' ? mn.lokal : v.ox + (s.ox - v.ox) * f;
+  v.ox = mn.peran === 'geser' ? mn.lokal : mnPutar(v.ox + (mnPutar(s.ox - v.ox + MN.PERIODE / 2) - MN.PERIODE / 2) * f);
   if (s.b) { if (!v.b || v.b.tipe !== s.b.tipe || (!s.b.jatuh && v.b.jatuh)) v.b = { x: s.b.x, y: s.b.y, tipe: s.b.tipe, jatuh: s.b.jatuh }; v.b.jatuh = s.b.jatuh; v.b.x = mn.peran === 'jatuh' && !s.b.jatuh ? mn.lokal : v.b.x + (s.b.x - v.b.x) * f; v.b.y += (s.b.y - v.b.y) * f; } else v.b = null;
 }
 function mnLoop(ts) {
@@ -3822,7 +3823,7 @@ function mnLoop(ts) {
   if (mn.main) {
     mnFxLangkah(dt);
     if (mn.mode === 'tamu') {
-      if (mn.arah) { mn.lokal = mnJepit(mn.lokal + mn.arah * (mn.peran === 'geser' ? 560 : 420) * dt, mn.peran === 'geser' ? -MN.OXMAKS : MN.R, mn.peran === 'geser' ? MN.OXMAKS : MN.W - MN.R); }
+      if (mn.arah) { mn.lokal = mn.peran === 'geser' ? mnPutar(mn.lokal + mn.arah * 560 * dt) : mnJepit(mn.lokal + mn.arah * 420 * dt, MN.R, MN.W - MN.R); }
       mnLicin(dt);
     } else { mnLangkah(dt); mn.v = mn.g; }
     mnGambar();
@@ -3840,7 +3841,7 @@ function mnMulaiMain() {   // papan permainan menggantikan lobi
   const px = e => { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * MN.W; };
   cv.addEventListener('pointermove', e => {
     const x = px(e);
-    if (mn.mode === 'solo' || mn.peran === 'geser') { const o = mnJepit((x / MN.W * 2 - 1) * MN.OXMAKS, -MN.OXMAKS, MN.OXMAKS); if (mn.mode === 'tamu') mn.lokal = o; else mn.g.ox = o; }
+    if (mn.mode === 'solo' || mn.peran === 'geser') { const o = mnPutar(x / MN.W * MN.PERIODE - MN.PERIODE / 2); if (mn.mode === 'tamu') mn.lokal = o; else mn.g.ox = o; }
     else { const xx = mnJepit(x, MN.R, MN.W - MN.R); if (mn.mode === 'tamu') mn.lokal = xx; else if (mn.g.b && !mn.g.b.jatuh) mn.g.b.x = xx; }
   });
   cv.addEventListener('pointerdown', e => { if (mn.mode !== 'solo' && mn.peran === 'jatuh') { if (mn.mode === 'tamu') mnKirimIn(true); else mnLepas(); } });
@@ -3858,7 +3859,7 @@ function mnSambungG(id) {   // kanal sendiri per pasangan (hemat: tidak ikut sia
   k.on('broadcast', { event: 'st' }, m => mnTerimaSnap(m.payload));
   k.on('broadcast', { event: 'in' }, m => {
     if (!mn || mn.mode !== 'host' || !mn.g) return; const p = m.payload || {}, g = mn.g;
-    if (mn.peran === 'jatuh') { if (Number.isFinite(+p.ox)) g.ox = mnJepit(+p.ox, -MN.OXMAKS, MN.OXMAKS); } else { if (Number.isFinite(+p.x) && g.b && !g.b.jatuh) g.b.x = mnJepit(+p.x, MN.R, MN.W - MN.R); if (p.drop) mnLepas(); }
+    if (mn.peran === 'jatuh') { if (Number.isFinite(+p.ox)) g.ox = mnPutar(+p.ox); } else { if (Number.isFinite(+p.x) && g.b && !g.b.jatuh) g.b.x = mnJepit(+p.x, MN.R, MN.W - MN.R); if (p.drop) mnLepas(); }
   });
   k.on('broadcast', { event: 'keluar' }, () => { if (!mn) return; mn.jeda = true; mn.status = 'Pasangan keluar. Tutup lalu buka lagi untuk bermain.'; if (mn.mode === 'tamu') mn.g && (mn.g.selesai = true); umumkan('Pasangan keluar dari permainan.'); });
   k.subscribe(st => { if (!mn) return; mn.tersambungG = st === 'SUBSCRIBED'; if (mn.tersambungG && mn.mode === 'host') mn.status = ''; });

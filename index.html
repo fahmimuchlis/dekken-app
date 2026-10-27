@@ -3703,7 +3703,7 @@ function alatOtomatis() {
   setInterval(() => { if (tahan()) { terakhir = Date.now(); nav.classList.remove('sembunyi'); } else if (Date.now() - terakhir > JEDA && nav.querySelector('.ikon')) nav.classList.add('sembunyi'); }, 400);
 }
 /* ===== Menara Bentuk: game menumpuk bentuk di Ruang Privat. Solo, atau berpasangan (satu menjatuhkan, satu menggeser tatakan). ===== */
-const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, SLOT: 108, R: 28, PERIODE: 540, NMAKS: 36, TIPE: ['kotak', 'lingkaran', 'segienam', 'segilima', 'tumpul'], NAMA: ['persegi', 'lingkaran', 'segi enam', 'segi lima', 'persegi tumpul'], NADA: [262, 330, 392, 494, 587], WARNA: ['#FEE440', '#F15BB5', '#00F5D4', '#00BBF9', '#9B5DE5'] };   // palet kartu: kuning, pink, hijau, biru, ungu
+const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, SLOT: 96, R: 28, PERIODE: 480, NMAKS: 36, TIPE: ['kotak', 'lingkaran', 'segienam', 'segilima', 'tumpul'], NAMA: ['persegi', 'lingkaran', 'segi enam', 'segi lima', 'persegi tumpul'], NADA: [262, 330, 392, 494, 587], WARNA: ['#FEE440', '#F15BB5', '#00F5D4', '#00BBF9', '#9B5DE5'] };   // palet kartu: kuning, pink, hijau, biru, ungu
 const mnPetak = i => MN.WARNA[i];
 const mnWarnaTipe = t => t === 'duri' ? '#9aa0a6' : MN.WARNA[Math.max(0, MN.TIPE.indexOf(t))];
 let mn = null;
@@ -3718,19 +3718,21 @@ function mnJalur(c, tipe, x, y, r) {
   c.closePath();
 }
 const mnPutar = o => ((o % MN.PERIODE) + MN.PERIODE) % MN.PERIODE;   // tatakan berputar: yang keluar di satu sisi muncul di sisi lain
-const mnPusat = (v, i) => mnPutar(MN.W / 2 + v.ox + (i - 2) * MN.SLOT + 34) - 34;
+const mnPusat = (v, i) => mnPutar(MN.W / 2 + v.ox + (i - 2) * MN.SLOT);   // lima tumpukan tepat mengisi satu putaran lebar layar: tidak ada celah kosong
+const mnDekat = (v, i, x) => { const c = mnPusat(v, i); let t = c; for (const o of [-MN.W, MN.W]) if (Math.abs(x - (c + o)) < Math.abs(x - t)) t = c + o; return t; };
 const mnRest = n => MN.LANTAI - MN.R - (n + 1) * MN.TEBAL;
-function mnSasaran(v, x) { let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { const e = Math.abs(x - mnPusat(v, i)); if (e < d) { d = e; k = i; } } return d <= MN.SLOT * 0.42 ? mnRest(v.t[k]) : MN.LANTAI - 4; }
+function mnSasaran(v, x) { let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { const e = Math.abs(x - mnDekat(v, i, x)); if (e < d) { d = e; k = i; } } return d <= MN.SLOT * 0.5 ? mnRest(v.t[k]) : MN.LANTAI - 4; }
 function mnGambar() {
   const c = mn.c, v = mn.v, { W, H, LANTAI, R, TEBAL } = MN;
   c.clearRect(0, 0, W, H); if (!mn.ink || (mn.f = (mn.f || 0) + 1) % 40 === 0) mn.ink = getComputedStyle(document.body).color || '#fff'; const ink = mn.ink;
   for (let i = 0; i < 5; i++) {
     const cx = mnPusat(v, i), gw = mnGoyang(i), nn = Math.max(1, v.t[i]);
-    for (let j = 0; j <= v.t[i]; j++) { mnJalur(c, MN.TIPE[i], cx + gw * (j / nn), LANTAI - R - j * TEBAL, R); c.fillStyle = mnPetak(i); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); }
+    for (const off of [-W, 0, W]) { const bx = cx + off; if (bx + R + 20 < 0 || bx - R - 20 > W) continue;   // salinan di sisi seberang agar putaran mulus
+      for (let j = 0; j <= v.t[i]; j++) { mnJalur(c, MN.TIPE[i], bx + gw * (j / nn), LANTAI - R - j * TEBAL, R); c.fillStyle = mnPetak(i); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); } }
   }
   c.strokeStyle = '#4fc3f7'; c.fillStyle = '#4fc3f7'; c.lineWidth = 2.5;
   if (v.b) {
-    const b = v.b, ti = Math.max(0, MN.TIPE.indexOf(b.tipe)), tx = mnJepit(mnPusat(v, ti), 10, W - 10), y1 = b.y + R + 8, y2 = mnRest(v.t[ti]) - R - 6;
+    const b = v.b, ti = Math.max(0, MN.TIPE.indexOf(b.tipe)), tx = mnJepit(mnDekat(v, ti, b.x), 10, W - 10), y1 = b.y + R + 8, y2 = mnRest(v.t[ti]) - R - 6;
     if (b.tipe !== 'duri' && y2 > y1 + 14) {   // konektor siku bertitik (gaya kartu) dari bentuk yang jatuh ke tumpukan yang cocok
       const ym = (y1 + y2) / 2, P = [[b.x, y1], [b.x, ym], [tx, ym], [tx, y2]], bx = Math.abs(tx - b.x) < 3;
       const pts = bx ? [[b.x, y1], [b.x, y2]] : P; let tot = 0; const L = [];
@@ -3791,16 +3793,16 @@ function mnLangkah(dt) {
   }
   const b = g.b; if (!b.jatuh) { g.xTerakhir = b.x; return; }
   const lvl = Math.min(2.2, 1 + g.skor * 0.025); b.vy += 520 * lvl * dt; b.y += b.vy * dt;
-  let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { const e = Math.abs(b.x - mnPusat(g, i)); if (e < d) { d = e; k = i; } }
-  if (d <= MN.SLOT * 0.42 && b.y >= mnRest(g.t[k])) {
+  let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { const e = Math.abs(b.x - mnDekat(g, i, b.x)); if (e < d) { d = e; k = i; } }
+  if (d <= MN.SLOT * 0.5 && b.y >= mnRest(g.t[k])) {
     g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45;
     if (b.tipe === 'duri') {
       const lama = g.t[k];
-      if (lama > 0) { g.t[k] = 0; g.salah++; mnPeristiwa('hancur', { k, n: lama, x: Math.round(mnPusat(g, k)), y: Math.round(MN.LANTAI - MN.R - lama * MN.TEBAL) }); }
+      if (lama > 0) { g.t[k] = 0; g.salah++; mnPeristiwa('hancur', { k, n: lama, x: Math.round(mnDekat(g, k, b.x)), y: Math.round(MN.LANTAI - MN.R - lama * MN.TEBAL) }); }
       else { const sisi = Math.random() < 0.5 ? -1 : 1; mnPeristiwa('meleset', { k, tipe: 'duri', x: Math.round(b.x), y: Math.round(b.y), vx: sisi * 160, vy: -300, vr: sisi * 8 }); }
     }
     else if (MN.TIPE[k] === b.tipe) { g.t[k]++; g.skor++; mnPeristiwa('benar', { k }); if (g.skor % 5 === 0) umumkan('Skor ' + g.skor); if (g.t[k] >= MN.NMAKS) { g.selesai = true; mnPeristiwa('selesai'); umumkan('Menara penuh. Skor akhir ' + g.skor + '.'); } }
-    else { const dx = b.x - mnPusat(g, k), sisi = dx >= 0 ? 1 : -1; g.salah++; mnPeristiwa('salah', { k, tipe: b.tipe, x: Math.round(b.x), y: Math.round(b.y), vx: Math.round(dx * 5 + sisi * (150 + Math.random() * 80)), vy: -Math.round(Math.max(300, b.vy * 0.6)), vr: Math.round((6 + Math.random() * 6) * sisi) }); }
+    else { const dx = b.x - mnDekat(g, k, b.x), sisi = dx >= 0 ? 1 : -1; g.salah++; mnPeristiwa('salah', { k, tipe: b.tipe, x: Math.round(b.x), y: Math.round(b.y), vx: Math.round(dx * 5 + sisi * (150 + Math.random() * 80)), vy: -Math.round(Math.max(300, b.vy * 0.6)), vr: Math.round((6 + Math.random() * 6) * sisi) }); }
   } else if (b.y + MN.R >= MN.LANTAI) { g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45; const sisi = Math.random() < 0.5 ? -1 : 1; mnPeristiwa('meleset', { k: 0, tipe: b.tipe, x: Math.round(b.x), y: Math.round(Math.min(b.y, MN.LANTAI - MN.R)), vx: sisi * Math.round(100 + Math.random() * 100), vy: -Math.round(Math.max(220, b.vy * 0.35)), vr: sisi * Math.round(5 + Math.random() * 5) }); }
 }
 function mnLepas() { const g = mn.g; if (mn.mode !== 'solo' && mn.peran !== 'jatuh') return; if (g.b && !g.b.jatuh) { g.b.jatuh = true; g.b.vy = 60; mnBunyi(330, 60); } }

@@ -3697,8 +3697,8 @@ function mnGambar() {
   const c = mn.c, v = mn.v, { W, H, LANTAI, R, TEBAL } = MN;
   c.clearRect(0, 0, W, H); if (!mn.ink || (mn.f = (mn.f || 0) + 1) % 40 === 0) mn.ink = getComputedStyle(document.body).color || '#fff'; const ink = mn.ink;
   for (let i = 0; i < 5; i++) {
-    const cx = mnPusat(v, i);
-    for (let j = 0; j <= v.t[i]; j++) { mnJalur(c, MN.TIPE[i], cx, LANTAI - R - j * TEBAL, R); c.fillStyle = mnPetak(i); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); }
+    const cx = mnPusat(v, i), gw = mnGoyang(i), nn = Math.max(1, v.t[i]);
+    for (let j = 0; j <= v.t[i]; j++) { mnJalur(c, MN.TIPE[i], cx + gw * (j / nn), LANTAI - R - j * TEBAL, R); c.fillStyle = mnPetak(i); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); }
   }
   c.strokeStyle = '#4fc3f7'; c.fillStyle = '#4fc3f7'; c.lineWidth = 2.5;
   if (v.b) {
@@ -3712,6 +3712,7 @@ function mnGambar() {
     }
     mnJalur(c, b.tipe, b.x, b.y, R); c.fillStyle = mnPetak(MN.TIPE.indexOf(b.tipe)); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke();
   }
+  for (const f of mn.fx) { c.save(); c.translate(f.x, f.y); c.rotate(f.r); mnJalur(c, f.tipe, 0, 0, R); c.fillStyle = mnPetak(MN.TIPE.indexOf(f.tipe)); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); c.restore(); }
   c.fillStyle = ink; c.font = '600 16px system-ui, Arial, sans-serif'; c.textAlign = 'left'; c.fillText('Skor ' + v.skor, 12, 30); c.textAlign = 'right'; c.fillText('Tinggi ' + Math.max(...v.t) + ' / ' + MN.NMAKS, W - 12, 30);
   if (v.selesai) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 70, W - 40, 140, 18) : c.rect(20, H / 2 - 70, W - 40, 140); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '700 28px system-ui, Arial, sans-serif'; c.fillText('Menara mencapai batas!', W / 2, H / 2 - 12); c.font = '600 20px system-ui, Arial, sans-serif'; c.fillText('Skor akhir ' + v.skor, W / 2, H / 2 + 28); }
   else if (mn.status) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 40, W - 40, 80, 18) : c.rect(20, H / 2 - 40, W - 40, 80); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '600 18px system-ui, Arial, sans-serif'; c.fillText(mn.status, W / 2, H / 2 + 6); }
@@ -3721,7 +3722,19 @@ function mnBunyi(f, ms, jenis) {
   try { const A = window.AudioContext || window.webkitAudioContext; if (!A) return; mn.ac = mn.ac || new A(); const o = mn.ac.createOscillator(), g = mn.ac.createGain(); o.type = jenis || 'sine'; o.frequency.value = f; g.gain.value = 0.06; o.connect(g); g.connect(mn.ac.destination); o.start(); o.stop(mn.ac.currentTime + ms / 1000); } catch (e) {}
 }
 function mnBaru() { return { ox: 0, t: [0, 0, 0, 0, 0], b: null, skor: 0, salah: 0, selesai: false, tunggu: 0.5, xTerakhir: MN.W / 2, ev: { n: 0, j: '' } }; }
-function mnPeristiwa(j) { const g = mn.g; g.ev = { n: g.ev.n + 1, j }; mnEfek(j); }
+function mnPeristiwa(j, ekstra) { const g = mn.g; g.ev = Object.assign({ n: g.ev.n + 1, j }, ekstra || {}); mnEfek(j); mnFxEv(g.ev); }
+const mnKurangGerak = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+function mnFxEv(ev) {   // efek fisik hanya visual; tiap perangkat menghitungnya sendiri dari peristiwa yang sama
+  if (!mn || !ev || mnKurangGerak()) return; const num = v => Number.isFinite(+v) ? +v : 0;
+  if (ev.j === 'benar' || ev.j === 'salah') { const k = Math.max(0, Math.min(4, num(ev.k) | 0)); mn.gy[k] = { a: ev.j === 'salah' ? 12 : 7, t: 0 }; }
+  if ((ev.j === 'salah' || ev.j === 'meleset') && MN.TIPE.includes(ev.tipe) && mn.fx.length < 6) mn.fx.push({ x: num(ev.x), y: num(ev.y), vx: mnJepit(num(ev.vx), -600, 600), vy: mnJepit(num(ev.vy), -900, 900), vr: mnJepit(num(ev.vr), -14, 14), r: 0, tipe: ev.tipe });
+}
+function mnFxLangkah(dt) {
+  for (const f of mn.fx) { f.vy += 1100 * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.r += f.vr * dt; }
+  mn.fx = mn.fx.filter(f => f.y < MN.H + 80 && f.x > -90 && f.x < MN.W + 90);
+  for (let i = 0; i < 5; i++) { const w = mn.gy[i]; if (w) { w.t += dt; if (w.t > 1.3) mn.gy[i] = null; } }
+}
+const mnGoyang = i => { const w = mn.gy[i]; return w ? w.a * Math.sin(w.t * 32) * Math.exp(-w.t * 5) : 0; };
 function mnEfek(j) {
   if (j === 'benar') mnBunyi(784, 120); else if (j === 'salah') mnBunyi(160, 220, 'sawtooth'); else if (j === 'meleset') mnBunyi(110, 120, 'triangle'); else if (j === 'selesai') { mnBunyi(523, 160); setTimeout(() => mnBunyi(392, 260), 170); }
   else if (j.startsWith('b')) mnBunyi(MN.NADA[+j.slice(1)] || 300, 90);
@@ -3747,9 +3760,9 @@ function mnLangkah(dt) {
   let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { const e = Math.abs(b.x - mnPusat(g, i)); if (e < d) { d = e; k = i; } }
   if (d <= MN.SLOT * 0.42 && b.y >= mnRest(g.t[k])) {
     g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45;
-    if (MN.TIPE[k] === b.tipe) { g.t[k]++; g.skor++; mnPeristiwa('benar'); if (g.skor % 5 === 0) umumkan('Skor ' + g.skor); if (g.t[k] >= MN.NMAKS) { g.selesai = true; mnPeristiwa('selesai'); umumkan('Menara penuh. Skor akhir ' + g.skor + '.'); } }
-    else { g.t[k] = Math.max(0, g.t[k] - 1); g.salah++; mnPeristiwa('salah'); }
-  } else if (b.y + MN.R >= MN.LANTAI) { g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45; mnPeristiwa('meleset'); }
+    if (MN.TIPE[k] === b.tipe) { g.t[k]++; g.skor++; mnPeristiwa('benar', { k }); if (g.skor % 5 === 0) umumkan('Skor ' + g.skor); if (g.t[k] >= MN.NMAKS) { g.selesai = true; mnPeristiwa('selesai'); umumkan('Menara penuh. Skor akhir ' + g.skor + '.'); } }
+    else { const dx = b.x - mnPusat(g, k), sisi = dx >= 0 ? 1 : -1; g.salah++; mnPeristiwa('salah', { k, tipe: b.tipe, x: Math.round(b.x), y: Math.round(b.y), vx: Math.round(dx * 5 + sisi * (150 + Math.random() * 80)), vy: -Math.round(Math.max(300, b.vy * 0.6)), vr: Math.round((6 + Math.random() * 6) * sisi) }); }
+  } else if (b.y + MN.R >= MN.LANTAI) { g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45; const sisi = Math.random() < 0.5 ? -1 : 1; mnPeristiwa('meleset', { k: 0, tipe: b.tipe, x: Math.round(b.x), y: Math.round(Math.min(b.y, MN.LANTAI - MN.R)), vx: sisi * Math.round(100 + Math.random() * 100), vy: -Math.round(Math.max(220, b.vy * 0.35)), vr: sisi * Math.round(5 + Math.random() * 5) }); }
 }
 function mnLepas() { const g = mn.g; if (mn.mode !== 'solo' && mn.peran !== 'jatuh') return; if (g.b && !g.b.jatuh) { g.b.jatuh = true; g.b.vy = 60; mnBunyi(330, 60); } }
 function mnKirimIn(drop) { if (mn.mode !== 'tamu' || !mn.kanalG) return; const o = { drop: !!drop }; if (mn.peran === 'geser') o.ox = mn.lokal; else o.x = mn.lokal; try { mn.kanalG.send({ type: 'broadcast', event: 'in', payload: o }); } catch (e) {} }
@@ -3757,7 +3770,7 @@ function mnSnap() { const g = mn.g; return { ox: Math.round(g.ox), t: g.t, b: g.
 function mnTerimaSnap(s) {
   if (!mn || mn.mode !== 'tamu' || !s || !Array.isArray(s.t) || s.t.length !== 5) return;
   mn.snap = s; if (mn.status) { mn.status = ''; }
-  if (s.ev && s.ev.n !== mn.evTerakhir) { if (mn.evTerakhir !== undefined) mnEfek(String(s.ev.j || '')); mn.evTerakhir = s.ev.n; }
+  if (s.ev && s.ev.n !== mn.evTerakhir) { if (mn.evTerakhir !== undefined) { mnEfek(String(s.ev.j || '')); mnFxEv(s.ev); } mn.evTerakhir = s.ev.n; }
   if (s.selesai && !mn.v.selesai) umumkan('Menara penuh. Skor akhir ' + s.skor + '.');
 }
 function mnLicin(dt) {   // sisi tamu: haluskan kiriman 10 Hz dari host
@@ -3769,6 +3782,7 @@ function mnLicin(dt) {   // sisi tamu: haluskan kiriman 10 Hz dari host
 function mnLoop(ts) {
   if (!mn) return; const dt = Math.min(0.05, ((ts || 0) - (mn.last || ts || 0)) / 1000); mn.last = ts;
   if (mn.main) {
+    mnFxLangkah(dt);
     if (mn.mode === 'tamu') {
       if (mn.arah) { mn.lokal = mnJepit(mn.lokal + mn.arah * (mn.peran === 'geser' ? 560 : 420) * dt, mn.peran === 'geser' ? -MN.OXMAKS : MN.R, mn.peran === 'geser' ? MN.OXMAKS : MN.W - MN.R); }
       mnLicin(dt);
@@ -3843,7 +3857,7 @@ function bukaMenara() {
       h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup permainan', onclick: tutupMenara }, '✕'))),
     h('div', { class: 'mn-isi' }));
   const ov = h('div', { id: 'menara-ov' }, kotak); ov.addEventListener('mousedown', e => { if (e.target === ov) tutupMenara(); });
-  mn = { kotak, ruang: ruangSaya, suara: true, undangan: new Map(), mode: '', peran: '', arah: 0, main: false, g: null, v: null };
+  mn = { fx: [], gy: [null, null, null, null, null], kotak, ruang: ruangSaya, suara: true, undangan: new Map(), mode: '', peran: '', arah: 0, main: false, g: null, v: null };
   document.body.append(ov); pasangEsc(tutupMenara);
   mn.tekan = e => {
     const k = e.key, kiri = k === 'ArrowLeft' || k === 'a' || k === 'A', kanan = k === 'ArrowRight' || k === 'd' || k === 'D';

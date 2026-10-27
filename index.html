@@ -3717,7 +3717,6 @@ function mnGambar() {
     }
     mnJalur(c, b.tipe, b.x, b.y, R); c.fillStyle = mnPetak(MN.TIPE.indexOf(b.tipe)); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke();
   }
-  const ya = LANTAI + 56, xa = W / 2; c.strokeStyle = '#4fc3f7'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(xa - 66, ya); c.lineTo(xa + 66, ya); c.moveTo(xa - 58, ya - 8); c.lineTo(xa - 66, ya); c.lineTo(xa - 58, ya + 8); c.moveTo(xa + 58, ya - 8); c.lineTo(xa + 66, ya); c.lineTo(xa + 58, ya + 8); c.stroke();
   c.fillStyle = ink; c.font = '600 16px system-ui, Arial, sans-serif'; c.textAlign = 'left'; c.fillText('Skor ' + v.skor, 12, 30); c.textAlign = 'right'; c.fillText('Tinggi ' + Math.max(...v.t) + ' / ' + MN.NMAKS, W - 12, 30);
   if (v.selesai) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 70, W - 40, 140, 18) : c.rect(20, H / 2 - 70, W - 40, 140); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '700 28px system-ui, Arial, sans-serif'; c.fillText('Menara mencapai batas!', W / 2, H / 2 - 12); c.font = '600 20px system-ui, Arial, sans-serif'; c.fillText('Skor akhir ' + v.skor, W / 2, H / 2 + 28); }
   else if (mn.status) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 40, W - 40, 80, 18) : c.rect(20, H / 2 - 40, W - 40, 80); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '600 18px system-ui, Arial, sans-serif'; c.fillText(mn.status, W / 2, H / 2 + 6); }

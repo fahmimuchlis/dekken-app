@@ -1513,7 +1513,7 @@ function renderAlat() {
   }
   if (!el.querySelector('.ikon.gbr')) el.append(h('button', { type: 'button', class: 'ikon gbr', title: 'Kartu gambar: tempel gambar dari link', 'aria-label': 'Kartu gambar, tempel gambar dari link', onclick: bukaGambar }, '\u{1F5BC}\uFE0E'));
   if (!el.querySelector('.ikon.kvs') && sb) el.append(h('button', { type: 'button', class: 'ikon kvs', title: 'Kanvas coret bersama', 'aria-label': 'Kanvas coret bersama, fitur visual', onclick: bukaKanvas }, '\u{1F3A8}\uFE0E'));
-  if (!el.querySelector('.ikon.mnr') && sb) el.append(h('button', { type: 'button', class: 'ikon mnr', title: 'Gim-Dek (game di Ruang Privat)', 'aria-label': 'Gim-Dek, game visual di Ruang Privat', onclick: bukaMenara }, '\u{1F5FC}\uFE0E'));
+  if (!el.querySelector('.ikon.mnr') && sb) el.append(h('button', { type: 'button', class: 'ikon mnr', title: 'Gim-Dek (game di Ruang Privat)', 'aria-label': 'Gim-Dek, game visual di Ruang Privat', onclick: bukaMenara }, ikonSvg(IKON_GAME)));
   { const mb = el.querySelector('.ikon.mnr'); if (mb) mb.hidden = !adalahEscape(ruangSaya); }
   if (mn && !adalahEscape(ruangSaya)) tutupMenara();
   { const kb = el.querySelector('.ikon.kvs'); if (kb) kb.hidden = !kanvasDibuka(); }   // mahasiswa baru melihat ikon kanvas bila dosen membukanya

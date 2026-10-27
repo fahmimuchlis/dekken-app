@@ -730,8 +730,24 @@
   #umum { position:fixed; left:0; right:0; top:0; z-index:60; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; min-height:40px; box-sizing:border-box; padding:6px 16px; background:#ffee58; color:#000; font:600 14px/1.3 system-ui, Arial, sans-serif; border-bottom:2px solid #000; }
   #umum .btn { font:inherit; font-size:12px; padding:3px 10px; background:#000; color:#ffee58; border:1px solid #000; border-radius:6px; cursor:pointer; }
   html.ada-umum header { top:var(--umum-h,44px); } html.ada-umum body { padding-top:calc(var(--hh,72px) + var(--umum-h,44px)); }
-  html.foto #umum { visibility:hidden !important; }
+  html.foto #umum, html.foto #pencatat { visibility:hidden !important; }
   .pes-kv select { font:inherit; font-size:12px; padding:3px 6px; background:transparent; color:inherit; border:1px solid var(--gx); border-radius:4px; }
+  /* Pencatat Waktu */
+  #pencatat { position:fixed; right:12px; z-index:26; width:240px; box-sizing:border-box; background:#fff; color:#3c4043; border:1px solid var(--gx); border-radius:0; padding:10px 12px 12px; font:500 14px "Google Sans", Roboto, Arial, sans-serif; text-align:center; }
+  :root[data-tema="gelap"] #pencatat { background:#131314; color:#e3e3e3; }
+  @media (max-width:640px) { #pencatat { right:8px; } }
+  @media (max-width:420px) { #pencatat { width:min(240px, calc(100vw - 16px)); } }
+  html.mode-baca #pencatat .tm-ctl { display:none; }
+  .tm-jdl { text-align:left; font-size:16px; margin-bottom:6px; }
+  .tm-lbl { display:grid; grid-template-columns:1fr 1fr 1fr; font-size:13px; font-weight:400; margin-bottom:0; }
+  .tm-ang { font:500 44px/1.1 "Google Sans", Roboto, Arial, sans-serif; font-variant-numeric:tabular-nums; letter-spacing:0; white-space:nowrap; }
+  #pencatat.tm-kritis .tm-ang { color:#d93025; } #pencatat.tm-habis .tm-ang { color:#d93025; animation:tmkedip 1s steps(2) infinite; }
+  @media (prefers-reduced-motion:reduce) { #pencatat.tm-habis .tm-ang { animation:none; } }
+  @keyframes tmkedip { 50% { opacity:.35; } }
+  .tm-ctl { display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:center; margin-top:8px; }
+  .tm-ctl .btn { font:inherit; font-size:12px; padding:3px 10px; border:1px solid var(--gx); background:transparent; color:inherit; cursor:pointer; }
+  .tm-ctl input, .tm-ctl select { font:inherit; font-size:12px; padding:3px 6px; background:transparent; color:inherit; border:1px solid var(--gx); border-radius:0; max-width:100%; box-sizing:border-box; }
+  .tm-ctl input[type=text] { width:100%; } .tm-ctl input[type=number] { width:64px; }
 </style>
 </head>
 <body>
@@ -744,6 +760,7 @@
   <div class="kanan"><span id="sinkron" role="status" aria-label="Menyinkronkan data" title="Menyinkronkan data\u2026" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path class="cr" d="M3 6.5L9 1.5L15 6.5"/><path class="cr" d="M3 11L9 6L15 11"/><path class="cr" d="M3 15.5L9 10.5L15 15.5"/></svg></span><span id="ruang-wrap" hidden><button type="button" id="btn-ruang" class="btn garis" aria-haspopup="true" aria-expanded="false" title="Pilih ruang (breakout)">▣ Ruang</button><div id="menu-ruang" role="menu" hidden></div></span><button type="button" id="btn-baca" class="btn garis" aria-pressed="false" title="Mode Baca: daftar kartu berurutan yang ramah pembaca layar">☰ Baca</button><button type="button" id="btn-purge" class="btn garis" hidden aria-label="Purge: hapus bersih semua kartu di semua ruang (khusus dosen)" title="Purge: hapus bersih semua kartu (khusus dosen)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M13.2 12.0 L13.3 12.3 L13.4 12.8 L13.3 13.2 L13.0 13.6 L12.7 14.0 L12.1 14.3 L11.5 14.5 L10.9 14.4 L10.2 14.2 L9.5 13.8 L9.0 13.2 L8.6 12.4 L8.4 11.5 L8.5 10.6 L8.8 9.7 L9.3 8.8 L10.1 8.1 L11.1 7.5 L12.3 7.3 L13.5 7.3 L14.7 7.7 L15.9 8.4 L16.8 9.4 L17.5 10.6 L17.9 12.0 L17.8 13.5 L17.5 15.0 L16.7 16.4 L15.5 17.6 L14.1 18.4 L12.4 19.0 L10.7 19.0 L8.9 18.6 L7.2 17.8 L5.8 16.5 L4.7 14.9 L4.0 13.0 L3.8 11.0 L4.1 8.9 L5.0 6.9 L6.4 5.2 L8.2 3.8 L10.3 3.0 L12.6 2.6 L15.0 2.9 L17.2 3.8 L19.2 5.2 L20.9 7.1 L22.0 9.4 L22.5 12.0"/></svg></button><select id="urut" aria-label="Urutkan kartu" title="Urutkan kartu (hanya di tampilanmu)"><option value="suara">Urut: Suara</option><option value="terbaru">Urut: Terbaru</option><option value="nama">Urut: Nama A–Z</option></select><button type="button" id="btn-rapi" class="btn garis" aria-pressed="false" title="Ganti tampilan kartu: Acak (tempelan miring) atau Rapi (kolom rapi, semua balasan terbuka). Hanya di tampilanmu.">▦ Acak</button><span id="tema-wrap"><button type="button" id="btn-tema" class="btn garis" aria-haspopup="true" aria-expanded="false" aria-label="Pilih tampilan"></button><div id="menu-tema" role="menu" hidden></div></span><button type="button" id="btn-suara" class="btn garis" aria-pressed="true" aria-label="Suara kartu baru" title="Suara kartu baru: menyala">♪</button><button type="button" id="btn-foto" class="btn garis" aria-label="Salin foto semua kartu" title="Salin foto semua kartu ke clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button type="button" id="btn-help" class="btn garis" aria-label="Petunjuk" title="Petunjuk">?</button><button type="button" id="btn-lipat" class="btn garis" aria-expanded="true" aria-controls="login" aria-label="Sembunyikan menu" title="Sembunyikan menu">»</button><div id="login"></div></div>
 </header>
 <aside id="statistik"><button type="button" id="stat-judul" aria-expanded="true"><span>Statistik</span><span id="stat-panah">▾</span></button><div id="stat-isi"></div></aside>
+<aside id="pencatat" hidden></aside>
 <aside id="peserta" class="tutup" hidden><button type="button" id="pes-judul" aria-expanded="false" aria-controls="pes-isi"><span id="pes-teks">Akses</span><span id="pes-panah">▴</span></button><div id="pes-isi"></div></aside>
 <aside id="peta" hidden><button type="button" id="peta-judul" aria-expanded="true"><span>Peta kartu</span><span id="peta-panah">▾</span></button><div id="peta-isi"><div id="peta-kanvas" role="presentation" title="Klik atau seret untuk berpindah"><canvas></canvas><div id="peta-kotak"></div></div></div><div id="peta-zoom"><button type="button" id="pz-min" aria-label="Perkecil" title="Perkecil (Ctrl + gulir)">−</button><button type="button" id="pz-nilai" title="Kembali ke 100%">100%</button><button type="button" id="pz-plus" aria-label="Perbesar" title="Perbesar (Ctrl + gulir)">+</button></div></aside>
 <nav id="alat"><div id="bentuk-baris"></div></nav>
@@ -2171,7 +2188,7 @@ function kvKosongkanSemua() {   // dipanggil setelah Purge: beri tahu semua kanv
 /* ================== PANEL PESERTA (izin mencoret) ================== */
 function posPeserta() {   // kolom kanan menempel tanpa jarak, dari bawah ke atas: Peta kartu, Statistik, Akses, kanvas mini (tepi saling tumpang 1px)
   let dasar = innerWidth <= 640 ? 58 : 12;
-  ['peta', 'statistik', 'peserta', 'kanvas-mini'].forEach(id => {
+  ['peta', 'statistik', 'peserta', 'kanvas-mini', 'pencatat'].forEach(id => {
     const e = document.getElementById(id); if (!e) return;
     if (e.hidden || getComputedStyle(e).display === 'none') return;
     e.style.bottom = dasar + 'px'; dasar += Math.max(0, e.offsetHeight - 1);
@@ -3646,13 +3663,75 @@ function renderUmum() {
   const id = idUmum(u); if (id !== umumMuncul) { umumMuncul = id; umumkan(teks); }
 }
 setInterval(() => { if (umumSaya && waktuServer() >= umumSaya.t) umumJalankan(); renderUmum(); }, 500);
+/* Pencatat Waktu: jendela kecil di kolom kanan, diatur dosen, disebar lewat Presence ke semua ruang. */
+let tmSaya = null, tmDosen = null, tmKunci = '', tmHabisSudah = '', tmJud = 'Pencatat Waktu', tmMenit = 10, tmMode = 'mundur';
+try { const x = JSON.parse(localStorage.getItem('deck-tm') || 'null'); if (x && typeof x === 'object') tmSaya = tmValid(x); } catch (e) {}
+function tmValid(x) {
+  if (!x || !['mundur', 'maju'].includes(x.mode)) return null;
+  const n = v => Number.isFinite(+v) ? +v : 0;
+  return { jud: String(x.jud || '').slice(0, 30), mode: x.mode, dur: Math.max(0, Math.min(n(x.dur), 86400000)), mulai: n(x.mulai), jeda: x.jeda == null ? null : Math.max(0, n(x.jeda)) };
+}
+const tmAktif = () => dosenSaya ? tmSaya : tmDosen;
+const tmLalu = t => t.jeda != null ? t.jeda : Math.max(0, waktuServer() - t.mulai);
+const tmNilai = t => t.mode === 'mundur' ? Math.max(0, t.dur - tmLalu(t)) : tmLalu(t);
+function tmSimpan() { try { if (tmSaya) localStorage.setItem('deck-tm', JSON.stringify(tmSaya)); else localStorage.removeItem('deck-tm'); } catch (e) {} hadirSig = ''; hadirKirim(); tmKunci = ''; renderPencatat(); }
+function tmMulai() {
+  const jud = (document.getElementById('tm-jud') || {}).value, mnt = parseInt((document.getElementById('tm-mnt') || {}).value);
+  tmJud = jud || 'Pencatat Waktu'; if (Number.isFinite(mnt)) tmMenit = Math.max(1, Math.min(mnt, 1440));
+  tmSaya = { jud: tmJud.slice(0, 30), mode: tmMode, dur: tmMode === 'mundur' ? tmMenit * 60000 : 0, mulai: Math.round(waktuServer()), jeda: null };
+  tmHabisSudah = ''; tmSimpan();
+}
+function tmJeda() { const t = tmSaya; if (!t) return; if (t.jeda != null) { t.mulai = Math.round(waktuServer() - t.jeda); t.jeda = null; } else t.jeda = Math.round(tmLalu(t)); tmSimpan(); }
+function tmReset() { const t = tmSaya; if (!t) return; t.mulai = Math.round(waktuServer()); t.jeda = 0; tmHabisSudah = ''; tmSimpan(); }
+function tmHapus() { tmSaya = null; tmSimpan(); }
+function tmTeks(ms) { const d = Math.floor(ms / 1000), p = n => String(n).padStart(2, '0'); return [p(Math.floor(d / 3600)), p(Math.floor(d / 60) % 60), p(d % 60)]; }
+function renderPencatat() {
+  const el = document.getElementById('pencatat'); if (!el) return;
+  const t = tmAktif();
+  if (!t && !dosenSaya) { el.hidden = true; tmKunci = ''; posPeserta(); return; }
+  el.hidden = false;
+  const kunci = [t ? t.jud + t.mode + t.dur + t.mulai + (t.jeda != null) : '-', dosenSaya, t ? '' : tmMode].join('|');
+  if (kunci !== tmKunci) {
+    tmKunci = kunci;
+    const kids = [h('div', { class: 'tm-jdl' }, t ? (t.jud || 'Pencatat Waktu') : 'Pencatat Waktu')];
+    if (t) {
+      kids.push(h('div', { class: 'tm-lbl', 'aria-hidden': 'true' }, h('span', {}, 'Jam'), h('span', {}, 'Menit'), h('span', {}, 'Detik')),
+        h('div', { class: 'tm-ang', id: 'tm-ang', role: 'timer' }, h('span', {}, '00'), ':', h('span', {}, '00'), ':', h('span', {}, '00')));
+    }
+    if (dosenSaya) {
+      const bar = h('div', { class: 'tm-ctl' });
+      if (t) bar.append(h('button', { type: 'button', class: 'btn', onclick: tmJeda }, t.jeda != null ? 'Lanjut' : 'Jeda'), h('button', { type: 'button', class: 'btn', onclick: tmReset }, 'Reset'), h('button', { type: 'button', class: 'btn', onclick: tmHapus }, 'Hapus'));
+      else {
+        const jud = h('input', { id: 'tm-jud', type: 'text', maxlength: 30, value: tmJud, 'aria-label': 'Judul pencatat waktu', autocomplete: 'off' });
+        const mnt = h('input', { id: 'tm-mnt', type: 'number', min: 1, max: 1440, value: String(tmMenit), 'aria-label': 'Durasi dalam menit' });
+        const sel = h('select', { 'aria-label': 'Arah hitung' }, h('option', { value: 'mundur', selected: tmMode === 'mundur' ? '' : null }, 'Hitung mundur'), h('option', { value: 'maju', selected: tmMode === 'maju' ? '' : null }, 'Hitung maju'));
+        sel.addEventListener('change', () => { tmJud = jud.value || tmJud; tmMenit = parseInt(mnt.value) || tmMenit; tmMode = sel.value; tmKunci = ''; renderPencatat(); });
+        bar.append(jud, sel, tmMode === 'mundur' ? h('label', {}, mnt, ' menit') : '', h('button', { type: 'button', class: 'btn', onclick: tmMulai }, 'Mulai'));
+      }
+      kids.push(bar);
+    }
+    el.replaceChildren(...kids);
+    posPeserta();
+  }
+  if (t) {
+    const sisa = tmNilai(t), ang = document.getElementById('tm-ang');
+    if (ang) {
+      const [j, m, d] = tmTeks(sisa), sp = ang.querySelectorAll('span');
+      if (sp[0] && (sp[0].textContent !== j || sp[1].textContent !== m || sp[2].textContent !== d)) { sp[0].textContent = j; sp[1].textContent = m; sp[2].textContent = d; ang.setAttribute('aria-label', parseInt(j) + ' jam ' + parseInt(m) + ' menit ' + parseInt(d) + ' detik'); }
+      const habis = t.mode === 'mundur' && sisa <= 0, kritis = t.mode === 'mundur' && sisa > 0 && sisa <= 60000;
+      el.classList.toggle('tm-habis', habis); el.classList.toggle('tm-kritis', kritis);
+      if (habis && tmHabisSudah !== t.jud + t.mulai) { tmHabisSudah = t.jud + t.mulai; umumkan('Waktu habis.'); }
+    }
+  } else el.classList.remove('tm-habis', 'tm-kritis');
+}
+setInterval(renderPencatat, 250);
 const kanvasDibuka = r => !!dosenSaya || kvBukaDosen.has(kunciRuangKv(r === undefined ? ruangSaya : r));
 const semuaBolehCoret = r => kvSemuaDosen.has(kunciRuangKv(r === undefined ? ruangSaya : r));
 const bolehCoret = () => { if (dosenSaya) return true; if (!kanvasDibuka()) return false; if (semuaBolehCoret()) return true; const u = uidSaya(); return !!u && izinDosen.has(u); };
 function hadirKirim() {
   if (!kanalHadir) return;
   const info = { id: idKlien, nama: tokenHidup() ? (getUser() || '') : '', ruang: ruangSaya, uid: tokenHidup() ? uidSaya() : '', dos: !!dosenSaya };
-  if (dosenSaya) { info.izin = [...izinKanvas].slice(0, 400); info.kvb = [...kvBukaSet].slice(0, 60); info.kvs = [...kvSemuaSet].slice(0, 60); if (umumSaya) info.um = umumSaya; }
+  if (dosenSaya) { info.izin = [...izinKanvas].slice(0, 400); info.kvb = [...kvBukaSet].slice(0, 60); info.kvs = [...kvSemuaSet].slice(0, 60); if (umumSaya) info.um = umumSaya; if (dosenSaya && tmSaya) info.tm = tmSaya; }
   const sig = JSON.stringify(info); if (sig === hadirSig) return; hadirSig = sig;
   try { kanalHadir.track(info); } catch (e) {}
 }
@@ -3670,7 +3749,8 @@ function hadirMulai() {
       orang.push({ id: String(x.id || ''), nama: String(x.nama || '').slice(0, 20), ruang: String(x.ruang || ''), uid: /^[0-9a-f]{12}$/.test(String(x.uid || '')) ? String(x.uid) : '', dos: !!x.dos }); });
     izinDosen = uni; orangOnline = orang; kvBukaDosen = kb; kvSemuaDosen = ks;
     umumDosen = []; Object.values(st).forEach(arr => { const x = arr[arr.length - 1] || {}, u = x.um; if (x.dos && u && ['kanvas', 'semua', 'ruang'].includes(u.j) && typeof u.r === 'string' && /^(\*|[A-Za-z0-9_]{1,24})$/.test(u.r) && Number.isFinite(+u.t)) umumDosen.push({ j: u.j, r: u.r, t: +u.t }); });
-    renderUmum();
+    tmDosen = null; Object.values(st).forEach(arr => { const x = arr[arr.length - 1] || {}; if (!tmDosen && x.dos && x.tm) tmDosen = tmValid(x.tm); });
+    renderUmum(); renderPencatat();
     const sigKv = [...kb].sort().join(',') + '|' + [...ks].sort().join(','); if (sigKv !== kvSigDosen) { kvSigDosen = sigKv; renderAlat(); }
     hadirData = { aktif, nama, per }; renderStat(); renderRuang(); renderPeserta();
     if (kv && !dosenSaya && !kanvasDibuka(kv.ruang)) { tutupKanvas(); toast('Dosen menutup kanvas di ruang ini.'); umumkan('Kanvas ditutup oleh dosen.'); return; }

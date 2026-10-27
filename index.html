@@ -593,7 +593,7 @@
   .gambar-gagal { font-size:12px; }
   #baca .gambar-kotak img { max-height:260px; }
   #baca .gambar-muat { font-size:16px; min-height:40px; border:2px solid var(--h); }
-  .ikon.gbr, .ikon.kvs { position:relative; color:var(--p,#fff); font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; }
+  .ikon.gbr, .ikon.kvs, .ikon.mnr { position:relative; color:var(--p,#fff); font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; }
   #gambar-ov, #lihat-ov { position:fixed; inset:0; z-index:99985; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:16px; }
   .gb-kotak { background:#fff; color:#000; border:2px solid #111; width:100%; max-width:480px; max-height:94vh; overflow:auto; box-shadow:6px 6px 0 rgba(0,0,0,.35); }
   .gb-kotak.lihat { max-width:min(900px,96vw); }
@@ -749,6 +749,16 @@
   .tm-ctl .btn { font:inherit; font-size:12px; padding:3px 10px; border:1px solid var(--gx); background:transparent; color:inherit; cursor:pointer; }
   .tm-ctl input, .tm-ctl select { font:inherit; font-size:12px; padding:3px 6px; background:transparent; color:inherit; border:1px solid var(--gx); border-radius:0; max-width:100%; box-sizing:border-box; }
   .tm-ctl input[type=text] { width:100%; } .tm-ctl input[type=number] { width:64px; }
+  /* Menara Bentuk */
+  #menara-ov { position:fixed; inset:0; z-index:99985; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:12px; }
+  .mn-kotak { max-width:min(520px,98vw); }
+  .mn-isi { padding:10px 12px 12px; display:flex; flex-direction:column; gap:8px; align-items:stretch; }
+  .mn-cv { display:block; width:min(100%, calc((92vh - 150px) * 0.75)); aspect-ratio:3 / 4; margin:0 auto; border:1px solid #111; background:#fff; cursor:crosshair; }
+  .mn-info { font-size:13px; color:#333; text-align:center; } .mn-ctl { display:flex; gap:8px; justify-content:center; }
+  .mn-p { margin:0; font-size:14px; } .mn-jdl { font-weight:600; margin-top:6px; }
+  .mn-isi .btn, .mn-kotak .gb-bar .btn { font:inherit; font-size:14px; padding:8px 12px; border:1px solid #111; background:#fff; color:#000; cursor:pointer; }
+  .mn-kotak .gb-bar .btn { padding:2px 8px; }
+  html.foto #menara-ov { visibility:hidden; }
 </style>
 </head>
 <body>
@@ -1500,6 +1510,9 @@ function renderAlat() {
   }
   if (!el.querySelector('.ikon.gbr')) el.append(h('button', { type: 'button', class: 'ikon gbr', title: 'Kartu gambar: tempel gambar dari link', 'aria-label': 'Kartu gambar, tempel gambar dari link', onclick: bukaGambar }, '\u{1F5BC}\uFE0E'));
   if (!el.querySelector('.ikon.kvs') && sb) el.append(h('button', { type: 'button', class: 'ikon kvs', title: 'Kanvas coret bersama', 'aria-label': 'Kanvas coret bersama, fitur visual', onclick: bukaKanvas }, '\u{1F3A8}\uFE0E'));
+  if (!el.querySelector('.ikon.mnr') && sb) el.append(h('button', { type: 'button', class: 'ikon mnr', title: 'Menara Bentuk (game di Ruang Privat)', 'aria-label': 'Menara Bentuk, game visual di Ruang Privat', onclick: bukaMenara }, '\u{1F5FC}\uFE0E'));
+  { const mb = el.querySelector('.ikon.mnr'); if (mb) mb.hidden = !adalahEscape(ruangSaya); }
+  if (mn && !adalahEscape(ruangSaya)) tutupMenara();
   { const kb = el.querySelector('.ikon.kvs'); if (kb) kb.hidden = !kanvasDibuka(); }   // mahasiswa baru melihat ikon kanvas bila dosen membukanya
   // tombol polling (merah) hanya untuk dosen
   const tp = el.querySelector('.ikon.poll');
@@ -3664,6 +3677,209 @@ function renderUmum() {
   const id = idUmum(u); if (id !== umumMuncul) { umumMuncul = id; umumkan(teks); }
 }
 setInterval(() => { if (umumSaya && waktuServer() >= umumSaya.t) umumJalankan(); renderUmum(); }, 500);
+/* ===== Menara Bentuk: game menumpuk bentuk di Ruang Privat. Solo, atau berpasangan (satu menjatuhkan, satu menggeser tatakan). ===== */
+const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, SLOT: 100, R: 28, OXMAKS: 110, NMAKS: 36, TIPE: ['kotak', 'lingkaran', 'segienam', 'segilima', 'tumpul'], NAMA: ['persegi', 'lingkaran', 'segi enam', 'segi lima', 'persegi tumpul'], NADA: [262, 330, 392, 494, 587] };
+let mn = null;
+const mnJepit = (v, a, b) => Math.max(a, Math.min(b, v));
+function mnJalur(c, tipe, x, y, r) {
+  c.beginPath();
+  if (tipe === 'lingkaran') c.arc(x, y, r, 0, Math.PI * 2);
+  else if (tipe === 'kotak') c.rect(x - r, y - r, 2 * r, 2 * r);
+  else if (tipe === 'tumpul') { if (c.roundRect) c.roundRect(x - r, y - r, 2 * r, 2 * r, r * 0.4); else c.rect(x - r, y - r, 2 * r, 2 * r); }
+  else { const n = tipe === 'segienam' ? 6 : 5, o = tipe === 'segienam' ? 0 : -Math.PI / 2; for (let i = 0; i < n; i++) { const a = o + i * 2 * Math.PI / n, px = x + r * 1.06 * Math.cos(a), py = y + r * 1.06 * Math.sin(a); if (i) c.lineTo(px, py); else c.moveTo(px, py); } }
+  c.closePath();
+}
+const mnPusat = (v, i) => MN.W / 2 + v.ox + (i - 2) * MN.SLOT;
+const mnRest = n => MN.LANTAI - MN.R - (n + 1) * MN.TEBAL;
+function mnSasaran(v, x) { let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { const e = Math.abs(x - mnPusat(v, i)); if (e < d) { d = e; k = i; } } return d <= MN.SLOT * 0.42 ? mnRest(v.t[k]) : MN.LANTAI - 4; }
+function mnGambar() {
+  const c = mn.c, v = mn.v, { W, H, LANTAI, R, TEBAL } = MN;
+  c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+  c.strokeStyle = '#d93025'; c.lineWidth = 1; c.setLineDash([6, 6]); c.beginPath(); c.moveTo(0, 6); c.lineTo(W, 6); c.stroke(); c.setLineDash([]);
+  c.fillStyle = '#000'; c.fillRect(W / 2 + v.ox - 262, LANTAI, 524, 40);
+  for (let i = 0; i < 5; i++) {
+    const cx = mnPusat(v, i);
+    for (let j = 0; j <= v.t[i]; j++) { mnJalur(c, MN.TIPE[i], cx, LANTAI - R - j * TEBAL, R); c.fillStyle = '#000'; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 1.2; c.stroke(); }
+  }
+  c.strokeStyle = '#1a5f7a'; c.fillStyle = '#1a5f7a'; c.lineWidth = 2.5;
+  if (v.b) {
+    const b = v.b, y2 = mnSasaran(v, b.x) - R - 10;
+    if (y2 > b.y + R + 24) { c.setLineDash([18, 12]); c.beginPath(); c.moveTo(b.x, b.y + R + 8); c.lineTo(b.x, y2); c.stroke(); c.setLineDash([]); c.beginPath(); c.moveTo(b.x - 8, y2 - 8); c.lineTo(b.x, y2); c.lineTo(b.x + 8, y2 - 8); c.stroke(); }
+    mnJalur(c, b.tipe, b.x, b.y, R); c.fillStyle = '#000'; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 1.2; c.stroke();
+  }
+  const ya = LANTAI + 66, xa = W / 2; c.strokeStyle = '#1a5f7a'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(xa - 66, ya); c.lineTo(xa + 66, ya); c.moveTo(xa - 58, ya - 8); c.lineTo(xa - 66, ya); c.lineTo(xa - 58, ya + 8); c.moveTo(xa + 58, ya - 8); c.lineTo(xa + 66, ya); c.lineTo(xa + 58, ya + 8); c.stroke();
+  c.fillStyle = '#000'; c.font = '600 16px system-ui, Arial, sans-serif'; c.textAlign = 'left'; c.fillText('Skor ' + v.skor, 12, 30); c.textAlign = 'right'; c.fillText('Tinggi ' + Math.max(...v.t) + ' / ' + MN.NMAKS, W - 12, 30);
+  if (v.selesai) { c.fillStyle = 'rgba(255,255,255,.88)'; c.fillRect(0, H / 2 - 70, W, 140); c.fillStyle = '#000'; c.textAlign = 'center'; c.font = '700 28px system-ui, Arial, sans-serif'; c.fillText('Menara mencapai batas!', W / 2, H / 2 - 12); c.font = '600 20px system-ui, Arial, sans-serif'; c.fillText('Skor akhir ' + v.skor, W / 2, H / 2 + 28); }
+  else if (mn.status) { c.fillStyle = 'rgba(255,255,255,.9)'; c.fillRect(0, H / 2 - 40, W, 80); c.fillStyle = '#000'; c.textAlign = 'center'; c.font = '600 18px system-ui, Arial, sans-serif'; c.fillText(mn.status, W / 2, H / 2 + 6); }
+}
+function mnBunyi(f, ms, jenis) {
+  if (!mn || !mn.suara) return;
+  try { const A = window.AudioContext || window.webkitAudioContext; if (!A) return; mn.ac = mn.ac || new A(); const o = mn.ac.createOscillator(), g = mn.ac.createGain(); o.type = jenis || 'sine'; o.frequency.value = f; g.gain.value = 0.06; o.connect(g); g.connect(mn.ac.destination); o.start(); o.stop(mn.ac.currentTime + ms / 1000); } catch (e) {}
+}
+function mnBaru() { return { ox: 0, t: [0, 0, 0, 0, 0], b: null, skor: 0, salah: 0, selesai: false, tunggu: 0.5, xTerakhir: MN.W / 2, ev: { n: 0, j: '' } }; }
+function mnPeristiwa(j) { const g = mn.g; g.ev = { n: g.ev.n + 1, j }; mnEfek(j); }
+function mnEfek(j) {
+  if (j === 'benar') mnBunyi(784, 120); else if (j === 'salah') mnBunyi(160, 220, 'sawtooth'); else if (j === 'meleset') mnBunyi(110, 120, 'triangle'); else if (j === 'selesai') { mnBunyi(523, 160); setTimeout(() => mnBunyi(392, 260), 170); }
+  else if (j.startsWith('b')) mnBunyi(MN.NADA[+j.slice(1)] || 300, 90);
+}
+function mnLangkah(dt) {
+  const g = mn.g; if (g.selesai || mn.jeda) return;
+  const sp = 330 * dt, peran = mn.peran;   // peran saya: 'geser' | 'jatuh' | 'solo'
+  const sayaGeser = mn.mode === 'solo' || peran === 'geser', sayaJatuh = mn.mode !== 'solo' && peran === 'jatuh';
+  if (sayaGeser && mn.arah) g.ox = mnJepit(g.ox + mn.arah * sp, -MN.OXMAKS, MN.OXMAKS);
+  if (sayaJatuh && g.b && !g.b.jatuh && mn.arah) g.b.x = mnJepit(g.b.x + mn.arah * sp, MN.R, MN.W - MN.R);
+  if (!g.b) {
+    g.tunggu -= dt;
+    if (g.tunggu <= 0) {
+      const i = Math.floor(Math.random() * 5), tipe = MN.TIPE[i];
+      if (mn.mode === 'solo') { const x0 = Math.random() < 0.75 ? MN.W / 2 + (i - 2) * MN.SLOT + (Math.random() * 2 - 1) * MN.OXMAKS * 0.85 : MN.R + Math.random() * (MN.W - 2 * MN.R); g.b = { x: mnJepit(x0, MN.R, MN.W - MN.R), y: -MN.R, vy: 90, tipe, jatuh: true }; }
+      else g.b = { x: g.xTerakhir, y: 62, vy: 0, tipe, jatuh: false };
+      mnPeristiwa('b' + i);
+    }
+    return;
+  }
+  const b = g.b; if (!b.jatuh) { g.xTerakhir = b.x; return; }
+  const lvl = Math.min(2.2, 1 + g.skor * 0.025); b.vy += 520 * lvl * dt; b.y += b.vy * dt;
+  let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { const e = Math.abs(b.x - mnPusat(g, i)); if (e < d) { d = e; k = i; } }
+  if (d <= MN.SLOT * 0.42 && b.y >= mnRest(g.t[k])) {
+    g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45;
+    if (MN.TIPE[k] === b.tipe) { g.t[k]++; g.skor++; mnPeristiwa('benar'); if (g.skor % 5 === 0) umumkan('Skor ' + g.skor); if (g.t[k] >= MN.NMAKS) { g.selesai = true; mnPeristiwa('selesai'); umumkan('Menara penuh. Skor akhir ' + g.skor + '.'); } }
+    else { g.t[k] = Math.max(0, g.t[k] - 1); g.salah++; mnPeristiwa('salah'); }
+  } else if (b.y + MN.R >= MN.LANTAI) { g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45; mnPeristiwa('meleset'); }
+}
+function mnLepas() { const g = mn.g; if (mn.mode !== 'solo' && mn.peran !== 'jatuh') return; if (g.b && !g.b.jatuh) { g.b.jatuh = true; g.b.vy = 60; mnBunyi(330, 60); } }
+function mnKirimIn(drop) { if (mn.mode !== 'tamu' || !mn.kanalG) return; const o = { drop: !!drop }; if (mn.peran === 'geser') o.ox = mn.lokal; else o.x = mn.lokal; try { mn.kanalG.send({ type: 'broadcast', event: 'in', payload: o }); } catch (e) {} }
+function mnSnap() { const g = mn.g; return { ox: Math.round(g.ox), t: g.t, b: g.b ? { x: Math.round(g.b.x), y: Math.round(g.b.y), tipe: g.b.tipe, jatuh: g.b.jatuh } : null, skor: g.skor, selesai: g.selesai, ev: g.ev, jeda: !!mn.jeda }; }
+function mnTerimaSnap(s) {
+  if (!mn || mn.mode !== 'tamu' || !s || !Array.isArray(s.t) || s.t.length !== 5) return;
+  mn.snap = s; if (mn.status) { mn.status = ''; }
+  if (s.ev && s.ev.n !== mn.evTerakhir) { if (mn.evTerakhir !== undefined) mnEfek(String(s.ev.j || '')); mn.evTerakhir = s.ev.n; }
+  if (s.selesai && !mn.v.selesai) umumkan('Menara penuh. Skor akhir ' + s.skor + '.');
+}
+function mnLicin(dt) {   // sisi tamu: haluskan kiriman 10 Hz dari host
+  const s = mn.snap, v = mn.v; if (!s) return; const f = 1 - Math.exp(-dt * 18);
+  v.t = s.t.slice(); v.skor = s.skor; v.selesai = !!s.selesai;
+  v.ox = mn.peran === 'geser' ? mn.lokal : v.ox + (s.ox - v.ox) * f;
+  if (s.b) { if (!v.b || v.b.tipe !== s.b.tipe || (!s.b.jatuh && v.b.jatuh)) v.b = { x: s.b.x, y: s.b.y, tipe: s.b.tipe, jatuh: s.b.jatuh }; v.b.jatuh = s.b.jatuh; v.b.x = mn.peran === 'jatuh' && !s.b.jatuh ? mn.lokal : v.b.x + (s.b.x - v.b.x) * f; v.b.y += (s.b.y - v.b.y) * f; } else v.b = null;
+}
+function mnLoop(ts) {
+  if (!mn) return; const dt = Math.min(0.05, ((ts || 0) - (mn.last || ts || 0)) / 1000); mn.last = ts;
+  if (mn.main) {
+    if (mn.mode === 'tamu') {
+      if (mn.arah) { mn.lokal = mnJepit(mn.lokal + mn.arah * 330 * dt, mn.peran === 'geser' ? -MN.OXMAKS : MN.R, mn.peran === 'geser' ? MN.OXMAKS : MN.W - MN.R); }
+      mnLicin(dt);
+    } else { mnLangkah(dt); mn.v = mn.g; }
+    mnGambar();
+  }
+  mn.raf = requestAnimationFrame(mnLoop);
+}
+function mnUkur() {
+  if (!mn || !mn.cv) return; const r = mn.cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  mn.cv.width = Math.max(1, Math.round(r.width * d)); mn.cv.height = Math.max(1, Math.round(r.height * d)); mn.c.setTransform(mn.cv.width / MN.W, 0, 0, mn.cv.height / MN.H, 0, 0);
+}
+function mnMulaiMain() {   // papan permainan menggantikan lobi
+  mn.main = true; mn.g = mnBaru(); mn.v = mn.mode === 'tamu' ? { ox: 0, t: [0, 0, 0, 0, 0], b: null, skor: 0, selesai: false } : mn.g; mn.snap = null; mn.lokal = mn.peran === 'geser' ? 0 : MN.W / 2; mn.evTerakhir = undefined; mn.status = mn.mode === 'tamu' ? 'Menyambung ke pasangan…' : '';
+  const cv = h('canvas', { class: 'mn-cv', role: 'img', 'aria-label': 'Permainan Menara Bentuk. Fitur visual.', tabindex: '0' });
+  cv.style.touchAction = 'none'; mn.cv = cv; mn.c = cv.getContext('2d');
+  const px = e => { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * MN.W; };
+  cv.addEventListener('pointermove', e => {
+    const x = px(e);
+    if (mn.mode === 'solo' || mn.peran === 'geser') { const o = mnJepit(x - MN.W / 2, -MN.OXMAKS, MN.OXMAKS); if (mn.mode === 'tamu') mn.lokal = o; else mn.g.ox = o; }
+    else { const xx = mnJepit(x, MN.R, MN.W - MN.R); if (mn.mode === 'tamu') mn.lokal = xx; else if (mn.g.b && !mn.g.b.jatuh) mn.g.b.x = xx; }
+  });
+  cv.addEventListener('pointerdown', e => { if (mn.mode !== 'solo' && mn.peran === 'jatuh') { if (mn.mode === 'tamu') mnKirimIn(true); else mnLepas(); } });
+  const info = h('div', { class: 'mn-info', 'aria-live': 'off' });
+  const ulang = h('button', { type: 'button', class: 'btn', onclick: () => { if (mn.mode === 'tamu') { toast('Hanya pembuat permainan yang bisa mengulang.'); return; } mn.g = mnBaru(); mn.v = mn.g; mn.jeda = false; mnKirimSnap(true); } }, 'Main lagi');
+  const tutup = h('button', { type: 'button', class: 'btn', onclick: tutupMenara }, 'Selesai');
+  const petunjuk = mn.mode === 'solo' ? 'Geser tatakan dengan panah ← → (atau gerakkan mouse/jari) supaya bentuk yang jatuh mendarat di tumpukan yang bentuknya sama.' : mn.peran === 'jatuh' ? 'Kamu menjatuhkan: panah ← → memilih posisi, Spasi atau klik untuk menjatuhkan.' : 'Kamu menggeser tatakan: panah ← → atau gerakkan mouse/jari.';
+  info.textContent = petunjuk;
+  mn.kotak.querySelector('.mn-isi').replaceChildren(cv, info, h('div', { class: 'mn-ctl' }, ulang, tutup));
+  mnUkur(); umumkan('Permainan Menara Bentuk dimulai. ' + petunjuk + ' Ini fitur visual.'); cv.focus({ preventScroll: true });
+}
+function mnKirimSnap(paksa) { if (mn && mn.mode === 'host' && mn.kanalG && mn.tersambungG) { try { mn.kanalG.send({ type: 'broadcast', event: 'st', payload: mnSnap() }); } catch (e) {} } }
+function mnSambungG(id) {   // kanal sendiri per pasangan (hemat: tidak ikut siaran ke ruang)
+  const k = sb.channel('menara-' + id, { config: { broadcast: { self: false } } });
+  k.on('broadcast', { event: 'st' }, m => mnTerimaSnap(m.payload));
+  k.on('broadcast', { event: 'in' }, m => {
+    if (!mn || mn.mode !== 'host' || !mn.g) return; const p = m.payload || {}, g = mn.g;
+    if (mn.peran === 'jatuh') { if (Number.isFinite(+p.ox)) g.ox = mnJepit(+p.ox, -MN.OXMAKS, MN.OXMAKS); } else { if (Number.isFinite(+p.x) && g.b && !g.b.jatuh) g.b.x = mnJepit(+p.x, MN.R, MN.W - MN.R); if (p.drop) mnLepas(); }
+  });
+  k.on('broadcast', { event: 'keluar' }, () => { if (!mn) return; mn.jeda = true; mn.status = 'Pasangan keluar. Tutup lalu buka lagi untuk bermain.'; if (mn.mode === 'tamu') mn.g && (mn.g.selesai = true); umumkan('Pasangan keluar dari permainan.'); });
+  k.subscribe(st => { if (!mn) return; mn.tersambungG = st === 'SUBSCRIBED'; if (mn.tersambungG && mn.mode === 'host') mn.status = ''; });
+  mn.kanalG = k;
+}
+function mnLobi() {
+  const isi = mn.kotak.querySelector('.mn-isi'); if (!isi || mn.main) return;
+  const kids = [h('p', { class: 'mn-p' }, 'Tumpuk bentuk yang sama sampai menara menyentuh batas layar. Bisa sendirian, atau berpasangan: satu orang menjatuhkan bentuk, satu lagi menggeser tatakan.'),
+    h('button', { type: 'button', class: 'btn mn-b', onclick: () => { mn.mode = 'solo'; mn.peran = 'solo'; lobiTutup(); mnMulaiMain(); } }, 'Main sendiri')];
+  if (mn.menunggu) {
+    kids.push(h('p', { class: 'mn-p', role: 'status' }, 'Menunggu pasangan bergabung sebagai ' + (mn.peran === 'jatuh' ? 'penggeser' : 'penjatuh') + '… Kamu jadi ' + (mn.peran === 'jatuh' ? 'penjatuh' : 'penggeser') + '.'), h('button', { type: 'button', class: 'btn mn-b', onclick: () => { mn.menunggu = false; lobiTutup(); mn.mode = ''; mnLobi(); } }, 'Batalkan ajakan'));
+  } else {
+    kids.push(h('div', { class: 'mn-jdl' }, 'Berpasangan: buat ajakan'),
+      h('button', { type: 'button', class: 'btn mn-b', onclick: () => ajak('jatuh') }, 'Aku yang menjatuhkan'), h('button', { type: 'button', class: 'btn mn-b', onclick: () => ajak('geser') }, 'Aku yang menggeser tatakan'));
+    const ud = [...mn.undangan.entries()];
+    kids.push(h('div', { class: 'mn-jdl' }, 'Ajakan di ruang ini'));
+    if (!ud.length) kids.push(h('p', { class: 'mn-p' }, 'Belum ada ajakan.'));
+    ud.forEach(([id, u]) => kids.push(h('button', { type: 'button', class: 'btn mn-b', onclick: () => gabung(id, u) }, 'Gabung dengan ' + u.nama + ' sebagai ' + (u.peran === 'jatuh' ? 'penggeser' : 'penjatuh'))));
+  }
+  isi.replaceChildren(...kids);
+}
+function lobiKirim(ev, p) { try { if (mn && mn.lobi) mn.lobi.send({ type: 'broadcast', event: ev, payload: p }); } catch (e) {} }
+function lobiTutup() { if (mn && mn.menunggu !== undefined) lobiKirim('tutup', { id: idKlien }); }
+function ajak(peran) { mn.mode = 'host'; mn.peran = peran; mn.menunggu = true; lobiKirim('buka', { id: idKlien, nama: namaSaya(), peran }); mnLobi(); umumkan('Ajakan dibuat. Menunggu pasangan.'); }
+function gabung(id, u) { mn.mode = 'tamu'; mn.peran = u.peran === 'jatuh' ? 'geser' : 'jatuh'; mn.hostId = id; mn.menungguTerima = true; lobiKirim('gabung', { id: idKlien, host: id, nama: namaSaya() }); toast('Meminta bergabung…'); setTimeout(() => { if (mn && mn.menungguTerima) { mn.menungguTerima = false; mn.mode = ''; toast('Ajakan sudah tidak tersedia.'); mn.undangan.delete(id); mnLobi(); } }, 5000); }
+const namaSaya = () => String(getUser() || (sesi && sesi.user && sesi.user.user_metadata && sesi.user.user_metadata.name) || 'Teman').slice(0, 20);
+function bukaMenara() {
+  if (document.getElementById('menara-ov')) return;
+  if (!sb || !butuhLogin()) return;
+  if (!adalahEscape(ruangSaya)) { toast('Menara Bentuk hanya ada di Ruang Privat.'); return; }
+  const kotak = h('div', { class: 'gb-kotak mn-kotak', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'mn-judul' },
+    h('div', { class: 'gb-bar' }, h('h2', { id: 'mn-judul' }, '\u{1F5FC} Menara Bentuk'), h('span', { class: 'kv-bt' },
+      h('button', { type: 'button', class: 'btn', id: 'mn-suara', 'aria-pressed': 'true', onclick: e => { mn.suara = !mn.suara; e.currentTarget.setAttribute('aria-pressed', String(mn.suara)); e.currentTarget.textContent = mn.suara ? '\u{1F50A}' : '\u{1F507}'; } }, '\u{1F50A}'),
+      h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup permainan', onclick: tutupMenara }, '✕'))),
+    h('div', { class: 'mn-isi' }));
+  const ov = h('div', { id: 'menara-ov' }, kotak); ov.addEventListener('mousedown', e => { if (e.target === ov) tutupMenara(); });
+  mn = { kotak, ruang: ruangSaya, suara: true, undangan: new Map(), mode: '', peran: '', arah: 0, main: false, g: null, v: null };
+  document.body.append(ov); pasangEsc(tutupMenara);
+  mn.tekan = e => {
+    const k = e.key, kiri = k === 'ArrowLeft' || k === 'a' || k === 'A', kanan = k === 'ArrowRight' || k === 'd' || k === 'D';
+    if (!(kiri || kanan || k === ' ' || k === 'ArrowDown')) return;
+    if (!mn.main) return; e.preventDefault(); e.stopPropagation();
+    if (e.type === 'keyup') { if (kiri && mn.arah < 0) mn.arah = 0; if (kanan && mn.arah > 0) mn.arah = 0; return; }
+    if (kiri) mn.arah = -1; else if (kanan) mn.arah = 1; else if (!e.repeat) { if (mn.mode === 'tamu') mnKirimIn(true); else mnLepas(); }
+  };
+  document.addEventListener('keydown', mn.tekan, true); document.addEventListener('keyup', mn.tekan, true);
+  mn.onUkur = () => mnUkur(); window.addEventListener('resize', mn.onUkur);
+  const lb = sb.channel('menara-lobi-' + kunciRuangKv(ruangSaya), { config: { broadcast: { self: false } } });
+  lb.on('broadcast', { event: 'cari' }, () => { if (mn && mn.menunggu && mn.mode === 'host') lobiKirim('buka', { id: idKlien, nama: namaSaya(), peran: mn.peran }); });
+  lb.on('broadcast', { event: 'buka' }, m => { const p = m.payload || {}; if (!mn || !p.id || p.id === idKlien || !['jatuh', 'geser'].includes(p.peran)) return; mn.undangan.set(String(p.id), { nama: String(p.nama || 'Teman').slice(0, 20), peran: p.peran }); mnLobi(); });
+  lb.on('broadcast', { event: 'tutup' }, m => { const p = m.payload || {}; if (!mn || !p.id) return; mn.undangan.delete(String(p.id)); mnLobi(); });
+  lb.on('broadcast', { event: 'gabung' }, m => {
+    const p = m.payload || {}; if (!mn || mn.mode !== 'host' || !mn.menunggu || p.host !== idKlien || !p.id) return;
+    mn.menunggu = false; lobiKirim('tutup', { id: idKlien }); lobiKirim('terima', { host: idKlien, tamu: String(p.id) });
+    mnSambungG(idKlien); mnMulaiMain(); mn.status = 'Menunggu pasangan tersambung…'; setTimeout(() => { if (mn && mn.status && mn.mode === 'host') mn.status = ''; }, 2500);
+    mn.siaran = setInterval(() => mnKirimSnap(), 100);
+  });
+  lb.on('broadcast', { event: 'terima' }, m => {
+    const p = m.payload || {}; if (!mn || mn.mode !== 'tamu' || !mn.menungguTerima || p.host !== mn.hostId || p.tamu !== idKlien) return;
+    mn.menungguTerima = false; mnSambungG(mn.hostId); mnMulaiMain(); mn.kirimIn = setInterval(() => mnKirimIn(false), 90);
+  });
+  lb.subscribe(st => { if (st === 'SUBSCRIBED' && mn) lobiKirim('cari', { id: idKlien }); });
+  mn.lobi = lb; mnLobi(); mn.raf = requestAnimationFrame(mnLoop);
+  const bt = document.querySelector('#bentuk-baris .ikon.mnr'); if (bt) bt.classList.add('pilih');
+  umumkan('Jendela permainan Menara Bentuk. Ini fitur visual. Escape untuk menutup.');
+}
+function tutupMenara() {
+  if (!mn) return; const m = mn; mn = null;
+  try { cancelAnimationFrame(m.raf); clearInterval(m.siaran); clearInterval(m.kirimIn); } catch (e) {}
+  try { if (m.kanalG) { m.kanalG.send({ type: 'broadcast', event: 'keluar', payload: {} }); } } catch (e) {}
+  try { if (m.menunggu) m.lobi.send({ type: 'broadcast', event: 'tutup', payload: { id: idKlien } }); } catch (e) {}
+  setTimeout(() => { try { sb.removeChannel(m.lobi); if (m.kanalG) sb.removeChannel(m.kanalG); } catch (e) {} }, 200);
+  document.removeEventListener('keydown', m.tekan, true); document.removeEventListener('keyup', m.tekan, true); window.removeEventListener('resize', m.onUkur);
+  try { if (m.ac) m.ac.close(); } catch (e) {}
+  lepasEsc(); const o = document.getElementById('menara-ov'); if (o) o.remove();
+  const b = document.querySelector('#bentuk-baris .ikon.mnr'); if (b) { b.classList.remove('pilih'); b.focus(); }
+}
 /* Pencatat Waktu: jendela kecil di kolom kanan, diatur dosen, disebar lewat Presence ke semua ruang. */
 let tmSaya = null, tmDosen = null, tmKunci = '', tmHabisSudah = '', tmJud = 'Pencatat Waktu', tmMenit = 10, tmMode = 'mundur';
 try { const x = JSON.parse(localStorage.getItem('deck-tm') || 'null'); if (x && typeof x === 'object') tmSaya = tmValid(x); } catch (e) {}

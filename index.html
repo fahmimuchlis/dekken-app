@@ -2222,7 +2222,6 @@ function renderPeserta() {
       })(),
       h('button', { type: 'button', class: 'btn', disabled: umumSaya ? '' : null, onclick: () => umumMulai('kanvas', umumMenit) }, 'Umumkan: tutup kanvas ruang ini'),
       h('button', { type: 'button', class: 'btn', disabled: umumSaya ? '' : null, onclick: () => umumMulai('semua', umumMenit) }, 'Umumkan: tutup kanvas semua ruang'),
-      h('button', { type: 'button', class: 'btn', disabled: (umumSaya || !ruangSaya) ? '' : null, title: ruangSaya ? '' : 'Papan utama tidak bisa ditutup', onclick: () => umumMulai('ruang', umumMenit) }, 'Umumkan: tutup ruang ini'),
       umumSaya ? h('button', { type: 'button', class: 'btn', onclick: umumBatal }, 'Batalkan pengumuman') : null);
   }
   isi.replaceChildren(...rows, ...(kontrolKv ? [kontrolKv] : []), ...(massal ? [massal] : []));
@@ -2344,8 +2343,8 @@ function renderRuang() {
     const iB = h('input', { type: 'number', value: String(escBatas), min: '0', max: '30', 'aria-label': 'Jatah Ruang Privat' });
     const bBt = h('button', { type: 'button', onclick: () => aturEscapeAksi(iB.value, bBt) }, 'Atur');
     kids.push(h('div', { class: 'jdl' }, 'Dosen: jatah Ruang Privat (0 = tutup), terpakai ' + ruangData.filter(x => x.jenis === 'escape').length), h('div', { class: 'buat esc-batas' }, iB, bBt));
-    if (ruangSaya) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === ruangSaya) tutupRuangAksi(ruangSaya); else { ruangKonfirm = ruangSaya; renderRuang(); } } }, ruangKonfirm === ruangSaya ? 'Yakin? Klik lagi untuk menutup' : (adalahEscape(ruangSaya) ? 'Tutup dan hapus Ruang Privat ini' : 'Tutup ruang ini (gabung ke utama)')));
-    if (ruangData.length) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === '*') tutupRuangAksi(null); else { ruangKonfirm = '*'; renderRuang(); } } }, ruangKonfirm === '*' ? 'Yakin? Klik lagi untuk menutup semua' : 'Tutup semua ruang'));
+    if (ruangSaya) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === ruangSaya) umumTutupRuangMulai(ruangSaya); else { ruangKonfirm = ruangSaya; renderRuang(); } } }, ruangKonfirm === ruangSaya ? 'Yakin? Klik lagi (ditutup 30 detik kemudian)' : (adalahEscape(ruangSaya) ? 'Tutup dan hapus Ruang Privat ini' : 'Tutup ruang ini (gabung ke utama)')));
+    if (ruangData.length) kids.push(h('button', { type: 'button', class: 'bahaya', onclick: () => { if (ruangKonfirm === '*') umumTutupRuangMulai(null); else { ruangKonfirm = '*'; renderRuang(); } } }, ruangKonfirm === '*' ? 'Yakin? Klik lagi (semua ruang ditutup 30 detik kemudian)' : 'Tutup semua ruang'));
   }
   menu.replaceChildren(...kids);
 }
@@ -3609,22 +3608,20 @@ let umumMenit = 3, umumSaya = null, umumDosen = [], umumMuncul = '';   // umumSa
 const idUmum = u => u.j + '|' + u.r + '|' + u.t;
 function umumMulai(j, menit) {
   if (!dosenSaya) return;
-  if (j === 'ruang' && !ruangSaya) { toast('Papan utama tidak bisa ditutup.'); return; }
-  umumSaya = { j, r: j === 'semua' ? '*' : kunciRuangKv(ruangSaya), t: Math.round(waktuServer()) + menit * 60000 };
+  umumSaya = { j, r: (j === 'semua' || j === 'ruangsemua') ? '*' : kunciRuangKv(ruangSaya), t: Math.round(waktuServer()) + menit * 60000 };
   hadirSig = ''; hadirKirim(); renderUmum(); renderPeserta();
+}
+function umumTutupRuangMulai(id) {   // dosen menekan konfirmasi hapus ruang: umumkan dulu, ruang ditutup 30 detik kemudian
+  ruangKonfirm = '';
+  umumSaya = { j: 'ruang', r: id ? id : '*', t: Math.round(waktuServer()) + 30000 };
+  hadirSig = ''; hadirKirim(); renderUmum(); renderPeserta(); renderRuang();
 }
 function umumBatal() { umumSaya = null; hadirSig = ''; hadirKirim(); renderUmum(); renderPeserta(); }
 async function umumJalankan() {   // dosen: waktu habis -> kanvas ditutup otomatis; ruang menunggu konfirmasi dosen
   const u = umumSaya; if (!u || !dosenSaya) return;
-  if (u.j === 'ruang') return;
+  if (u.j === 'ruang') { umumSaya = null; hadirSig = ''; hadirKirim(); renderUmum(); await tutupRuangAksi(u.r === '*' ? null : u.r); return; }
   if (u.r === '*') { kvBukaSet.clear(); kvSemuaSet.clear(); } else { kvBukaSet.delete(u.r); kvSemuaSet.delete(u.r); }
   simpanSetKv(); umumSaya = null; hadirSig = ''; hadirKirim(); renderAlat(); renderPeserta(); renderUmum(); toast('Kanvas ditutup.');
-}
-async function umumTutupRuang() {
-  const u = umumSaya; if (!u || u.j !== 'ruang') return;
-  const id = u.r === 'u' ? '' : u.r; if (!id) { umumBatal(); return; }
-  umumSaya = null; hadirSig = ''; hadirKirim(); renderUmum();
-  await tutupRuangAksi(id);
 }
 function umumUntukSaya() {   // pengumuman yang berlaku di ruangku sekarang
   const rk = kunciRuangKv(ruangSaya), daftar = dosenSaya ? (umumSaya ? [umumSaya] : []) : umumDosen;
@@ -3639,17 +3636,16 @@ function renderUmum() {
   const ruangTxt = u.r === '*' ? 'semua ruang' : (adalahEscape(ruangSaya) ? 'Ruang Privat ini' : 'ruang ini');
   const mm = Math.max(0, Math.floor(sisa / 60000)), ss = Math.max(0, Math.floor(sisa / 1000) % 60), jam = String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
   let teks;
-  if (u.j === 'ruang') teks = sisa > 0 ? 'Dosen akan menutup ' + ruangTxt + ' dalam ' + jam + '. ' + (adalahEscape(ruangSaya) ? 'Kartu akan dihapus.' : 'Kartu akan digabung ke papan utama.') + ' Salin atau foto yang perlu disimpan.' : 'Dosen sedang menutup ' + ruangTxt + '…';
+  if (u.j === 'ruang') teks = sisa > 0 ? 'Dosen akan menutup ' + ruangTxt + ' dalam ' + jam + '. ' + (adalahEscape(ruangSaya) ? 'Kartu akan dihapus.' : 'Kartu akan digabung ke papan utama.') + ' Salin atau foto yang perlu disimpan.' : 'Menutup ' + ruangTxt + '…';
   else teks = sisa > 0 ? 'Dosen akan menutup kanvas di ' + ruangTxt + ' dalam ' + jam + '. Selesaikan coretanmu dan simpan PNG bila perlu.' : 'Kanvas ditutup.';
   const kids = [h('span', { class: 'umum-t' }, '\u{1F4E2} ' + teks)];
   if (dosenSaya) {
-    if (u.j === 'ruang' && sisa <= 0) kids.push(h('button', { type: 'button', class: 'btn', onclick: umumTutupRuang }, 'Tutup ruang sekarang'));
     kids.push(h('button', { type: 'button', class: 'btn', onclick: umumBatal }, 'Batalkan'));
   }
   el.replaceChildren(...kids);
   const id = idUmum(u); if (id !== umumMuncul) { umumMuncul = id; umumkan(teks); }
 }
-setInterval(() => { if (umumSaya && waktuServer() >= umumSaya.t && umumSaya.j !== 'ruang') umumJalankan(); renderUmum(); }, 500);
+setInterval(() => { if (umumSaya && waktuServer() >= umumSaya.t) umumJalankan(); renderUmum(); }, 500);
 const kanvasDibuka = r => !!dosenSaya || kvBukaDosen.has(kunciRuangKv(r === undefined ? ruangSaya : r));
 const semuaBolehCoret = r => kvSemuaDosen.has(kunciRuangKv(r === undefined ? ruangSaya : r));
 const bolehCoret = () => { if (dosenSaya) return true; if (!kanvasDibuka()) return false; if (semuaBolehCoret()) return true; const u = uidSaya(); return !!u && izinDosen.has(u); };

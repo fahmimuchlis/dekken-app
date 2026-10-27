@@ -738,11 +738,12 @@
   @media (max-width:640px) { #pencatat { right:8px; } }
   @media (max-width:420px) { #pencatat { width:min(240px, calc(100vw - 16px)); } }
   html.mode-baca #pencatat .tm-ctl { display:none; }
-  .tm-jdl { text-align:left; font-size:16px; margin-bottom:6px; }
+  .tm-jdl { text-align:left; font:500 14px/1.2 "Google Sans", Roboto, Arial, sans-serif; margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .tm-lbl { display:grid; grid-template-columns:1fr 1fr 1fr; font-size:13px; font-weight:400; margin-bottom:0; }
   .tm-ang { font:500 44px/1.1 "Google Sans", Roboto, Arial, sans-serif; font-variant-numeric:tabular-nums; letter-spacing:0; white-space:nowrap; }
   #pencatat.tm-kritis .tm-ang { color:#d93025; } #pencatat.tm-habis .tm-ang { color:#d93025; animation:tmkedip 1s steps(2) infinite; }
-  @media (prefers-reduced-motion:reduce) { #pencatat.tm-habis .tm-ang { animation:none; } }
+  #pencatat.tm-jeda .tm-ang { animation:tmkedip 1s steps(2) infinite; }
+  @media (prefers-reduced-motion:reduce) { #pencatat.tm-habis .tm-ang, #pencatat.tm-jeda .tm-ang { animation:none; opacity:.55; } }
   @keyframes tmkedip { 50% { opacity:.35; } }
   .tm-ctl { display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:center; margin-top:8px; }
   .tm-ctl .btn { font:inherit; font-size:12px; padding:3px 10px; border:1px solid var(--gx); background:transparent; color:inherit; cursor:pointer; }
@@ -3695,8 +3696,7 @@ function renderPencatat() {
     tmKunci = kunci;
     const kids = [h('div', { class: 'tm-jdl' }, t ? (t.jud || 'Pencatat Waktu') : 'Pencatat Waktu')];
     if (t) {
-      kids.push(h('div', { class: 'tm-lbl', 'aria-hidden': 'true' }, h('span', {}, 'Jam'), h('span', {}, 'Menit'), h('span', {}, 'Detik')),
-        h('div', { class: 'tm-ang', id: 'tm-ang', role: 'timer' }, h('span', {}, '00'), ':', h('span', {}, '00'), ':', h('span', {}, '00')));
+      kids.push(h('div', { class: 'tm-ang', id: 'tm-ang', role: 'timer' }, h('span', {}, '00'), ':', h('span', {}, '00'), ':', h('span', {}, '00')));
     }
     if (dosenSaya) {
       const bar = h('div', { class: 'tm-ctl' });
@@ -3719,10 +3719,10 @@ function renderPencatat() {
       const [j, m, d] = tmTeks(sisa), sp = ang.querySelectorAll('span');
       if (sp[0] && (sp[0].textContent !== j || sp[1].textContent !== m || sp[2].textContent !== d)) { sp[0].textContent = j; sp[1].textContent = m; sp[2].textContent = d; ang.setAttribute('aria-label', parseInt(j) + ' jam ' + parseInt(m) + ' menit ' + parseInt(d) + ' detik'); }
       const habis = t.mode === 'mundur' && sisa <= 0, kritis = t.mode === 'mundur' && sisa > 0 && sisa <= 60000;
-      el.classList.toggle('tm-habis', habis); el.classList.toggle('tm-kritis', kritis);
+      el.classList.toggle('tm-jeda', t.jeda != null); el.classList.toggle('tm-habis', habis); el.classList.toggle('tm-kritis', kritis);
       if (habis && tmHabisSudah !== t.jud + t.mulai) { tmHabisSudah = t.jud + t.mulai; umumkan('Waktu habis.'); }
     }
-  } else el.classList.remove('tm-habis', 'tm-kritis');
+  } else el.classList.remove('tm-habis', 'tm-kritis', 'tm-jeda');
 }
 setInterval(renderPencatat, 250);
 const kanvasDibuka = r => !!dosenSaya || kvBukaDosen.has(kunciRuangKv(r === undefined ? ruangSaya : r));

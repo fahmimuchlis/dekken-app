@@ -758,7 +758,7 @@
   .mn-cv { display:block; width:100%; aspect-ratio:3 / 4; margin:0 auto; border:1px solid var(--gx); border-radius:18px; background:transparent; cursor:crosshair; touch-action:none; }
   .mn-info, .mn-p { font:500 13px/1.35 "Google Sans", Roboto, Arial, sans-serif; color:var(--h); text-align:center; margin:0; padding:7px 12px; border:1px solid var(--gx); border-radius:10px; background:transparent; }
   .mn-p { text-align:left; } .mn-ctl { display:flex; gap:8px; justify-content:center; } .mn-jdl { font-weight:600; margin-top:4px; color:var(--h); text-shadow:0 0 6px var(--p); }
-  .mn-isi .btn, .mn-kotak .gb-bar .btn { font:500 14px "Google Sans", Roboto, Arial, sans-serif; padding:7px 14px; border:1px solid var(--gx); border-radius:10px; background:transparent; color:var(--h); cursor:pointer; }
+  .mn-isi .btn, .mn-kotak .gb-bar .btn { font:500 14px "Google Sans", Roboto, Arial, sans-serif; padding:7px 14px; border:1px solid var(--gx); border-radius:10px; background:var(--p); color:var(--h); cursor:pointer; }
   .mn-kotak .gb-bar .btn { padding:3px 10px; } .mn-kotak .btn:hover { background:var(--h); color:var(--p); }
   .mn-kotak .btn:focus-visible, .mn-cv:focus-visible { outline:2px solid #4fc3f7; outline-offset:2px; }
   html.foto #menara-ov { visibility:hidden; }
@@ -3696,7 +3696,6 @@ function mnSasaran(v, x) { let k = -1, d = 1e9; for (let i = 0; i < 5; i++) { co
 function mnGambar() {
   const c = mn.c, v = mn.v, { W, H, LANTAI, R, TEBAL } = MN;
   c.clearRect(0, 0, W, H); if (!mn.ink || (mn.f = (mn.f || 0) + 1) % 40 === 0) mn.ink = getComputedStyle(document.body).color || '#fff'; const ink = mn.ink;
-  c.strokeStyle = '#d93025'; c.lineWidth = 1; c.setLineDash([6, 6]); c.beginPath(); c.moveTo(0, 6); c.lineTo(W, 6); c.stroke(); c.setLineDash([]);
   for (let i = 0; i < 5; i++) {
     const cx = mnPusat(v, i);
     for (let j = 0; j <= v.t[i]; j++) { mnJalur(c, MN.TIPE[i], cx, LANTAI - R - j * TEBAL, R); c.fillStyle = mnPetak(i); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); }
@@ -3709,8 +3708,7 @@ function mnGambar() {
       const pts = bx ? [[b.x, y1], [b.x, y2]] : P; let tot = 0; const L = [];
       for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); L.push(l); tot += l; }
       c.fillStyle = ink; let jar = 0, ke = 0, sisa = 0;
-      for (let p = 0; p < L.length; p++) { const [x0, y0] = pts[p], [x1, y1b] = pts[p + 1]; for (let d = sisa; d < L[p]; d += 13) { const u = d / (L[p] || 1), x = x0 + (x1 - x0) * u, y = y0 + (y1b - y0) * u, f = Math.min(1, (jar + d) / Math.max(1, tot)); c.beginPath(); c.arc(x, y, 2 + f * 2.6, 0, Math.PI * 2); c.fill(); ke = d; } jar += L[p]; sisa = (ke + 13) - L[p]; if (sisa < 0) sisa = 0; }
-      c.strokeStyle = ink; c.lineWidth = 2.5; c.beginPath(); c.arc(tx, y2 + 6, 8, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.arc(tx, y2 + 6, 3.5, 0, Math.PI * 2); c.fill();
+      for (let p = 0; p < L.length; p++) { const [x0, y0] = pts[p], [x1, y1b] = pts[p + 1]; for (let d = sisa; d < L[p]; d += 13) { const u = d / (L[p] || 1), x = x0 + (x1 - x0) * u, y = y0 + (y1b - y0) * u, f = Math.min(1, (jar + d) / Math.max(1, tot)); c.beginPath(); c.arc(x, y, 3, 0, Math.PI * 2); c.fill(); ke = d; } jar += L[p]; sisa = (ke + 13) - L[p]; if (sisa < 0) sisa = 0; }
     }
     mnJalur(c, b.tipe, b.x, b.y, R); c.fillStyle = mnPetak(MN.TIPE.indexOf(b.tipe)); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke();
   }

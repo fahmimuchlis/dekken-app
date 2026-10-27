@@ -3711,7 +3711,7 @@ function alatOtomatis() {
   setInterval(() => { if (tahan()) { terakhir = Date.now(); nav.classList.remove('sembunyi'); } else if (Date.now() - terakhir > JEDA && nav.querySelector('.ikon')) nav.classList.add('sembunyi'); }, 400);
 }
 /* ===== Menara Bentuk: game menumpuk bentuk di Ruang Privat. Solo, atau berpasangan (satu menjatuhkan, satu menggeser tatakan). ===== */
-const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, R: 28, HIT: 56, PERIODE: 480,
+const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, R: 28, HIT: 48, SLOT: 96, PERIODE: 480,
   NMAKS: 36, TIPE: ['kotak', 'lingkaran', 'segienam', 'segilima', 'tumpul'], NAMA: ['persegi', 'lingkaran', 'segi enam', 'segi lima', 'persegi tumpul'], NADA: [262, 330, 392, 494, 587], WARNA: ['#FEE440', '#F15BB5', '#00F5D4', '#00BBF9', '#9B5DE5'] };   // palet kartu: kuning, pink, hijau, biru, ungu
 const mnPetak = i => MN.WARNA[i];
 const mnWarnaTipe = t => MN.WARNA[Math.max(0, MN.TIPE.indexOf(t))];
@@ -3729,6 +3729,7 @@ const mnPutar = o => ((o % MN.PERIODE) + MN.PERIODE) % MN.PERIODE;   // cincin 6
 const mnPusat = (v, s) => mnPutar(s.u + v.ox);   // s = tumpukan {u,k,c}; u = posisi pada cincin tatakan
 const mnDekatS = (v, s, x) => { const c = mnPusat(v, s); let t = c; for (const o of [-MN.PERIODE, MN.PERIODE]) if (Math.abs(x - (c + o)) < Math.abs(x - t)) t = c + o; return t; };
 const mnCari = (g, x) => { let b = -1, bd = MN.HIT; g.st.forEach((s, i) => { const d = Math.abs(((x - mnPusat(g, s)) % MN.PERIODE + MN.PERIODE * 1.5) % MN.PERIODE - MN.PERIODE / 2); if (d < bd) { bd = d; b = i; } }); return b; };   // tumpukan tepat di bawah posisi x (-1 = lantai kosong)
+const mnSlotX = (v, x) => { const c = MN.SLOT / 2 + Math.round((x - v.ox - MN.SLOT / 2) / MN.SLOT) * MN.SLOT + v.ox; return c; };   // pusat petak terdekat dari x
 const mnRest = n => MN.LANTAI - MN.R - (n + 1) * MN.TEBAL;
 function mnGambar() {
   const c = mn.c, v = mn.v, { W, H, LANTAI, R, TEBAL } = MN;
@@ -3740,7 +3741,7 @@ function mnGambar() {
       for (let j = 0; j < s.c; j++) { mnJalur(c, MN.TIPE[s.k], bx + gw * (j / nn), LANTAI - R - j * TEBAL, R); c.fillStyle = mnPetak(s.k); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); } }
   });
   if (v.b) {
-    const b = v.b, ki = mnCari(v, b.x), n = ki >= 0 ? v.st[ki].c : 0, tx = ki >= 0 ? mnDekatS(v, v.st[ki], b.x) : b.x, ty = mnRest(n - 1), y1 = b.y + R + 8, y2 = ty - R - 6;
+    const b = v.b, ki = mnCari(v, b.x), n = ki >= 0 ? v.st[ki].c : 0, tx = ki >= 0 ? mnDekatS(v, v.st[ki], b.x) : (v.st.length < 4 ? mnSlotX(v, b.x) : b.x), ty = mnRest(n - 1), y1 = b.y + R + 8, y2 = ty - R - 6;
     if (!b.jatuh) { c.save(); c.globalAlpha = 0.45; c.setLineDash([5, 4]); c.strokeStyle = ink; c.lineWidth = 1.6; mnJalur(c, b.tipe, tx, ty, R); c.stroke(); c.restore(); }   // bayangan tempat mendarat
     if (y2 > y1 + 14) {   // konektor tipis bertitik lurus ke bawah, sampai tempat mendarat
       c.fillStyle = ink; for (let y = y1; y < y2; y += 13) { c.beginPath(); c.arc(b.x, y, 3, 0, Math.PI * 2); c.fill(); }
@@ -3748,7 +3749,7 @@ function mnGambar() {
     mnJalur(c, b.tipe, b.x, b.y, R); c.fillStyle = mnWarnaTipe(b.tipe); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke();
   }
   for (const f of mn.fx) { c.save(); c.translate(f.x, f.y); c.rotate(f.r); mnJalur(c, f.tipe, 0, 0, R); c.fillStyle = mnWarnaTipe(f.tipe); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); c.restore(); }
-  c.fillStyle = ink; c.font = '600 16px system-ui, Arial, sans-serif'; c.textAlign = 'left'; c.fillText('Skor ' + v.skor, 12, 30); c.textAlign = 'right'; c.fillText('Tinggi ' + Math.max(0, ...v.st.map(q => q.c)) + ' / ' + MN.NMAKS, W - 12, 30);
+  c.fillStyle = ink; c.font = '600 16px system-ui, Arial, sans-serif'; c.textAlign = 'left'; c.fillText('Skor ' + v.skor, 12, 30); if (v.st.length < 4) { c.textAlign = 'center'; c.fillText('Pasang ' + v.st.length + ' / 4', W / 2, 30); } c.textAlign = 'right'; c.fillText('Tinggi ' + Math.max(0, ...v.st.map(q => q.c)) + ' / ' + MN.NMAKS, W - 12, 30);
   if (v.selesai) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 70, W - 40, 140, 18) : c.rect(20, H / 2 - 70, W - 40, 140); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '700 28px system-ui, Arial, sans-serif'; c.fillText('Menara mencapai batas!', W / 2, H / 2 - 12); c.font = '600 20px system-ui, Arial, sans-serif'; c.fillText('Skor akhir ' + v.skor, W / 2, H / 2 + 28); }
   else if (mn.mode === 'tamu' ? (mn.snap && mn.snap.jeda) : (mn.pause || mn.jedaTamu)) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 40, W - 40, 80, 18) : c.rect(20, H / 2 - 40, W - 40, 80); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '700 22px system-ui, Arial, sans-serif'; c.fillText('Dijeda', W / 2, H / 2 + 8); }
   else if (mn.status) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 40, W - 40, 80, 18) : c.rect(20, H / 2 - 40, W - 40, 80); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '600 18px system-ui, Arial, sans-serif'; c.fillText(mn.status, W / 2, H / 2 + 6); }
@@ -3763,7 +3764,11 @@ const mnKurangGerak = () => { try { return window.matchMedia('(prefers-reduced-m
 function mnFxEv(ev) {   // efek fisik hanya visual; tiap perangkat menghitungnya sendiri dari peristiwa yang sama
   if (!mn || !ev || mnKurangGerak()) return; const num = v => Number.isFinite(+v) ? +v : 0;
   if (ev.j === 'benar' || ev.j === 'salah') { const k = Math.max(0, Math.min(15, num(ev.k) | 0)); mn.gy[k] = { a: ev.j === 'salah' ? 12 : 7, t: 0 }; }
-  if (ev.j === 'salah' && MN.TIPE.includes(ev.tipe) && mn.fx.length < 16) mn.fx.push({ x: num(ev.x), y: num(ev.y), vx: mnJepit(num(ev.vx), -600, 600), vy: mnJepit(num(ev.vy), -900, 900), vr: mnJepit(num(ev.vr), -14, 14), r: 0, tipe: ev.tipe });
+  if (ev.j === 'hancur') {
+    const k = Math.max(0, Math.min(15, num(ev.k) | 0)), n = Math.min(10, Math.max(2, num(ev.n) | 0)), cx = num(ev.x), top = num(ev.y), tp = MN.TIPE[num(ev.t) | 0] || 'kotak'; mn.gy[k] = { a: 22, t: 0 };
+    for (let i = 0; i < n && mn.fx.length < 16; i++) mn.fx.push({ x: cx + (Math.random() - 0.5) * 30, y: top + i * MN.TEBAL, vx: (Math.random() - 0.5) * 520, vy: -(160 + Math.random() * 380), vr: (Math.random() - 0.5) * 20, r: Math.random() * 6, tipe: tp });
+  }
+  if ((ev.j === 'salah' || ev.j === 'meleset') && MN.TIPE.includes(ev.tipe) && mn.fx.length < 16) mn.fx.push({ x: num(ev.x), y: num(ev.y), vx: mnJepit(num(ev.vx), -600, 600), vy: mnJepit(num(ev.vy), -900, 900), vr: mnJepit(num(ev.vr), -14, 14), r: 0, tipe: ev.tipe });
 }
 function mnFxLangkah(dt) {
   for (const f of mn.fx) { f.vy += 1100 * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.r += f.vr * dt; }
@@ -3772,27 +3777,38 @@ function mnFxLangkah(dt) {
 }
 const mnGoyang = i => { const w = mn.gy[i]; return w ? w.a * Math.sin(w.t * 32) * Math.exp(-w.t * 5) : 0; };
 function mnEfek(j) {
-  if (j === 'benar') mnBunyi(784, 120); else if (j === 'salah') mnBunyi(160, 220, 'sawtooth'); else if (j === 'selesai') { mnBunyi(523, 160); setTimeout(() => mnBunyi(392, 260), 170); }
+  if (j === 'hancur') { mnBunyi(90, 320, 'sawtooth'); setTimeout(() => mnBunyi(60, 260, 'square'), 120); return; }
+  if (j === 'benar') mnBunyi(784, 120); else if (j === 'salah') mnBunyi(160, 220, 'sawtooth'); else if (j === 'meleset') mnBunyi(110, 120, 'triangle'); else if (j === 'selesai') { mnBunyi(523, 160); setTimeout(() => mnBunyi(392, 260), 170); }
   else if (j.startsWith('b')) mnBunyi(MN.NADA[+j.slice(1)] || 300, 90);
 }
-function mnLangkah(dt) {
+function mnLangkah(dt) {   // fase menyusun: pasang 4 jenis ke 4 dari 5 petak; sesudahnya bentuk apa pun bisa datang
   const g = mn.g; if (g.selesai || mn.jeda || mn.pause || mn.jedaTamu) return;
-  const sayaGeser = mn.mode !== 'solo' && mn.peran === 'geser', sayaJatuh = mn.mode === 'solo' || mn.peran === 'jatuh';
+  const solo = mn.mode === 'solo', sayaGeser = solo || mn.peran === 'geser', sayaJatuh = !solo && mn.peran === 'jatuh', susun = g.st.length < 4, dek = g.st.map(q => q.k);
   if (sayaGeser && mn.arah) g.ox = mnPutar(g.ox + mn.arah * 560 * dt);
   if (sayaJatuh && mn.arah && g.b && !g.b.jatuh) g.b.x = mnJepit(g.b.x + mn.arah * 420 * dt, MN.R, MN.W - MN.R);
   if (!g.b) {
     g.tunggu -= dt;
-    if (g.tunggu <= 0) { const i = Math.floor(Math.random() * 5); g.b = { x: g.xTerakhir, y: 62, vy: 0, tipe: MN.TIPE[i], jatuh: false }; mnPeristiwa('b' + i); }
+    if (g.tunggu <= 0) {
+      const pil = [0, 1, 2, 3, 4].filter(i => !susun || !dek.includes(i)), i = pil[Math.floor(Math.random() * pil.length)], tipe = MN.TIPE[i];
+      if (solo && !susun) g.b = { x: MN.R + Math.random() * (MN.W - 2 * MN.R), y: -MN.R, vy: 90, tipe, jatuh: true };
+      else g.b = { x: g.xTerakhir, y: 62, vy: 0, tipe, jatuh: false };
+      mnPeristiwa('b' + i);
+    }
     return;
   }
   const b = g.b; if (!b.jatuh) { g.xTerakhir = b.x; return; }
   const lvl = Math.min(2.0, 1 + g.skor * 0.02); b.vy += 520 * lvl * dt; b.y += b.vy * dt;
   const k = mnCari(g, b.x), n = k >= 0 ? g.st[k].c : 0;
   if (b.y >= mnRest(n - 1)) {
-    g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45; const ti = MN.TIPE.indexOf(b.tipe);
-    if (k < 0) { g.st.push({ u: Math.round(mnPutar(b.x - g.ox)), k: ti, c: 1 }); g.skor++; mnPeristiwa('benar', { k: g.st.length - 1 }); }
+    g.xTerakhir = b.x; g.b = null; g.tunggu = 0.45; const ti = MN.TIPE.indexOf(b.tipe), sisiAcak = () => Math.random() < 0.5 ? -1 : 1;
+    const pental = () => { const dx = k >= 0 ? b.x - mnDekatS(g, g.st[k], b.x) : 0, sisi = dx === 0 ? sisiAcak() : Math.sign(dx); g.salah++; mnPeristiwa(k >= 0 ? 'salah' : 'meleset', { k: Math.max(0, k), tipe: b.tipe, x: Math.round(b.x), y: Math.round(Math.min(b.y, MN.LANTAI - MN.R)), vx: Math.round(dx * 5 + sisi * (150 + Math.random() * 80)), vy: -Math.round(Math.max(300, b.vy * 0.6)), vr: Math.round((6 + Math.random() * 6) * sisi) }); };
+    if (k < 0) {
+      if (susun) { const u = mnPutar(MN.SLOT / 2 + Math.round((b.x - g.ox - MN.SLOT / 2) / MN.SLOT) * MN.SLOT); g.st.push({ u, k: ti, c: 1 }); g.skor++; mnPeristiwa('benar', { k: g.st.length - 1 }); if (g.st.length === 4) umumkan('Empat tumpukan terpasang, satu petak kosong. Sekarang bentuk yang tidak ada di dek akan menghancurkan tumpukan.'); }
+      else pental();   // petak kosong: bentuk apa pun jatuh ke lantai dan terpental
+    }
     else if (g.st[k].k === ti) { g.st[k].c++; g.skor++; mnPeristiwa('benar', { k }); if (g.skor % 5 === 0) umumkan('Skor ' + g.skor); if (g.st[k].c >= MN.NMAKS) { g.selesai = true; mnPeristiwa('selesai'); umumkan('Menara penuh. Skor akhir ' + g.skor + '.'); } }
-    else { const dx = b.x - mnDekatS(g, g.st[k], b.x), sisi = dx === 0 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(dx); g.salah++; mnPeristiwa('salah', { k, tipe: b.tipe, x: Math.round(b.x), y: Math.round(b.y), vx: Math.round(dx * 5 + sisi * (150 + Math.random() * 80)), vy: -Math.round(Math.max(300, b.vy * 0.6)), vr: Math.round((6 + Math.random() * 6) * sisi) }); }
+    else if (!susun && !dek.includes(ti) && g.st[k].c > 1) { const lama = g.st[k].c; g.st[k].c = 1; g.salah++; mnPeristiwa('hancur', { k, n: lama, t: g.st[k].k, x: Math.round(mnDekatS(g, g.st[k], b.x)), y: Math.round(MN.LANTAI - MN.R - (lama - 1) * MN.TEBAL) }); umumkan('Dek hancur, kembali satu.'); }
+    else pental();
   }
 }
 function mnJalurGerak(d) {   // penjatuh: geser bentuk 28 px ke kiri/kanan
@@ -3840,17 +3856,17 @@ function mnMasuk() {   // papan permainan menggantikan lobi / layar penyusunan
   const cv = h('canvas', { class: 'mn-cv', role: 'img', 'aria-label': 'Permainan Gim-Dek. Fitur visual.', tabindex: '0' });
   cv.style.touchAction = 'none'; mn.cv = cv; mn.c = cv.getContext('2d');
   const px = e => { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * MN.W; };
-  const geserAtas = mn.mode !== 'solo' && mn.peran === 'geser';
+  const geserAtas = () => mn.mode === 'solo' ? mn.g.st.length >= 4 : mn.peran === 'geser';   // solo: mouse memilih tempat saat menyusun, lalu memutar tatakan
   cv.addEventListener('pointermove', e => {   // gerak bebas: cukup menggerakkan mouse/jari, tanpa klik
     const x = px(e);
-    if (geserAtas) { const o = mnPutar(x / MN.W * MN.PERIODE - MN.PERIODE / 2); if (mn.mode === 'tamu') mn.lokal = o; else mn.g.ox = o; }
+    if (geserAtas()) { const o = mnPutar(x / MN.W * MN.PERIODE - MN.PERIODE / 2); if (mn.mode === 'tamu') mn.lokal = o; else mn.g.ox = o; }
     else { const xx = mnJepit(x, MN.R, MN.W - MN.R); if (mn.mode === 'tamu') { if (mn.lokal !== xx) { mn.lokal = xx; mnKirimIn(false); } } else if (mn.g.b && !mn.g.b.jatuh) mn.g.b.x = xx; }
   });
-  cv.addEventListener('pointerdown', e => { if (!geserAtas) { const xx = mnJepit(px(e), MN.R, MN.W - MN.R); if (mn.mode === 'tamu') { mn.lokal = xx; mnKirimIn(false); setTimeout(() => mnKirimIn(true), 30); } else { if (mn.g.b && !mn.g.b.jatuh) mn.g.b.x = xx; mnLepas(); } } });
+  cv.addEventListener('pointerdown', e => { if (!geserAtas()) { const xx = mnJepit(px(e), MN.R, MN.W - MN.R); if (mn.mode === 'tamu') { mn.lokal = xx; mnKirimIn(false); setTimeout(() => mnKirimIn(true), 30); } else { if (mn.g.b && !mn.g.b.jatuh) mn.g.b.x = xx; mnLepas(); } } });
   const info = h('div', { class: 'mn-info', 'aria-live': 'off' });
   const ulang = h('button', { type: 'button', class: 'btn', onclick: () => { if (mn.mode === 'tamu') { toast('Hanya pembuat permainan yang bisa mengulang.'); return; } mn.g = mnBaru(); mn.v = mn.g; mn.jeda = false; mnKirimSnap(true); } }, 'Main lagi');
   const tutup = h('button', { type: 'button', class: 'btn', onclick: tutupMenara }, 'Selesai');
-  const petunjuk = mn.mode === 'solo' ? 'Tatakan masih kosong. Gerakkan mouse atau jari (tanpa klik), atau panah ← →, untuk memilih tempat; klik atau Spasi menjatuhkan bentuk. Di tempat kosong bentuk membuka tumpukan baru; di tumpukan yang bentuknya sama, bentuk menambah satu lapis; di tumpukan berbeda, bentuk terpental.' : mn.peran === 'jatuh' ? 'Tatakan masih kosong. Kamu menjatuhkan: gerakkan mouse atau panah ← → ke tempat mana pun, klik atau Spasi untuk menjatuhkan. Pasanganmu menggeser tatakan.' : 'Kamu menggeser tatakan: gerakkan mouse (tanpa klik) atau panah ← → untuk memutar tatakan, supaya bentuk yang dijatuhkan pasanganmu mendarat di tempat yang kamu mau.';
+  const petunjuk = mn.mode === 'solo' ? 'Tatakan punya 5 petak dan masih kosong. Awal: gerakkan mouse (tanpa klik) memilih petak, klik atau Spasi menjatuhkan, untuk memasang 4 bentuk berbeda; satu petak dibiarkan kosong. Panah ← → memutar tatakan. Sesudah itu bentuk jatuh sendiri dan mouse memutar tatakan: bentuk yang sama menambah lapis, bentuk dek lain terpental, dan bentuk yang tidak ada di dek menghancurkan tumpukannya jadi satu, jadi loloskan lewat petak kosong.' : mn.peran === 'jatuh' ? 'Tatakan masih kosong. Kamu menjatuhkan: gerakkan mouse atau panah ← → memilih tempat, klik atau Spasi menjatuhkan. Pasang dulu 4 bentuk berbeda di 4 dari 5 petak; sesudahnya bentuk yang tidak ada di dek menghancurkan tumpukan yang ditimpanya. Pasanganmu memutar tatakan.' : 'Kamu memutar tatakan: gerakkan mouse (tanpa klik) atau panah ← →. Pasanganmu menjatuhkan bentuk; arahkan petak yang tepat ke bawahnya, dan loloskan bentuk yang tidak ada di dek lewat petak kosong.';
   info.textContent = petunjuk;
   mn.kotak.querySelector('.mn-isi').replaceChildren(cv, info, h('div', { class: 'mn-ctl' }, ulang, tutup));
   mnUkur(); umumkan('Permainan Gim-Dek dimulai. ' + petunjuk + ' Ini fitur visual.'); cv.focus({ preventScroll: true });
@@ -3870,7 +3886,7 @@ function mnSambungG(id) {   // kanal sendiri per pasangan (hemat: tidak ikut sia
 }
 function mnLobi() {
   const isi = mn.kotak.querySelector('.mn-isi'); if (!isi || mn.main) return;
-  const kids = [h('p', { class: 'mn-p' }, 'Mulai dari tatakan kosong. Jatuhkan bentuk di mana pun: di tempat kosong membuka tumpukan baru, di tumpukan yang sama menambah lapisan, di tumpukan berbeda bentuk terpental. Tumpuk sampai menara menyentuh batas layar. Bisa sendirian, atau berpasangan: satu orang menjatuhkan bentuk, satu lagi memutar tatakan.'),
+  const kids = [h('p', { class: 'mn-p' }, 'Mulai dari tatakan kosong berpetak 5: pasang 4 bentuk berbeda, satu petak kosong, tatakan bisa digeser. Lalu tumpuk bentuk yang sama; bentuk yang tidak ada di dek menghancurkan tumpukan jadi satu. Tumpuk sampai menara menyentuh batas layar. Bisa sendirian, atau berpasangan: satu orang menjatuhkan bentuk, satu lagi memutar tatakan.'),
     h('button', { type: 'button', class: 'btn mn-b', onclick: () => { mn.mode = 'solo'; mn.peran = 'solo'; lobiTutup(); mnMulaiMain(); } }, 'Main sendiri')];
   if (mn.menunggu) {
     kids.push(h('p', { class: 'mn-p', role: 'status' }, 'Menunggu pasangan bergabung sebagai ' + (mn.peran === 'jatuh' ? 'penggeser' : 'penjatuh') + '… Kamu jadi ' + (mn.peran === 'jatuh' ? 'penjatuh' : 'penggeser') + '.'), h('button', { type: 'button', class: 'btn mn-b', onclick: () => { mn.menunggu = false; lobiTutup(); mn.mode = ''; mnLobi(); } }, 'Batalkan ajakan'));

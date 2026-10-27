@@ -774,6 +774,11 @@
   html:not(.mode-baca) #alat.sembunyi ~ #alat-pegang { display:block; }
   html.foto #alat-pegang { display:none !important; }
   @media (prefers-reduced-motion:reduce) { #alat .ikon { transition:none; } }
+  #menara-mini { position:fixed; right:12px; z-index:26; width:240px; box-sizing:border-box; background:var(--p); color:var(--h); border:1px solid var(--gx); font:500 14px "Google Sans", Roboto, Arial, sans-serif; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  #menara-mini .btn { font:500 13px "Google Sans", Roboto, Arial, sans-serif; padding:4px 10px; border:1px solid var(--gx); border-radius:10px; background:var(--p); color:var(--h); cursor:pointer; }
+  #menara-mini .mm-b { display:flex; gap:6px; } #menara-mini .mm-t { white-space:nowrap; font-size:13px; } #menara-mini .btn:hover { background:var(--h); color:var(--p); }
+  @media (max-width:640px) { #menara-mini { right:8px; } }
+  html.foto #menara-mini { visibility:hidden; }
 </style>
 </head>
 <body>
@@ -2217,7 +2222,7 @@ function kvKosongkanSemua() {   // dipanggil setelah Purge: beri tahu semua kanv
 /* ================== PANEL PESERTA (izin mencoret) ================== */
 function posPeserta() {   // kolom kanan menempel tanpa jarak, dari bawah ke atas: Peta kartu, Statistik, Akses, kanvas mini (tepi saling tumpang 1px)
   let dasar = innerWidth <= 640 ? 58 : 12;
-  ['peta', 'statistik', 'peserta', 'kanvas-mini', 'pencatat'].forEach(id => {
+  ['peta', 'statistik', 'peserta', 'kanvas-mini', 'menara-mini', 'pencatat'].forEach(id => {
     const e = document.getElementById(id); if (!e) return;
     if (e.hidden || getComputedStyle(e).display === 'none') return;
     e.style.bottom = dasar + 'px'; dasar += Math.max(0, e.offsetHeight - 1);
@@ -3748,6 +3753,7 @@ function mnGambar() {
   for (const f of mn.fx) { c.save(); c.translate(f.x, f.y); c.rotate(f.r); mnJalur(c, f.tipe, 0, 0, R); c.fillStyle = mnWarnaTipe(f.tipe); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); c.restore(); }
   c.fillStyle = ink; c.font = '600 16px system-ui, Arial, sans-serif'; c.textAlign = 'left'; c.fillText('Skor ' + v.skor, 12, 30); c.textAlign = 'right'; c.fillText('Tinggi ' + Math.max(...v.t) + ' / ' + MN.NMAKS, W - 12, 30);
   if (v.selesai) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 70, W - 40, 140, 18) : c.rect(20, H / 2 - 70, W - 40, 140); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '700 28px system-ui, Arial, sans-serif'; c.fillText('Menara mencapai batas!', W / 2, H / 2 - 12); c.font = '600 20px system-ui, Arial, sans-serif'; c.fillText('Skor akhir ' + v.skor, W / 2, H / 2 + 28); }
+  else if (mn.mode === 'tamu' ? (mn.snap && mn.snap.jeda) : (mn.pause || mn.jedaTamu)) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 40, W - 40, 80, 18) : c.rect(20, H / 2 - 40, W - 40, 80); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '700 22px system-ui, Arial, sans-serif'; c.fillText('Dijeda', W / 2, H / 2 + 8); }
   else if (mn.status) { c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect ? c.roundRect(20, H / 2 - 40, W - 40, 80, 18) : c.rect(20, H / 2 - 40, W - 40, 80); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '600 18px system-ui, Arial, sans-serif'; c.fillText(mn.status, W / 2, H / 2 + 6); }
 }
 function mnBunyi(f, ms, jenis) {
@@ -3779,7 +3785,7 @@ function mnEfek(j) {
   else if (j.startsWith('b')) mnBunyi(MN.NADA[+j.slice(1)] || 300, 90);
 }
 function mnLangkah(dt) {
-  const g = mn.g; if (g.selesai || mn.jeda) return;
+  const g = mn.g; if (g.selesai || mn.jeda || mn.pause || mn.jedaTamu) return;
   const sayaGeser = mn.mode === 'solo' || mn.peran === 'geser', sayaJatuh = mn.mode !== 'solo' && mn.peran === 'jatuh';
   if (sayaGeser && mn.arah) g.ox = mnPutar(g.ox + mn.arah * 560 * dt);
   if (sayaJatuh && g.b && !g.b.jatuh && mn.arah) g.b.x = mnJepit(g.b.x + mn.arah * 420 * dt, MN.R, MN.W - MN.R);
@@ -3809,7 +3815,7 @@ function mnLangkah(dt) {
 }
 function mnLepas() { const g = mn.g; if (mn.mode !== 'solo' && mn.peran !== 'jatuh') return; if (g.b && !g.b.jatuh) { g.b.jatuh = true; g.b.vy = 60; mnBunyi(330, 60); } }
 function mnKirimIn(drop) { if (mn.mode !== 'tamu' || !mn.kanalG) return; const o = { drop: !!drop }; if (mn.peran === 'geser') o.ox = mn.lokal; else o.x = mn.lokal; try { mn.kanalG.send({ type: 'broadcast', event: 'in', payload: o }); } catch (e) {} }
-function mnSnap() { const g = mn.g; return { ox: Math.round(g.ox), t: g.t, b: g.b ? { x: Math.round(g.b.x), y: Math.round(g.b.y), tipe: g.b.tipe, jatuh: g.b.jatuh } : null, skor: g.skor, selesai: g.selesai, ev: g.ev, jeda: !!mn.jeda }; }
+function mnSnap() { const g = mn.g; return { ox: Math.round(g.ox), t: g.t, b: g.b ? { x: Math.round(g.b.x), y: Math.round(g.b.y), tipe: g.b.tipe, jatuh: g.b.jatuh } : null, skor: g.skor, selesai: g.selesai, ev: g.ev, jeda: !!(mn.jeda || mn.pause || mn.jedaTamu) }; }
 function mnTerimaSnap(s) {
   if (!mn || mn.mode !== 'tamu' || !s || !Array.isArray(s.t) || s.t.length !== 5) return;
   mn.snap = s; if (mn.status) { mn.status = ''; }
@@ -3866,6 +3872,7 @@ function mnSambungG(id) {   // kanal sendiri per pasangan (hemat: tidak ikut sia
     if (!mn || mn.mode !== 'host' || !mn.g) return; const p = m.payload || {}, g = mn.g;
     if (mn.peran === 'jatuh') { if (Number.isFinite(+p.ox)) g.ox = mnPutar(+p.ox); } else { if (Number.isFinite(+p.x) && g.b && !g.b.jatuh) g.b.x = mnJepit(+p.x, MN.R, MN.W - MN.R); if (p.drop) mnLepas(); }
   });
+  k.on('broadcast', { event: 'jeda' }, m => { if (!mn || mn.mode !== 'host') return; mn.jedaTamu = !!(m.payload && m.payload.on); mnKirimSnap(); });
   k.on('broadcast', { event: 'keluar' }, () => { if (!mn) return; mn.jeda = true; mn.status = 'Pasangan keluar. Tutup lalu buka lagi untuk bermain.'; if (mn.mode === 'tamu') mn.g && (mn.g.selesai = true); umumkan('Pasangan keluar dari permainan.'); });
   k.subscribe(st => { if (!mn) return; mn.tersambungG = st === 'SUBSCRIBED'; if (mn.tersambungG && mn.mode === 'host') mn.status = ''; });
   mn.kanalG = k;
@@ -3897,6 +3904,7 @@ function bukaMenara() {
   if (!adalahEscape(ruangSaya)) { toast('Gim-Dek hanya ada di Ruang Privat.'); return; }
   const kotak = h('div', { class: 'gb-kotak mn-kotak', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'mn-judul' },
     h('div', { class: 'gb-bar' }, h('h2', { id: 'mn-judul' }, 'Gim-Dek'), h('span', { class: 'kv-bt' },
+      h('button', { type: 'button', class: 'btn', id: 'mn-min', title: 'Kecilkan dan jeda', 'aria-label': 'Kecilkan jendela dan jeda game', onclick: () => mnMinim(true) }, '\u2013'),
       h('button', { type: 'button', class: 'btn', id: 'mn-suara', 'aria-pressed': 'true', onclick: e => { mn.suara = !mn.suara; e.currentTarget.setAttribute('aria-pressed', String(mn.suara)); e.currentTarget.textContent = mn.suara ? '\u{1F50A}' : '\u{1F507}'; } }, '\u{1F50A}'),
       h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup permainan', onclick: tutupMenara }, '✕'))),
     h('div', { class: 'mn-isi' }));
@@ -3904,6 +3912,7 @@ function bukaMenara() {
   mn = { fx: [], gy: [null, null, null, null, null], kotak, ruang: ruangSaya, suara: true, undangan: new Map(), mode: '', peran: '', arah: 0, main: false, g: null, v: null };
   document.body.append(ov); pasangEsc(tutupMenara);
   mn.tekan = e => {
+    if (mn.min) return;
     const k = e.key, kiri = k === 'ArrowLeft' || k === 'a' || k === 'A', kanan = k === 'ArrowRight' || k === 'd' || k === 'D';
     if (!(kiri || kanan || k === ' ' || k === 'ArrowDown')) return;
     if (!mn.main) return; e.preventDefault(); e.stopPropagation();
@@ -3931,6 +3940,18 @@ function bukaMenara() {
   const bt = document.querySelector('#bentuk-baris .ikon.mnr'); if (bt) bt.classList.add('pilih');
   umumkan('Jendela permainan Gim-Dek. Ini fitur visual. Escape untuk menutup.');
 }
+function mnMinim(on) {   // kecilkan jendela ke kolom kanan dan jeda game; buka lagi untuk melanjutkan
+  if (!mn) return; const ov = document.getElementById('menara-ov'); if (!ov) return; on = !!on; if (on === !!mn.min) return; mn.min = on;
+  if (mn.main) { if (mn.mode === 'tamu') { try { mn.kanalG.send({ type: 'broadcast', event: 'jeda', payload: { on } }); } catch (e) {} } else { mn.pause = on; mnKirimSnap(); } }
+  ov.style.display = on ? 'none' : '';
+  const lama = document.getElementById('menara-mini'); if (lama) lama.remove();
+  if (on) {
+    lepasEsc(); mn.arah = 0;
+    const mini = h('aside', { id: 'menara-mini', role: 'region', 'aria-label': 'Gim-Dek dikecilkan dan dijeda' }, h('div', { class: 'mm-t' }, mn.main ? 'Gim-Dek · jeda' : 'Gim-Dek'),
+      h('div', { class: 'mm-b' }, h('button', { type: 'button', class: 'btn', id: 'mm-buka', onclick: () => mnMinim(false) }, mn.main ? 'Lanjut' : 'Buka'), h('button', { type: 'button', class: 'btn', onclick: tutupMenara, 'aria-label': 'Tutup game' }, '\u2715')));
+    document.body.append(mini); posPeserta(); umumkan('Gim-Dek dikecilkan' + (mn.main ? ' dan dijeda.' : '.'));
+  } else { pasangEsc(tutupMenara); posPeserta(); umumkan('Gim-Dek dilanjutkan.'); try { if (mn.cv) mn.cv.focus({ preventScroll: true }); } catch (e) {} mnUkur(); }
+}
 function tutupMenara() {
   if (!mn) return; const m = mn; mn = null;
   try { cancelAnimationFrame(m.raf); clearInterval(m.siaran); clearInterval(m.kirimIn); } catch (e) {}
@@ -3939,7 +3960,7 @@ function tutupMenara() {
   setTimeout(() => { try { sb.removeChannel(m.lobi); if (m.kanalG) sb.removeChannel(m.kanalG); } catch (e) {} }, 200);
   document.removeEventListener('keydown', m.tekan, true); document.removeEventListener('keyup', m.tekan, true); window.removeEventListener('resize', m.onUkur);
   try { if (m.ac) m.ac.close(); } catch (e) {}
-  lepasEsc(); const o = document.getElementById('menara-ov'); if (o) o.remove();
+  lepasEsc(); const o = document.getElementById('menara-ov'); if (o) o.remove(); const mm = document.getElementById('menara-mini'); if (mm) { mm.remove(); posPeserta(); }
   const b = document.querySelector('#bentuk-baris .ikon.mnr'); if (b) { b.classList.remove('pilih'); b.focus(); }
 }
 /* Pencatat Waktu: jendela kecil di kolom kanan, diatur dosen, disebar lewat Presence ke semua ruang. */

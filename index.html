@@ -2729,7 +2729,7 @@ function gerbangNetra(manual) {
   const ANGKA = ['', 'one', 'two', 'three', 'four', 'five'];
   const ov = h('div', { id: 'gerbang', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Selamat datang di Dekken' });
   const btn = h('button', { type: 'button', id: 'gerbang-btn', 'aria-label': EN[0] + ' ' + EN[1] + ' Escape atau tombol Mulai untuk langsung ke papan.' }, 'Dekken');
-  const cap = h('p', { class: 'gerbang-cap', 'aria-hidden': 'true' });
+  const cap = h('p', { class: 'gerbang-cap', 'aria-hidden': 'true' });   // dipakai hanya untuk hitung mundur
   const langsung = h('button', { type: 'button', id: 'gerbang-langsung', title: 'Mulai: masuk ke papan' }, 'Mulai');
   ov.append(btn, cap);
   ov.append(langsung);
@@ -2766,10 +2766,7 @@ function gerbangNetra(manual) {
     }
   };
   const jalan = async () => {
-    try { speechSynthesis.cancel(); } catch (e) {}
-    const bagian = manual ? EN.slice(0, 2) : EN;
-    for (const t of bagian) { await kalimat(t); if (usai) return; }
-    if (manual) return;
+    if (manual) return;   // tanpa suara dan tanpa teks sambutan; Spasi/Escape/Mulai tetap berfungsi
     for (let n = 5; n >= 1; n--) {   // hitung mundur: 5 4 3 2 1 START, tiap angka tampil besar dan diucapkan
       if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, String(n))); await tidur(1000);
     }

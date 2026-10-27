@@ -1974,6 +1974,7 @@ function bukaLihatGambar(p) {
 const KV_W = 1000, KV_H = 600;
 const KV_WARNA = ['#111111', '#d32f2f', '#1565c0', '#2e7d32', '#f9a825'], KV_TEBAL = [3, 6, 12];
 let kv = null;   // keadaan kanvas yang sedang terbuka
+const KV_MAKS_PENCORET = 3, KV_SEPI_MENIT = 10;   // batas pencoret serentak dan batas diam sebelum kanvas menutup sendiri
 let kvAlfa = 1, kvGrid = false;   // transparansi (1 = pekat) dan tampilan grid, diingat selama halaman terbuka
 const kvBisaTulis = () => bolehCoret();
 const kvKanal = r => 'kanvas-' + (r || 'utama');
@@ -2040,6 +2041,8 @@ function kvStatus() {
 function kvKirim(ev, data) { try { if (kv && kv.kanal && kv.tersambung) kv.kanal.send({ type: 'broadcast', event: ev, payload: data }); } catch (e) {} }
 function kvTerima(ev, d) {
   if (!kv || !d || d.dari === idKlien) return;
+  if (ev === 'g' || ev === 'u' || ev === 'x') kv.terakhir = Date.now();
+  if (ev === 'g' && d.dari) kv.pencoret.set(String(d.dari), Date.now());
   if (ev === 'g') kvTambah(String(d.id), String(d.nm || '').slice(0, 20), KV_WARNA.includes(d.c) ? d.c : '#111111', Math.min(24, Math.max(1, +d.w || 3)), d.e, (Array.isArray(d.p) ? d.p : []).slice(0, 200).map(q => [Math.max(0, Math.min(KV_W, +q[0] || 0)), Math.max(0, Math.min(KV_H, +q[1] || 0))]));
   else if (ev === 'u') { const i = kv.strokes.findIndex(x => x.id === String(d.id)); if (i >= 0) { kv.strokes.splice(i, 1); kvUlang(); } }
   else if (ev === 'x') { kv.strokes = []; kvUlang(); toast('Kanvas dikosongkan'); }
@@ -2061,7 +2064,7 @@ function kvTerima(ev, d) {
 function tutupKanvas() {
   const o = document.getElementById('kanvas-ov'); if (!o) return;
   lepasEsc(); o.remove(); const mm = document.getElementById('kanvas-mini'); if (mm) mm.remove();
-  if (kv) { try { sb.removeChannel(kv.kanal); sb.removeChannel(kv.kanalSemua); } catch (e) {} window.removeEventListener('resize', kv.onResize); clearTimeout(kv.jawab); kv = null; }
+  if (kv) { try { sb.removeChannel(kv.kanal); sb.removeChannel(kv.kanalSemua); } catch (e) {} window.removeEventListener('resize', kv.onResize); clearTimeout(kv.jawab); clearInterval(kv.cek); kv = null; }
   const b = document.querySelector('#bentuk-baris .ikon.kvs'); if (b) { b.classList.remove('pilih'); b.focus(); }
 }
 function kvBangunUlang() { if (!kv) return; const simpan = kv.strokes, mini = kv.mini; tutupKanvas(); bukaKanvas(simpan); if (mini) kvMinim(true); }
@@ -2071,7 +2074,7 @@ function bukaKanvas(simpan) {
   if (!kanvasDibuka()) { toast('Kanvas belum dibuka dosen di ruang ini.'); return; }
   const bisa = kvBisaTulis(), cv = h('canvas', { class: 'kv-cv', role: 'img', 'aria-label': 'Kanvas coret bersama, visual saja' });
   const grid = h('div', { class: 'kv-grid', 'aria-hidden': 'true' }), wadah = h('div', { class: 'kv-wadah' }, h('div', { class: 'kv-cvw' }, cv, grid)), status = h('span', { class: 'kv-status', 'aria-live': 'off' }, 'Menyambung…');
-  kv = { cv, wadah, grid, status, bisa, strokes: Array.isArray(simpan) ? simpan : [], tersambung: false, warna: KV_WARNA[0], tebal: KV_TEBAL[1], hapusMode: false, ruang: ruangSaya, pena: '', penaT: 0, sedang: null, antre: [], kunciHapus: false };
+  kv = { cv, wadah, grid, status, bisa, strokes: Array.isArray(simpan) ? simpan : [], tersambung: false, warna: KV_WARNA[0], tebal: KV_TEBAL[1], hapusMode: false, ruang: ruangSaya, pena: '', penaT: 0, sedang: null, antre: [], kunciHapus: false, pencoret: new Map(), terakhir: Date.now() };
   kv.onResize = () => kvUkur();
   const alat = h('div', { class: 'kv-alat' });
   const tombol = (teks, judul, fn, kelas) => h('button', { type: 'button', class: 'btn kv-t ' + (kelas || ''), title: judul, 'aria-label': judul, onclick: fn }, teks);
@@ -2111,9 +2114,15 @@ function bukaKanvas(simpan) {
   if (bisa) {
     cv.style.touchAction = 'none'; cv.style.cursor = 'crosshair';
     cv.addEventListener('pointerdown', e => {
-      if (e.button) return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      if (e.button) return; e.preventDefault();
+      if (!dosenSaya) {   // hemat kuota: paling banyak 3 orang mencoret bersamaan; yang lain menunggu giliran
+        const kini = Date.now(); let n = 0; kv.pencoret.forEach((t, id) => { if (kini - t < 3000) n++; else kv.pencoret.delete(id); });
+        if (n >= KV_MAKS_PENCORET) { toast('Sudah ' + KV_MAKS_PENCORET + ' orang mencoret. Tunggu sebentar lalu coba lagi.'); return; }
+      }
+      kv.terakhir = Date.now();
+      try { cv.setPointerCapture(e.pointerId); } catch (x) {}
       const p0 = titik(e), s = { id: idKlien + '-' + Date.now().toString(36) + Math.floor(Math.random() * 99), nm: getUser() || '', c: kv.warna, w: kv.tebal, e: kv.hapusMode, p: [p0], dari: 'saya', kirim: [p0] };
-      s.iv = setInterval(() => kirimBatch(false), 250); kv.strokes.push(s); kv.sedang = s; kvGambarSatu(cv.getContext('2d'), s, cv.width / KV_W);
+      s.iv = setInterval(() => kirimBatch(false), 500); kv.strokes.push(s); kv.sedang = s; kvGambarSatu(cv.getContext('2d'), s, cv.width / KV_W);
     });
     cv.addEventListener('pointermove', e => {
       const s = kv.sedang; if (!s) return; const p = titik(e), l = s.p[s.p.length - 1];
@@ -2138,6 +2147,7 @@ function bukaKanvas(simpan) {
   ['g', 'u', 'x', 'minta', 'isi'].forEach(ev => kn.on('broadcast', { event: ev }, m => kvTerima(ev, m.payload)));
   kn.subscribe(st => { if (!kv) return; kv.tersambung = st === 'SUBSCRIBED'; kvStatus(); if (kv.tersambung) kvKirim('minta', { dari: idKlien }); });
   kv.kanal = kn;
+  kv.cek = setInterval(() => { if (kv && Date.now() - kv.terakhir > KV_SEPI_MENIT * 60000 && !kv.sedang) { tutupKanvas(); toast('Kanvas ditutup karena ' + KV_SEPI_MENIT + ' menit tanpa coretan. Buka lagi bila perlu.'); } }, 30000);
   const ks = sb.channel('kanvas-semua', { config: { broadcast: { self: false } } });
   ks.on('broadcast', { event: 'x' }, () => { if (kv) { kv.strokes = []; kvUlang(); toast('Papan dibersihkan, kanvas ikut kosong'); } }).subscribe();
   kv.kanalSemua = ks;

@@ -443,6 +443,10 @@
   #tip[hidden] { display:none; }
   html.foto #tip { display:none !important; }
   footer.hukum { position:static !important; pointer-events:auto !important; padding:28px 16px 100px !important; font-size:12px; text-align:center; max-width:none; }
+  html:not(.mode-baca) footer.hukum { position:fixed !important; left:0; bottom:0; margin:0; padding:0 0 6px 12px !important; font-size:10.5px; text-align:left; opacity:.75; z-index:16; }
+  html:not(.mode-baca) footer.hukum:hover, html:not(.mode-baca) footer.hukum:focus-within { opacity:1; }
+  html:not(.mode-baca) body { padding-bottom:70px; }
+  html.foto footer.hukum { visibility:hidden; }
   footer.hukum a { color:inherit; }
   /* ===== stiker tempel ===== */
   .kartu:not(.lapis), .balas { position:relative; }
@@ -762,6 +766,14 @@
   .mn-kotak .gb-bar .btn { padding:3px 10px; } .mn-kotak .btn:hover { background:var(--h); color:var(--p); }
   .mn-kotak .btn:focus-visible, .mn-cv:focus-visible { outline:2px solid #4fc3f7; outline-offset:2px; }
   html.foto #menara-ov { visibility:hidden; }
+  /* tombol ikon kartu: sembunyi otomatis saat diam, muncul bila pointer mendekat ke bawah atau fokus papan ketik */
+  #alat .ikon { transition:opacity .25s ease, transform .25s ease; }
+  html:not(.mode-baca) #alat.sembunyi .ikon { opacity:0; transform:translateY(26px) scale(.8); pointer-events:none; }
+  #alat-pegang { position:fixed; left:50%; bottom:5px; transform:translateX(-50%); width:44px; height:14px; padding:0; border:none; background:transparent; cursor:pointer; z-index:21; display:none; }
+  #alat-pegang::after { content:''; position:absolute; left:6px; right:6px; top:5px; height:4px; border-radius:2px; background:var(--h); opacity:.55; }
+  html:not(.mode-baca) #alat.sembunyi ~ #alat-pegang { display:block; }
+  html.foto #alat-pegang { display:none !important; }
+  @media (prefers-reduced-motion:reduce) { #alat .ikon { transition:none; } }
 </style>
 </head>
 <body>
@@ -777,7 +789,7 @@
 <aside id="pencatat" hidden></aside>
 <aside id="peserta" class="tutup" hidden><button type="button" id="pes-judul" aria-expanded="false" aria-controls="pes-isi"><span id="pes-teks">Akses</span><span id="pes-panah">▴</span></button><div id="pes-isi"></div></aside>
 <aside id="peta" hidden><button type="button" id="peta-judul" aria-expanded="true"><span>Peta kartu</span><span id="peta-panah">▾</span></button><div id="peta-isi"><div id="peta-kanvas" role="presentation" title="Klik atau seret untuk berpindah"><canvas></canvas><div id="peta-kotak"></div></div></div><div id="peta-zoom"><button type="button" id="pz-min" aria-label="Perkecil" title="Perkecil (Ctrl + gulir)">−</button><button type="button" id="pz-nilai" title="Kembali ke 100%">100%</button><button type="button" id="pz-plus" aria-label="Perbesar" title="Perbesar (Ctrl + gulir)">+</button></div></aside>
-<nav id="alat"><div id="bentuk-baris"></div></nav>
+<nav id="alat"><div id="bentuk-baris"></div></nav><button type="button" id="alat-pegang" aria-label="Tampilkan tombol kartu" title="Tampilkan tombol kartu"></button>
 <div id="banner"></div>
 <main class="dek" id="dek"></main>
 <main class="baca" id="baca" aria-label="Mode Baca"></main>
@@ -3677,6 +3689,19 @@ function renderUmum() {
   const id = idUmum(u); if (id !== umumMuncul) { umumMuncul = id; umumkan(teks); }
 }
 setInterval(() => { if (umumSaya && waktuServer() >= umumSaya.t) umumJalankan(); renderUmum(); }, 500);
+/* Tombol ikon kartu sembunyi sendiri setelah beberapa detik diam; muncul saat pointer ke bagian bawah layar, saat fokus papan ketik, atau lewat pegangan kecil. */
+function alatOtomatis() {
+  const nav = document.getElementById('alat'), pg = document.getElementById('alat-pegang'); if (!nav) return;
+  const JEDA = 3500; let terakhir = Date.now(), atas = false;
+  const tahan = () => atas || nav.matches(':hover') || nav.contains(document.activeElement) || komposBuka || pollBuka || !!document.getElementById('menu-bentuk') || !!document.querySelector('#gambar-ov, #kanvas-ov, #menara-ov, #gerbang, #purge-ov');
+  const tampil = () => { terakhir = Date.now(); nav.classList.remove('sembunyi'); };
+  document.addEventListener('pointermove', e => { const r = nav.getBoundingClientRect(); atas = e.clientY >= Math.min(r.top, innerHeight - 56) - 24 && e.clientY <= innerHeight; if (atas) tampil(); }, { passive: true });
+  document.addEventListener('pointerdown', e => { if (e.clientY >= innerHeight - 90) tampil(); }, { passive: true });
+  document.addEventListener('keydown', e => { if (e.key === 'Tab') tampil(); }, true);
+  nav.addEventListener('focusin', tampil);
+  if (pg) pg.addEventListener('click', () => { tampil(); const k = nav.querySelector('.ikon:not([hidden])'); if (k) { try { k.focus(); } catch (e) {} } });
+  setInterval(() => { if (tahan()) { terakhir = Date.now(); nav.classList.remove('sembunyi'); } else if (Date.now() - terakhir > JEDA && nav.querySelector('.ikon')) nav.classList.add('sembunyi'); }, 400);
+}
 /* ===== Menara Bentuk: game menumpuk bentuk di Ruang Privat. Solo, atau berpasangan (satu menjatuhkan, satu menggeser tatakan). ===== */
 const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, SLOT: 100, R: 28, OXMAKS: 412, NMAKS: 36, TIPE: ['kotak', 'lingkaran', 'segienam', 'segilima', 'tumpul'], NAMA: ['persegi', 'lingkaran', 'segi enam', 'segi lima', 'persegi tumpul'], NADA: [262, 330, 392, 494, 587], WARNA: ['#FEE440', '#F15BB5', '#00F5D4', '#00BBF9', '#9B5DE5'] };   // palet kartu: kuning, pink, hijau, biru, ungu
 const mnPetak = i => MN.WARNA[i];
@@ -4296,7 +4321,7 @@ function petaMulai() {
   tickTimer(); setInterval(tickTimer, 1000);
   setInterval(() => { const el = document.getElementById('timer'); if (el) el.textContent = '[' + teksReset(sisaReset(waktuServer())) + ']'; }, 250);   // angka detik tidak melompat
   titikMulai(); tautMulai(); statMulai(); petaMulai();
-  purgeMulai(); pesertaMulai();
+  purgeMulai(); pesertaMulai(); alatOtomatis();
   addEventListener('resize', gambarBingkai);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(gambarBingkai);
   bantuanMulai();

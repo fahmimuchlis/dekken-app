@@ -769,6 +769,11 @@
   .mn-kotak .gb-bar .btn { padding:3px 10px; } .mn-kotak .btn:hover { background:var(--h); color:var(--p); }
   .mn-kotak .btn:focus-visible, .mn-cv:focus-visible { outline:2px solid #4fc3f7; outline-offset:2px; }
   html.foto #menara-ov { visibility:hidden; }
+  #menu-game { position:fixed; z-index:30; display:flex; flex-direction:column; gap:4px; padding:6px; background:var(--p); color:var(--h); border:1px solid var(--gx); border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.3); }
+  #menu-game .mg { display:flex; align-items:center; gap:10px; text-align:left; padding:8px 12px; border:1px solid transparent; border-radius:8px; background:transparent; color:inherit; cursor:pointer; font:500 14px "Google Sans", Roboto, Arial, sans-serif; }
+  #menu-game .mg span { display:flex; flex-direction:column; } #menu-game .mg small { font-size:12px; opacity:.75; font-weight:400; }
+  #menu-game .mg:hover, #menu-game .mg:focus-visible { border-color:#ffd400; outline:none; }
+  html.mode-baca #menu-game { display:none !important; } html.foto #menu-game { visibility:hidden; }
   /* Ketik-Dek: panggung lebar, minimalis */
   #ketik-ov { position:fixed; inset:0; z-index:99986; background:var(--p); color:var(--h); display:flex; flex-direction:column; align-items:center; padding:8px 12px 12px; box-sizing:border-box; gap:8px; overflow:auto; }
   .kt-bar { width:100%; display:flex; justify-content:space-between; align-items:center; } .kt-bar h2 { margin:0; font-size:16px; }
@@ -1546,9 +1551,9 @@ function renderAlat() {
   }
   if (!el.querySelector('.ikon.gbr')) el.append(h('button', { type: 'button', class: 'ikon gbr', title: 'Kartu gambar: tempel gambar dari link', 'aria-label': 'Kartu gambar, tempel gambar dari link', onclick: bukaGambar }, '\u{1F5BC}\uFE0E'));
   if (!el.querySelector('.ikon.kvs') && sb) el.append(h('button', { type: 'button', class: 'ikon kvs', title: 'Kanvas coret bersama', 'aria-label': 'Kanvas coret bersama, fitur visual', onclick: bukaKanvas }, '\u{1F3A8}\uFE0E'));
-  if (!el.querySelector('.ikon.ktr') && sb) el.append(h('button', { type: 'button', class: 'ikon ktr', title: 'Ketik-Dek (game mengetik di Ruang Privat)', 'aria-label': 'Ketik-Dek, game mengetik visual di Ruang Privat', onclick: bukaKetik }, ikonSvg(IKON_KETIK)));
-  if (!el.querySelector('.ikon.mnr') && sb) el.append(h('button', { type: 'button', class: 'ikon mnr', title: 'Gim-Dek (game di Ruang Privat)', 'aria-label': 'Gim-Dek, game visual di Ruang Privat', onclick: bukaMenara }, ikonSvg(IKON_GAME)));
-  { const mb = el.querySelector('.ikon.mnr'); if (mb) mb.hidden = !adalahEscape(ruangSaya); const kb = el.querySelector('.ikon.ktr'); if (kb) kb.hidden = !adalahEscape(ruangSaya); }
+  { const lama = el.querySelector('.ikon.ktr'); if (lama) lama.remove(); }
+  if (!el.querySelector('.ikon.mnr') && sb) el.append(h('button', { type: 'button', class: 'ikon mnr', title: 'Game di Ruang Privat: Gim-Dek, Ketik-Dek', 'aria-label': 'Game di Ruang Privat, pilih Gim-Dek atau Ketik-Dek', 'aria-haspopup': 'menu', onclick: bukaMenuGame }, ikonSvg(IKON_GAME)));
+  { const mb = el.querySelector('.ikon.mnr'); if (mb) mb.hidden = !adalahEscape(ruangSaya); }
   if (kt && !adalahEscape(ruangSaya)) tutupKetik();
   if (mn && !adalahEscape(ruangSaya)) tutupMenara();
   { const kb = el.querySelector('.ikon.kvs'); if (kb) kb.hidden = !kanvasDibuka(); }   // mahasiswa baru melihat ikon kanvas bila dosen membukanya
@@ -3725,7 +3730,7 @@ setInterval(() => { if (umumSaya && waktuServer() >= umumSaya.t) umumJalankan();
 function alatOtomatis() {
   const nav = document.getElementById('alat'), pg = document.getElementById('alat-pegang'); if (!nav) return;
   const JEDA = 3500; let terakhir = Date.now(), atas = false;
-  const tahan = () => atas || nav.matches(':hover') || nav.contains(document.activeElement) || komposBuka || pollBuka || !!document.getElementById('menu-bentuk') || !!document.querySelector('#gambar-ov, #kanvas-ov, #menara-ov, #ketik-ov, #gerbang, #purge-ov');
+  const tahan = () => atas || nav.matches(':hover') || nav.contains(document.activeElement) || komposBuka || pollBuka || !!document.getElementById('menu-bentuk') || !!document.getElementById('menu-game') || !!document.querySelector('#gambar-ov, #kanvas-ov, #menara-ov, #ketik-ov, #gerbang, #purge-ov');
   const tampil = () => { terakhir = Date.now(); nav.classList.remove('sembunyi'); };
   document.addEventListener('pointermove', e => { const r = nav.getBoundingClientRect(); atas = e.clientY >= Math.min(r.top, innerHeight - 56) - 24 && e.clientY <= innerHeight; if (atas) tampil(); }, { passive: true });
   document.addEventListener('pointerdown', e => { if (e.clientY >= innerHeight - 90) tampil(); }, { passive: true });
@@ -4141,6 +4146,19 @@ function ktMulaiRuang() {
   ktKirimLobi('mulai', { host: idKlien, pl, seed, t0 }); ktKirimLobi('tutup', { id: idKlien }); ktMulai(pl, seed, t0);
 }
 const ktPl = a => (Array.isArray(a) ? a.slice(0, KT.MAKS) : []).map(x => ({ id: String((x && x.id) || '').slice(0, 40), nama: String((x && x.nama) || 'Teman').slice(0, 20) })).filter(x => x.id);
+function bukaMenuGame(e) {   // satu ikon game: pilih Gim-Dek atau Ketik-Dek
+  const lama = document.getElementById('menu-game'); if (lama) { lama.remove(); return; }
+  if (mn || kt) { toast('Tutup game yang sedang terbuka dulu.'); return; }
+  const tbl = e.currentTarget, r = tbl.getBoundingClientRect();
+  const tutupM = () => { m.remove(); document.removeEventListener('mousedown', luar, true); document.removeEventListener('keydown', esc, true); };
+  const luar = ev => { if (!m.contains(ev.target) && !tbl.contains(ev.target)) tutupM(); };
+  const esc = ev => { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); tutupM(); tbl.focus(); } };
+  const item = (ik, nama, ket, fn) => h('button', { type: 'button', role: 'menuitem', class: 'mg', onclick: () => { tutupM(); fn(); } }, ikonSvg(ik), h('span', {}, h('b', {}, nama), h('small', {}, ket)));
+  const m = h('div', { id: 'menu-game', role: 'menu', 'aria-label': 'Pilih game' }, item(IKON_GAME, 'Gim-Dek', 'menumpuk bentuk, solo atau berpasangan', bukaMenara), item(IKON_KETIK, 'Ketik-Dek', 'mengetik kata, solo atau battle royale', bukaKetik));
+  document.body.append(m); const w = m.offsetWidth; m.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px'; m.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+  document.addEventListener('mousedown', luar, true); document.addEventListener('keydown', esc, true);
+  const p = m.querySelector('.mg'); if (p) p.focus();
+}
 function bukaKetik() {
   if (document.getElementById('ketik-ov')) return;
   if (!sb || !butuhLogin()) return;
@@ -4175,7 +4193,7 @@ function bukaKetik() {
   lb.on('broadcast', { event: 'bye' }, m => { const p = m.payload || {}; if (!kt || !kt.main || p.h !== kt.hostId) return; const q = kt.p.find(x => x.id === p.i); if (q) { q.out = true; kt.pergi.add(q.id); } });
   lb.subscribe(st => { if (st === 'SUBSCRIBED' && kt) ktKirimLobi('cari', { id: idKlien }); });
   kt.lobi = lb; ktLobi();
-  const bt = document.querySelector('#bentuk-baris .ikon.ktr'); if (bt) bt.classList.add('pilih');
+  const bt = document.querySelector('#bentuk-baris .ikon.mnr'); if (bt) bt.classList.add('pilih');
   umumkan('Jendela permainan Ketik-Dek. Ini fitur visual. Escape untuk menutup.');
 }
 function tutupKetik() {
@@ -4188,7 +4206,7 @@ function tutupKetik() {
   } catch (e) {}
   setTimeout(() => { try { sb.removeChannel(m.lobi); } catch (e) {} }, 200);
   document.removeEventListener('keydown', m.tekan, true); document.removeEventListener('keyup', m.tekan, true); window.removeEventListener('resize', m.onUkur);
-  lepasEsc(); m.ov.remove(); const b = document.querySelector('#bentuk-baris .ikon.ktr'); if (b) { b.classList.remove('pilih'); b.focus(); }
+  lepasEsc(); m.ov.remove(); const b = document.querySelector('#bentuk-baris .ikon.mnr'); if (b) { b.classList.remove('pilih'); b.focus(); }
 }
 /* Pencatat Waktu: jendela kecil di kolom kanan, diatur dosen, disebar lewat Presence ke semua ruang. */
 let tmSaya = null, tmDosen = null, tmKunci = '', tmHabisSudah = '', tmJud = 'Pencatat Waktu', tmMenit = 10, tmMode = 'mundur';

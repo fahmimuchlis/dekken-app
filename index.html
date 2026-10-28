@@ -66,6 +66,9 @@
   #statistik.tutup #stat-judul { gap:10px; }
   #stat-isi { padding:8px 12px 10px; line-height:1.7; }
   #stat-isi .baris-s { display:flex; justify-content:space-between; }
+  #stat-isi .jdl-s { margin-top:6px; padding-top:4px; border-top:1px solid var(--gx,#dadce0); font-weight:600; }
+  #stat-isi .sub-s { padding-left:14px; font-size:13px; }
+  #stat-isi .main-s { color:#e53935; font-weight:600; font-size:12px; }
   #stat-isi .nama-s { margin-top:6px; font-size:13px; line-height:1.45; color:var(--abu); overflow-wrap:anywhere; }
   @media (max-width:640px) { #statistik { right:8px; bottom:58px; } }
   @media (max-width:640px) { .kanan { gap:5px; } .kanan select, .kanan .btn { font-size:12px !important; padding:3px 6px !important; min-width:0 !important; } #urut { max-width:105px; } #btn-akun { max-width:90px; } }
@@ -2340,7 +2343,7 @@ function purgeMulai() {
   b.addEventListener('click', bukaPurge);
 }
 function renderRuang() {
-  renderPurge();
+  renderPurge(); try { renderStat(); } catch (e) {}
   document.documentElement.classList.toggle('privat', adalahEscape(ruangSaya) && escapeBoleh(ruangSaya));
   document.documentElement.classList.toggle('ruangbiasa', !!ruangSaya && !adalahEscape(ruangSaya) && !!infoRuang(ruangSaya));   // ruang biasa: tepi layar berpendar kuning tipis   // Ruang Privat: tepi layar menyala biru
   if (kv && kv.ruang !== ruangSaya) tutupKanvas();
@@ -3630,11 +3633,23 @@ function renderStat() {
   const baris = (a, b) => h('div', { class: 'baris-s' }, h('span', {}, a), h('b', {}, String(b)));
   const nama = hadirData && hadirData.nama.length ? hadirData.nama : [];
   const tampil = nama.slice(0, 12).join(', ') + (nama.length > 12 ? ' +' + (nama.length - 12) + ' lainnya' : '');
+  const per = (hadirData && hadirData.per) || {}, gm = (hadirData && hadirData.gm) || {}, sebar = [];
+  if (hadirData) {
+    const biasa = (typeof ruangData !== 'undefined' ? ruangData : []).filter(r => r.jenis !== 'escape'), priv = (typeof ruangData !== 'undefined' ? ruangData : []).filter(r => r.jenis === 'escape');
+    sebar.push(h('div', { class: 'jdl-s' }, 'Sebaran'), baris('Papan utama', per[''] || 0));
+    biasa.forEach(r => sebar.push(baris(String(r.nama || 'Ruang').slice(0, 24), per[r.id] || 0)));
+    if (priv.length) {
+      sebar.push(baris('Privat (' + priv.length + ' ruang)', priv.reduce((a, r) => a + (per[r.id] || 0), 0)));
+      priv.forEach(r => { const m = gm[r.id] || 0; sebar.push(h('div', { class: 'baris-s sub-s' }, h('span', {}, String(r.nama || 'Privat').slice(0, 22) + (m ? ' ' : ''), ...(m ? [h('span', { class: 'main-s' }, '● ' + m + ' main')] : [])), h('b', {}, String(per[r.id] || 0)))); });
+    }
+    const tm = Object.values(gm).reduce((a, b) => a + b, 0); if (tm) sebar.push(baris('Sedang main Gim-Dek', tm));
+  }
   isi.replaceChildren(
     baris('Pengguna aktif', hadirData ? hadirData.aktif : '–'),
     baris('Kartu', statKartu),
     baris('Balasan', statBalasan),
     baris('Koneksi', garisData.length),
+    ...sebar,
     ...(nama.length ? [h('div', { class: 'nama-s' }, 'Sedang aktif: ' + tampil)] : []));
 }
 /* Pengguna aktif memakai Supabase Realtime Presence (tanpa tabel; hilang otomatis saat tab ditutup) */
@@ -3846,7 +3861,7 @@ function mnUkur() {
   mn.cv.width = Math.max(1, Math.round(r.width * d)); mn.cv.height = Math.max(1, Math.round(r.height * d)); mn.c.setTransform(mn.cv.width / MN.W, 0, 0, mn.cv.height / MN.H, 0, 0);
 }
 function mnMulaiMain() {   // sesudah lobi: tatakan kosong, langsung main
-  mn.main = true; mn.arah = 0; mn.fx = []; mn.gy = new Array(16).fill(null); mn.evTerakhir = undefined; mn.snap = null; mn.cv = null; mnMasuk();
+  mn.main = true; setTimeout(hadir, 0); mn.arah = 0; mn.fx = []; mn.gy = new Array(16).fill(null); mn.evTerakhir = undefined; mn.snap = null; mn.cv = null; mnMasuk();
 }
 function mnMasuk() {   // papan permainan menggantikan lobi / layar penyusunan
   mn.fase = 'main'; mn.g = mnBaru(); mn.v = mn.mode === 'tamu' ? { ox: 0, st: [], b: null, skor: 0, selesai: false } : mn.g; mn.snap = null; mn.lokal = mn.peran === 'geser' ? 0 : MN.W / 2; mn.arah = 0; mn.status = mn.mode === 'tamu' ? 'Menyambung ke pasangan…' : '';
@@ -3946,6 +3961,7 @@ function bukaMenara() {
 }
 function mnMinim(on) {   // kecilkan jendela ke kolom kanan dan jeda game; buka lagi untuk melanjutkan
   if (!mn) return; const ov = document.getElementById('menara-ov'); if (!ov) return; on = !!on; if (on === !!mn.min) return; mn.min = on;
+  setTimeout(hadir, 0);
   if (mn.main) { if (mn.mode === 'tamu') { try { mn.kanalG.send({ type: 'broadcast', event: 'jeda', payload: { on } }); } catch (e) {} } else { mn.pause = on; mnKirimSnap(); } }
   ov.style.display = on ? 'none' : '';
   const lama = document.getElementById('menara-mini'); if (lama) lama.remove();
@@ -3957,7 +3973,7 @@ function mnMinim(on) {   // kecilkan jendela ke kolom kanan dan jeda game; buka 
   } else { pasangEsc(tutupMenara); posPeserta(); umumkan('Gim-Dek dilanjutkan.'); try { if (mn.cv) mn.cv.focus({ preventScroll: true }); } catch (e) {} mnUkur(); }
 }
 function tutupMenara() {
-  if (!mn) return; const m = mn; mn = null;
+  if (!mn) return; const m = mn; mn = null; setTimeout(hadir, 0);
   try { cancelAnimationFrame(m.raf); clearInterval(m.siaran); clearInterval(m.kirimIn); } catch (e) {}
   try { if (m.kanalG) { m.kanalG.send({ type: 'broadcast', event: 'keluar', payload: {} }); } } catch (e) {}
   try { if (m.menunggu) m.lobi.send({ type: 'broadcast', event: 'tutup', payload: { id: idKlien } }); } catch (e) {}
@@ -4034,6 +4050,7 @@ const bolehCoret = () => { if (dosenSaya) return true; if (!kanvasDibuka()) retu
 function hadirKirim() {
   if (!kanalHadir) return;
   const info = { id: idKlien, nama: tokenHidup() ? (getUser() || '') : '', ruang: ruangSaya, uid: tokenHidup() ? uidSaya() : '', dos: !!dosenSaya };
+  if (mn && mn.main && !mn.min && adalahEscape(ruangSaya)) info.gm = 1;   // sedang memainkan Gim-Dek (titik merah / hitungan di Statistik)
   if (dosenSaya) { info.izin = [...izinKanvas].slice(0, 400); info.kvb = [...kvBukaSet].slice(0, 60); info.kvs = [...kvSemuaSet].slice(0, 60); if (umumSaya) info.um = umumSaya; if (dosenSaya && tmSaya) info.tm = tmSaya; }
   const sig = JSON.stringify(info); if (sig === hadirSig) return; hadirSig = sig;
   try { kanalHadir.track(info); } catch (e) {}
@@ -4043,8 +4060,8 @@ function hadirMulai() {
   kanalHadir = sb.channel('hadir', { config: { presence: { key: idKlien } } });
   kanalHadir.on('presence', { event: 'sync' }, () => {
     const st = kanalHadir.presenceState(), nama = [];
-    let aktif = 0; const per = {};
-    Object.values(st).forEach(arr => { aktif++; const x = arr[arr.length - 1] || {}, n = String(x.nama || '').trim(); if (n && !nama.includes(n)) nama.push(n); const r = String(x.ruang || ''); per[r] = (per[r] || 0) + 1; });
+    let aktif = 0; const per = {}, gm = {};
+    Object.values(st).forEach(arr => { aktif++; const x = arr[arr.length - 1] || {}, n = String(x.nama || '').trim(); if (n && !nama.includes(n)) nama.push(n); const r = String(x.ruang || ''); per[r] = (per[r] || 0) + 1; if (x.gm) gm[r] = (gm[r] || 0) + 1; });
     const lama = bolehCoret(), lamaBuka = kanvasDibuka(), uni = new Set(), orang = [], kb = new Set(), ks = new Set(), idOk = v => typeof v === 'string' && /^[A-Za-z0-9_]{1,24}$/.test(v);
     Object.values(st).forEach(arr => { const x = arr[arr.length - 1] || {}; if (x.dos && Array.isArray(x.izin)) x.izin.forEach(u => { if (typeof u === 'string' && /^[0-9a-f]{12}$/.test(u)) uni.add(u); });
       if (x.dos && Array.isArray(x.kvb)) x.kvb.slice(0, 60).forEach(v => { if (idOk(v)) kb.add(v); });
@@ -4055,7 +4072,7 @@ function hadirMulai() {
     tmDosen = null; Object.values(st).forEach(arr => { const x = arr[arr.length - 1] || {}; if (!tmDosen && x.dos && x.tm) tmDosen = tmValid(x.tm); });
     renderUmum(); renderPencatat();
     const sigKv = [...kb].sort().join(',') + '|' + [...ks].sort().join(','); if (sigKv !== kvSigDosen) { kvSigDosen = sigKv; renderAlat(); }
-    hadirData = { aktif, nama, per }; renderStat(); renderRuang(); renderPeserta();
+    hadirData = { aktif, nama, per, gm }; renderStat(); renderRuang(); renderPeserta();
     if (kv && !dosenSaya && !kanvasDibuka(kv.ruang)) { tutupKanvas(); toast('Dosen menutup kanvas di ruang ini.'); umumkan('Kanvas ditutup oleh dosen.'); return; }
     if (!dosenSaya && kanvasDibuka() && !lamaBuka) { toast('Dosen membuka kanvas. Tekan ikon kanvas di bawah.'); umumkan('Dosen membuka kanvas.'); }
     const baru = bolehCoret(); if (kv && kv.bisa !== baru) { kvBangunUlang(); } else if (baru !== lama && !dosenSaya) { toast(baru ? 'Dosen mengizinkanmu mencoret di kanvas.' : 'Izin mencoret dicabut.'); umumkan(baru ? 'Kamu sekarang boleh mencoret di kanvas.' : 'Izin mencoret kanvas dicabut.'); }

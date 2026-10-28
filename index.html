@@ -756,7 +756,7 @@
   .tm-ctl .btn { font:inherit; font-size:12px; padding:3px 10px; border:1px solid var(--gx); background:transparent; color:inherit; cursor:pointer; }
   .tm-ctl input, .tm-ctl select { font:inherit; font-size:12px; padding:3px 6px; background:transparent; color:inherit; border:1px solid var(--gx); border-radius:0; max-width:100%; box-sizing:border-box; }
   .tm-ctl input[type=text] { width:100%; } .tm-ctl input[type=number] { width:64px; }
-  /* Gim-Dek: jendela transparan, tombol dan kotak bersudut membulat */
+  /* Geser-Dek: jendela transparan, tombol dan kotak bersudut membulat */
   #menara-ov { position:fixed; inset:0; z-index:99985; background:transparent; display:flex; align-items:center; justify-content:center; padding:calc(var(--hh,72px) + 6px) 12px 64px; box-sizing:border-box; }
   .mn-kotak { background:transparent !important; border:none !important; box-shadow:none !important; color:var(--h); --mnw:max(300px, min(520px, 98vw, calc((100vh - var(--hh,72px) - 250px) * 0.75))); width:var(--mnw); max-width:98vw; overflow:visible; }
   .mn-kotak .gb-bar { background:transparent !important; color:var(--h) !important; padding:0 2px 8px; }
@@ -1552,7 +1552,7 @@ function renderAlat() {
   if (!el.querySelector('.ikon.gbr')) el.append(h('button', { type: 'button', class: 'ikon gbr', title: 'Kartu gambar: tempel gambar dari link', 'aria-label': 'Kartu gambar, tempel gambar dari link', onclick: bukaGambar }, '\u{1F5BC}\uFE0E'));
   if (!el.querySelector('.ikon.kvs') && sb) el.append(h('button', { type: 'button', class: 'ikon kvs', title: 'Kanvas coret bersama', 'aria-label': 'Kanvas coret bersama, fitur visual', onclick: bukaKanvas }, '\u{1F3A8}\uFE0E'));
   { const lama = el.querySelector('.ikon.ktr'); if (lama) lama.remove(); }
-  if (!el.querySelector('.ikon.mnr') && sb) el.append(h('button', { type: 'button', class: 'ikon mnr', title: 'Game di Ruang Privat: Gim-Dek, Ketik-Dek', 'aria-label': 'Game di Ruang Privat, pilih Gim-Dek atau Ketik-Dek', 'aria-haspopup': 'menu', onclick: bukaMenuGame }, ikonSvg(IKON_GAME)));
+  if (!el.querySelector('.ikon.mnr') && sb) el.append(h('button', { type: 'button', class: 'ikon mnr', title: 'Game di Ruang Privat: Geser-Dek, Ketik-Dek', 'aria-label': 'Game di Ruang Privat, pilih Geser-Dek atau Ketik-Dek', 'aria-haspopup': 'menu', onclick: bukaMenuGame }, ikonSvg(IKON_GAME)));
   { const mb = el.querySelector('.ikon.mnr'); if (mb) mb.hidden = !adalahEscape(ruangSaya); }
   if (kt && !adalahEscape(ruangSaya)) tutupKetik();
   if (mn && !adalahEscape(ruangSaya)) tutupMenara();
@@ -1801,6 +1801,7 @@ function susunBalasan(daftar) {
   return hasil;
 }
 const IKON_KETIK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>';
+const IKON_GESER = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="4.5" fill="none"/><circle cx="8" cy="8" r="3" stroke="none"/><path stroke="none" d="M16 4.7l3.1 2.3-1.2 3.7h-3.8L12.9 7z"/><path stroke="none" d="M4.7 16l1.65-2.9h3.3l1.65 2.9-1.65 2.9h-3.3z"/><rect x="13.5" y="13.5" width="5" height="5" stroke="none"/></svg>';
 const IKON_GAME = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.42.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg>';
 const IKON_MATA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const tersegel = p => !!(p.parent && p.game === 1);
@@ -3883,7 +3884,7 @@ function mnMulaiMain() {   // sesudah lobi: tatakan kosong, langsung main
 }
 function mnMasuk() {   // papan permainan menggantikan lobi / layar penyusunan
   mn.fase = 'main'; mn.g = mnBaru(); mn.v = mn.mode === 'tamu' ? { ox: 0, st: [], b: null, skor: 0, selesai: false } : mn.g; mn.snap = null; mn.lokal = mn.peran === 'geser' ? 0 : MN.W / 2; mn.arah = 0; mn.status = mn.mode === 'tamu' ? 'Menyambung ke pasangan…' : '';
-  const cv = h('canvas', { class: 'mn-cv', role: 'img', 'aria-label': 'Permainan Gim-Dek. Fitur visual.', tabindex: '0' });
+  const cv = h('canvas', { class: 'mn-cv', role: 'img', 'aria-label': 'Permainan Geser-Dek. Fitur visual.', tabindex: '0' });
   cv.style.touchAction = 'none'; mn.cv = cv; mn.c = cv.getContext('2d');
   const px = e => { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * MN.W; };
   const geserAtas = () => mn.mode === 'solo' ? mn.g.st.length >= 4 : mn.peran === 'geser';   // solo: mouse memilih tempat saat menyusun, lalu memutar tatakan
@@ -3899,7 +3900,7 @@ function mnMasuk() {   // papan permainan menggantikan lobi / layar penyusunan
   const petunjuk = mn.mode === 'solo' ? 'Tatakan punya 5 petak dan masih kosong. Awal: gerakkan mouse (tanpa klik) memilih petak, klik atau Spasi menjatuhkan, untuk memasang 4 bentuk berbeda; satu petak dibiarkan kosong. Panah ← → memutar tatakan. Sesudah itu bentuk jatuh sendiri dan mouse memutar tatakan: bentuk yang sama menambah lapis, bentuk dek lain terpental, dan bentuk yang tidak ada di dek menghancurkan tumpukannya jadi satu, jadi loloskan lewat petak kosong.' : mn.peran === 'jatuh' ? 'Tatakan masih kosong. Kamu menjatuhkan: gerakkan mouse atau panah ← → memilih tempat, klik atau Spasi menjatuhkan. Pasang dulu 4 bentuk berbeda di 4 dari 5 petak; sesudahnya bentuk yang tidak ada di dek menghancurkan tumpukan yang ditimpanya. Pasanganmu memutar tatakan.' : 'Kamu memutar tatakan: gerakkan mouse (tanpa klik) atau panah ← →. Pasanganmu menjatuhkan bentuk; arahkan petak yang tepat ke bawahnya, dan loloskan bentuk yang tidak ada di dek lewat petak kosong.';
   info.textContent = petunjuk;
   mn.kotak.querySelector('.mn-isi').replaceChildren(cv, info, h('div', { class: 'mn-ctl' }, ulang, tutup));
-  mnUkur(); umumkan('Permainan Gim-Dek dimulai. ' + petunjuk + ' Ini fitur visual.'); cv.focus({ preventScroll: true });
+  mnUkur(); umumkan('Permainan Geser-Dek dimulai. ' + petunjuk + ' Ini fitur visual.'); cv.focus({ preventScroll: true });
 }
 function mnKirimSnap(paksa) { if (mn && mn.mode === 'host' && mn.g && mn.fase === 'main' && mn.kanalG && mn.tersambungG) { try { mn.kanalG.send({ type: 'broadcast', event: 'st', payload: mnSnap() }); } catch (e) {} } }
 function mnSambungG(id) {   // kanal sendiri per pasangan (hemat: tidak ikut siaran ke ruang)
@@ -3939,9 +3940,9 @@ function bukaMenara() {
   if (document.getElementById('menara-ov')) return;
   if (kt) { toast('Tutup Ketik-Dek dulu.'); return; }
   if (!sb || !butuhLogin()) return;
-  if (!adalahEscape(ruangSaya)) { toast('Gim-Dek hanya ada di Ruang Privat.'); return; }
+  if (!adalahEscape(ruangSaya)) { toast('Geser-Dek hanya ada di Ruang Privat.'); return; }
   const kotak = h('div', { class: 'gb-kotak mn-kotak', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'mn-judul' },
-    h('div', { class: 'gb-bar' }, h('h2', { id: 'mn-judul' }, 'Gim-Dek'), h('span', { class: 'kv-bt' },
+    h('div', { class: 'gb-bar' }, h('h2', { id: 'mn-judul' }, 'Geser-Dek'), h('span', { class: 'kv-bt' },
       h('button', { type: 'button', class: 'btn', id: 'mn-min', title: 'Kecilkan dan jeda', 'aria-label': 'Kecilkan jendela dan jeda game', onclick: () => mnMinim(true) }, '\u2013'),
       h('button', { type: 'button', class: 'btn', id: 'mn-suara', 'aria-pressed': 'true', onclick: e => { mn.suara = !mn.suara; e.currentTarget.setAttribute('aria-pressed', String(mn.suara)); e.currentTarget.textContent = mn.suara ? '\u{1F50A}' : '\u{1F507}'; } }, '\u{1F50A}'),
       h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup permainan', onclick: tutupMenara }, '✕'))),
@@ -3976,7 +3977,7 @@ function bukaMenara() {
   lb.subscribe(st => { if (st === 'SUBSCRIBED' && mn) lobiKirim('cari', { id: idKlien }); });
   mn.lobi = lb; mnLobi(); mn.raf = requestAnimationFrame(mnLoop);
   const bt = document.querySelector('#bentuk-baris .ikon.mnr'); if (bt) bt.classList.add('pilih');
-  umumkan('Jendela permainan Gim-Dek. Ini fitur visual. Escape untuk menutup.');
+  umumkan('Jendela permainan Geser-Dek. Ini fitur visual. Escape untuk menutup.');
 }
 function mnMinim(on) {   // kecilkan jendela ke kolom kanan dan jeda game; buka lagi untuk melanjutkan
   if (!mn) return; const ov = document.getElementById('menara-ov'); if (!ov) return; on = !!on; if (on === !!mn.min) return; mn.min = on;
@@ -3986,10 +3987,10 @@ function mnMinim(on) {   // kecilkan jendela ke kolom kanan dan jeda game; buka 
   const lama = document.getElementById('menara-mini'); if (lama) lama.remove();
   if (on) {
     lepasEsc(); mn.arah = 0;
-    const mini = h('aside', { id: 'menara-mini', role: 'region', 'aria-label': 'Gim-Dek dikecilkan dan dijeda' }, h('div', { class: 'mm-t' }, mn.main ? 'Gim-Dek · jeda' : 'Gim-Dek'),
+    const mini = h('aside', { id: 'menara-mini', role: 'region', 'aria-label': 'Geser-Dek dikecilkan dan dijeda' }, h('div', { class: 'mm-t' }, mn.main ? 'Geser-Dek · jeda' : 'Geser-Dek'),
       h('div', { class: 'mm-b' }, h('button', { type: 'button', class: 'btn', id: 'mm-buka', onclick: () => mnMinim(false) }, mn.main ? 'Lanjut' : 'Buka'), h('button', { type: 'button', class: 'btn', onclick: tutupMenara, 'aria-label': 'Tutup game' }, '\u2715')));
-    document.body.append(mini); posPeserta(); umumkan('Gim-Dek dikecilkan' + (mn.main ? ' dan dijeda.' : '.'));
-  } else { pasangEsc(tutupMenara); posPeserta(); umumkan('Gim-Dek dilanjutkan.'); try { if (mn.cv) mn.cv.focus({ preventScroll: true }); } catch (e) {} mnUkur(); }
+    document.body.append(mini); posPeserta(); umumkan('Geser-Dek dikecilkan' + (mn.main ? ' dan dijeda.' : '.'));
+  } else { pasangEsc(tutupMenara); posPeserta(); umumkan('Geser-Dek dilanjutkan.'); try { if (mn.cv) mn.cv.focus({ preventScroll: true }); } catch (e) {} mnUkur(); }
 }
 function tutupMenara() {
   if (!mn) return; const m = mn; mn = null; setTimeout(hadir, 0);
@@ -4024,7 +4025,7 @@ function ktIsi(p, t) {   // buat kata jalur p sampai sedikit di depan waktu t; h
   while (L.next <= t + 1) {
     const k = L.list.length, ts = L.next;
     let len = Math.min(12, 3 + Math.floor(ts / 12) + (L.rng() < 0.3 ? 1 : 0)); while (!KT_KATA[len] && len > 3) len--;   // makin lama makin panjang
-    const arr = KT_KATA[len], teks = arr[Math.floor(L.rng() * arr.length)], v = Math.min(240, 90 + ts * 0.9);
+    const arr = KT_KATA[len], teks = arr[Math.floor(L.rng() * arr.length)], v = Math.min(290, 115 + ts * 1.1);
     L.list.push({ k, ts, teks, v });
     L.next = ts + (teks.length * KT.CW + 120) / v + 0.5 + L.rng() * 0.9;
   }
@@ -4146,7 +4147,7 @@ function ktMulaiRuang() {
   ktKirimLobi('mulai', { host: idKlien, pl, seed, t0 }); ktKirimLobi('tutup', { id: idKlien }); ktMulai(pl, seed, t0);
 }
 const ktPl = a => (Array.isArray(a) ? a.slice(0, KT.MAKS) : []).map(x => ({ id: String((x && x.id) || '').slice(0, 40), nama: String((x && x.nama) || 'Teman').slice(0, 20) })).filter(x => x.id);
-function bukaMenuGame(e) {   // satu ikon game: pilih Gim-Dek atau Ketik-Dek
+function bukaMenuGame(e) {   // satu ikon game: pilih Geser-Dek atau Ketik-Dek
   const lama = document.getElementById('menu-game'); if (lama) { lama.remove(); return; }
   if (mn || kt) { toast('Tutup game yang sedang terbuka dulu.'); return; }
   const tbl = e.currentTarget, r = tbl.getBoundingClientRect();
@@ -4154,7 +4155,7 @@ function bukaMenuGame(e) {   // satu ikon game: pilih Gim-Dek atau Ketik-Dek
   const luar = ev => { if (!m.contains(ev.target) && !tbl.contains(ev.target)) tutupM(); };
   const esc = ev => { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); tutupM(); tbl.focus(); } };
   const item = (ik, nama, ket, fn) => h('button', { type: 'button', role: 'menuitem', class: 'mg', onclick: () => { tutupM(); fn(); } }, ikonSvg(ik), h('span', {}, h('b', {}, nama), h('small', {}, ket)));
-  const m = h('div', { id: 'menu-game', role: 'menu', 'aria-label': 'Pilih game' }, item(IKON_GAME, 'Gim-Dek', 'menumpuk bentuk, solo atau berpasangan', bukaMenara), item(IKON_KETIK, 'Ketik-Dek', 'mengetik kata, solo atau battle royale', bukaKetik));
+  const m = h('div', { id: 'menu-game', role: 'menu', 'aria-label': 'Pilih game' }, item(IKON_GESER, 'Geser-Dek', 'menumpuk bentuk, solo atau berpasangan', bukaMenara), item(IKON_KETIK, 'Ketik-Dek', 'mengetik kata, solo atau battle royale', bukaKetik));
   document.body.append(m); const w = m.offsetWidth; m.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px'; m.style.bottom = (window.innerHeight - r.top + 8) + 'px';
   document.addEventListener('mousedown', luar, true); document.addEventListener('keydown', esc, true);
   const p = m.querySelector('.mg'); if (p) p.focus();
@@ -4163,7 +4164,7 @@ function bukaKetik() {
   if (document.getElementById('ketik-ov')) return;
   if (!sb || !butuhLogin()) return;
   if (!adalahEscape(ruangSaya)) { toast('Ketik-Dek hanya ada di Ruang Privat.'); return; }
-  if (mn) { toast('Tutup Gim-Dek dulu.'); return; }
+  if (mn) { toast('Tutup Geser-Dek dulu.'); return; }
   const isi = h('div', { class: 'kt-kotak' });
   const ov = h('div', { id: 'ketik-ov', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'kt-judul' }, h('div', { class: 'kt-bar' }, h('h2', { id: 'kt-judul' }, 'Ketik-Dek'), h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup permainan', onclick: tutupKetik }, '✕')), isi);
   kt = { ov, isi, ruang: ruangSaya, undangan: new Map(), mode: '', hostId: '', pl: [], main: false, p: [], me: -1, pergi: new Set(), t: -3 };
@@ -4275,7 +4276,7 @@ const bolehCoret = () => { if (dosenSaya) return true; if (!kanvasDibuka()) retu
 function hadirKirim() {
   if (!kanalHadir) return;
   const info = { id: idKlien, nama: tokenHidup() ? (getUser() || '') : '', ruang: ruangSaya, uid: tokenHidup() ? uidSaya() : '', dos: !!dosenSaya };
-  if (((mn && mn.main && !mn.min) || (kt && kt.main && !kt.selesai)) && adalahEscape(ruangSaya)) info.gm = 1;   // sedang memainkan Gim-Dek (titik merah / hitungan di Statistik)
+  if (((mn && mn.main && !mn.min) || (kt && kt.main && !kt.selesai)) && adalahEscape(ruangSaya)) info.gm = 1;   // sedang memainkan Geser-Dek (titik merah / hitungan di Statistik)
   if (dosenSaya) { info.izin = [...izinKanvas].slice(0, 400); info.kvb = [...kvBukaSet].slice(0, 60); info.kvs = [...kvSemuaSet].slice(0, 60); if (umumSaya) info.um = umumSaya; if (dosenSaya && tmSaya) info.tm = tmSaya; }
   const sig = JSON.stringify(info); if (sig === hadirSig) return; hadirSig = sig;
   try { kanalHadir.track(info); } catch (e) {}

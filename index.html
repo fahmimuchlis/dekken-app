@@ -2787,13 +2787,9 @@ function gerbangNetra(manual) {
   };
   const jalan = async () => {
     if (manual) return;   // tanpa suara dan tanpa teks sambutan; Spasi/Escape/Mulai tetap berfungsi
-    for (let n = 5; n >= 1; n--) {   // hitung mundur: 5 4 3 2 1 START, tiap angka tampil besar dan diucapkan
-      if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, String(n))); await tidur(1000);
-    }
-    if (usai) return; cap.textContent = ''; cap.append(h('span', { class: 'kata hitung' }, 'MULAI'));
-    await tidur(900); if (!usai) tutup(false);
+    await tidur(6000); if (!usai) tutup(false);   // tanpa hitung mundur: menutup sendiri diam-diam; Spasi tetap bisa mengaktifkan Mode Baca selama jendela ini terbuka
   };
-  btn.addEventListener('click', () => tutup(true));
+  btn.addEventListener('click', () => tutup(false));   // klik pada kata Dekken tidak lagi mengaktifkan Mode Baca; hanya Spasi
   langsung.addEventListener('click', () => tutup(false));
   document.addEventListener('keydown', tombolKbd, true);
   ov.addEventListener('keydown', () => ov.classList.add('kbd'), { once: true });

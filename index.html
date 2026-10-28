@@ -600,7 +600,7 @@
   .gambar-gagal { font-size:12px; }
   #baca .gambar-kotak img { max-height:260px; }
   #baca .gambar-muat { font-size:16px; min-height:40px; border:2px solid var(--h); }
-  .ikon.gbr, .ikon.kvs, .ikon.mnr { position:relative; color:var(--p,#fff); font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; }
+  .ikon.gbr, .ikon.kvs, .ikon.mnr, .ikon.ktr { position:relative; color:var(--p,#fff); font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center; }
   #gambar-ov, #lihat-ov { position:fixed; inset:0; z-index:99985; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:16px; }
   .gb-kotak { background:#fff; color:#000; border:2px solid #111; width:100%; max-width:480px; max-height:94vh; overflow:auto; box-shadow:6px 6px 0 rgba(0,0,0,.35); }
   .gb-kotak.lihat { max-width:min(900px,96vw); }
@@ -769,6 +769,16 @@
   .mn-kotak .gb-bar .btn { padding:3px 10px; } .mn-kotak .btn:hover { background:var(--h); color:var(--p); }
   .mn-kotak .btn:focus-visible, .mn-cv:focus-visible { outline:2px solid #4fc3f7; outline-offset:2px; }
   html.foto #menara-ov { visibility:hidden; }
+  /* Ketik-Dek: panggung lebar, minimalis */
+  #ketik-ov { position:fixed; inset:0; z-index:99986; background:var(--p); color:var(--h); display:flex; flex-direction:column; align-items:center; padding:8px 12px 12px; box-sizing:border-box; gap:8px; overflow:auto; }
+  .kt-bar { width:100%; display:flex; justify-content:space-between; align-items:center; } .kt-bar h2 { margin:0; font-size:16px; }
+  .kt-kotak { width:100%; max-width:520px; display:flex; flex-direction:column; gap:8px; margin:auto; }
+  .kt-scena { width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .kt-cv { display:block; width:min(100%, calc((100vh - 120px) * 1.875)); aspect-ratio:1200 / 640; border:1px solid var(--gx); border-radius:22px; background:var(--p); }
+  .kt-hasil { width:min(100%, 720px); display:flex; flex-direction:column; gap:8px; }
+  #ketik-ov .btn { font:500 14px "Google Sans", Roboto, Arial, sans-serif; padding:7px 14px; border:1px solid var(--gx); border-radius:10px; background:var(--p); color:var(--h); cursor:pointer; }
+  #ketik-ov .btn:hover:not(:disabled) { background:var(--h); color:var(--p); } #ketik-ov .btn:disabled { opacity:.5; cursor:default; } #ketik-ov .btn:focus-visible { outline:2px solid #4fc3f7; outline-offset:2px; }
+  html.foto #ketik-ov { visibility:hidden; }
   /* tombol ikon kartu: sembunyi otomatis saat diam, muncul bila pointer mendekat ke bawah atau fokus papan ketik */
   #alat .ikon { transition:opacity .25s ease, transform .25s ease; }
   html:not(.mode-baca) #alat.sembunyi .ikon { opacity:0; transform:translateY(26px) scale(.8); pointer-events:none; }
@@ -1536,8 +1546,10 @@ function renderAlat() {
   }
   if (!el.querySelector('.ikon.gbr')) el.append(h('button', { type: 'button', class: 'ikon gbr', title: 'Kartu gambar: tempel gambar dari link', 'aria-label': 'Kartu gambar, tempel gambar dari link', onclick: bukaGambar }, '\u{1F5BC}\uFE0E'));
   if (!el.querySelector('.ikon.kvs') && sb) el.append(h('button', { type: 'button', class: 'ikon kvs', title: 'Kanvas coret bersama', 'aria-label': 'Kanvas coret bersama, fitur visual', onclick: bukaKanvas }, '\u{1F3A8}\uFE0E'));
+  if (!el.querySelector('.ikon.ktr') && sb) el.append(h('button', { type: 'button', class: 'ikon ktr', title: 'Ketik-Dek (game mengetik di Ruang Privat)', 'aria-label': 'Ketik-Dek, game mengetik visual di Ruang Privat', onclick: bukaKetik }, ikonSvg(IKON_KETIK)));
   if (!el.querySelector('.ikon.mnr') && sb) el.append(h('button', { type: 'button', class: 'ikon mnr', title: 'Gim-Dek (game di Ruang Privat)', 'aria-label': 'Gim-Dek, game visual di Ruang Privat', onclick: bukaMenara }, ikonSvg(IKON_GAME)));
-  { const mb = el.querySelector('.ikon.mnr'); if (mb) mb.hidden = !adalahEscape(ruangSaya); }
+  { const mb = el.querySelector('.ikon.mnr'); if (mb) mb.hidden = !adalahEscape(ruangSaya); const kb = el.querySelector('.ikon.ktr'); if (kb) kb.hidden = !adalahEscape(ruangSaya); }
+  if (kt && !adalahEscape(ruangSaya)) tutupKetik();
   if (mn && !adalahEscape(ruangSaya)) tutupMenara();
   { const kb = el.querySelector('.ikon.kvs'); if (kb) kb.hidden = !kanvasDibuka(); }   // mahasiswa baru melihat ikon kanvas bila dosen membukanya
   // tombol polling (merah) hanya untuk dosen
@@ -1783,6 +1795,7 @@ function susunBalasan(daftar) {
   daftar.forEach(taruh);   // pengaman bila ada rantai melingkar
   return hasil;
 }
+const IKON_KETIK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>';
 const IKON_GAME = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.42.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg>';
 const IKON_MATA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const tersegel = p => !!(p.parent && p.game === 1);
@@ -3642,7 +3655,7 @@ function renderStat() {
       sebar.push(baris('Privat (' + priv.length + ' ruang)', priv.reduce((a, r) => a + (per[r.id] || 0), 0)));
       priv.forEach(r => { const m = gm[r.id] || 0; sebar.push(h('div', { class: 'baris-s sub-s' }, h('span', {}, String(r.nama || 'Privat').slice(0, 22) + (m ? ' ' : ''), ...(m ? [h('span', { class: 'main-s' }, '● ' + m + ' main')] : [])), h('b', {}, String(per[r.id] || 0)))); });
     }
-    const tm = Object.values(gm).reduce((a, b) => a + b, 0); if (tm) sebar.push(baris('Sedang main Gim-Dek', tm));
+    const tm = Object.values(gm).reduce((a, b) => a + b, 0); if (tm) sebar.push(baris('Sedang main game', tm));
   }
   isi.replaceChildren(
     baris('Pengguna aktif', hadirData ? hadirData.aktif : '–'),
@@ -3712,7 +3725,7 @@ setInterval(() => { if (umumSaya && waktuServer() >= umumSaya.t) umumJalankan();
 function alatOtomatis() {
   const nav = document.getElementById('alat'), pg = document.getElementById('alat-pegang'); if (!nav) return;
   const JEDA = 3500; let terakhir = Date.now(), atas = false;
-  const tahan = () => atas || nav.matches(':hover') || nav.contains(document.activeElement) || komposBuka || pollBuka || !!document.getElementById('menu-bentuk') || !!document.querySelector('#gambar-ov, #kanvas-ov, #menara-ov, #gerbang, #purge-ov');
+  const tahan = () => atas || nav.matches(':hover') || nav.contains(document.activeElement) || komposBuka || pollBuka || !!document.getElementById('menu-bentuk') || !!document.querySelector('#gambar-ov, #kanvas-ov, #menara-ov, #ketik-ov, #gerbang, #purge-ov');
   const tampil = () => { terakhir = Date.now(); nav.classList.remove('sembunyi'); };
   document.addEventListener('pointermove', e => { const r = nav.getBoundingClientRect(); atas = e.clientY >= Math.min(r.top, innerHeight - 56) - 24 && e.clientY <= innerHeight; if (atas) tampil(); }, { passive: true });
   document.addEventListener('pointerdown', e => { if (e.clientY >= innerHeight - 90) tampil(); }, { passive: true });
@@ -3726,7 +3739,7 @@ const MN = { W: 480, H: 640, LANTAI: 560, TEBAL: 14, R: 28, HIT: 48, SLOT: 96, P
   NMAKS: 36, TIPE: ['kotak', 'lingkaran', 'segienam', 'segilima', 'tumpul'], NAMA: ['persegi', 'lingkaran', 'segi enam', 'segi lima', 'persegi tumpul'], NADA: [262, 330, 392, 494, 587], WARNA: ['#FEE440', '#F15BB5', '#00F5D4', '#00BBF9', '#9B5DE5'] };   // palet kartu: kuning, pink, hijau, biru, ungu
 const mnPetak = i => MN.WARNA[i];
 const mnWarnaTipe = t => MN.WARNA[Math.max(0, MN.TIPE.indexOf(t))];
-let mn = null;
+let mn = null, kt = null;
 const mnJepit = (v, a, b) => Math.max(a, Math.min(b, v));
 function mnJalur(c, tipe, x, y, r) {
   c.beginPath();
@@ -3919,6 +3932,7 @@ function gabung(id, u) { mn.mode = 'tamu'; mn.peran = u.peran === 'jatuh' ? 'ges
 const namaSaya = () => String(getUser() || (sesi && sesi.user && sesi.user.user_metadata && sesi.user.user_metadata.name) || 'Teman').slice(0, 20);
 function bukaMenara() {
   if (document.getElementById('menara-ov')) return;
+  if (kt) { toast('Tutup Ketik-Dek dulu.'); return; }
   if (!sb || !butuhLogin()) return;
   if (!adalahEscape(ruangSaya)) { toast('Gim-Dek hanya ada di Ruang Privat.'); return; }
   const kotak = h('div', { class: 'gb-kotak mn-kotak', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'mn-judul' },
@@ -3982,6 +3996,199 @@ function tutupMenara() {
   try { if (m.ac) m.ac.close(); } catch (e) {}
   lepasEsc(); const o = document.getElementById('menara-ov'); if (o) o.remove(); const mm = document.getElementById('menara-mini'); if (mm) { mm.remove(); posPeserta(); }
   const b = document.querySelector('#bentuk-baris .ikon.mnr'); if (b) { b.classList.remove('pilih'); b.focus(); }
+}
+/* ---- Ketik-Dek: game mengetik di Ruang Privat. Solo, atau battle royale 2-4 pemain.
+   Tiap pemain punya jalur dan warna sendiri; kata dibuat deterministik dari benih yang sama sehingga tiap perangkat
+   menghitung posisi kata sendiri, dan hanya skor/nyawa/kemajuan ketikan yang disiarkan (tanpa database). ---- */
+const KT = { W: 1200, H: 640, CW: 46, FONT: 72, LIFE: 3, MAKS: 4, DURASI: 180, TEPI: 24, WARNA: ['#00BBF9', '#FEE440', '#F15BB5', '#00F5D4'] };
+const KT_KATA = {};
+('api air aku dia ibu ayo bus kue dua mau ada buku kota roti ayah ikan kaki mata laut kuda bulu pagi hati lagu naik baca pena kayu batu ' +
+ 'kotak lihat pantas pahit kartu balas rumah jalan malam siang cepat besar kecil bunga tanah angin hujan senja pagar sapi roda papan ' +
+ 'kursi pensil kereta pelan ketik layar lampu lemari jendela tangan kepala mulai hitam putih merah biru hijau kuning ' +
+ 'sekolah belajar kampus teman diskusi bangunan segitiga bersama lukisan pelajar menulis membaca berlari bernyanyi ' +
+ 'lingkaran mahasiswa tantangan kesehatan pertemuan kebijakan kecepatan bermain berpikir bertanya berjalan ' +
+ 'kolaborasi arsitektur keberanian pertanyaan pengalaman pengetikan perjuangan kemenangan kebersihan ketelitian perpustakaan ' +
+ 'kebersamaan pengetahuan pemandangan kebahagiaan universitas perancangan penghargaan kepercayaan pengumpulan ' +
+ 'persahabatan perkembangan pembelajaran keberhasilan ').trim().split(/\s+/).forEach(w => { (KT_KATA[w.length] = KT_KATA[w.length] || []).push(w); });
+const ktRng = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const ktWaktu = () => (waktuServer() - kt.t0) / 1000;
+const ktX = (w, t) => KT.W - w.v * (t - w.ts);
+const ktBatas = (v, a, b) => Math.max(a, Math.min(b, v | 0));
+function ktIsi(p, t) {   // buat kata jalur p sampai sedikit di depan waktu t; hasilnya sama di semua perangkat
+  const L = kt.lane[p];
+  while (L.next <= t + 1) {
+    const k = L.list.length, ts = L.next;
+    let len = Math.min(12, 3 + Math.floor(ts / 12) + (L.rng() < 0.3 ? 1 : 0)); while (!KT_KATA[len] && len > 3) len--;   // makin lama makin panjang
+    const arr = KT_KATA[len], teks = arr[Math.floor(L.rng() * arr.length)], v = Math.min(240, 90 + ts * 0.9);
+    L.list.push({ k, ts, teks, v });
+    L.next = ts + (teks.length * KT.CW + 120) / v + 0.5 + L.rng() * 0.9;
+  }
+}
+const ktPeringkat = () => kt.p.map((q, i) => ({ q, i })).sort((a, b) => (a.q.out - b.q.out) || (b.q.skor - a.q.skor) || (b.q.l - a.q.l) || (a.i - b.i));
+function ktKirimLobi(ev, p) { try { if (kt && kt.lobi) kt.lobi.send({ type: 'broadcast', event: ev, payload: p }); } catch (e) {} }
+function ktKirim() {
+  if (!kt || !kt.main || kt.p.length < 2) return; const me = kt.p[kt.me]; if (!me) return;
+  ktKirimLobi('ks', { h: kt.hostId, i: idKlien, s: me.skor, l: me.l, o: me.out ? 1 : 0, d: [...me.d].slice(-12), lk: me.kunci >= 0 ? [me.kunci, me.n] : null });
+}
+function ktTerimaKs(p) {
+  if (!kt || !kt.main || !p || p.h !== kt.hostId) return; const q = kt.p.find(x => x.id === p.i); if (!q || q === kt.p[kt.me]) return;
+  q.skor = ktBatas(p.s, 0, 99999); q.l = ktBatas(p.l, 0, KT.LIFE); q.out = !!p.o || q.l <= 0;
+  if (Array.isArray(p.d)) p.d.slice(0, 16).forEach(v => { if (Number.isInteger(v) && v >= 0 && v < 5000) q.d.add(v); });
+  q.lk = Array.isArray(p.lk) && Number.isInteger(p.lk[0]) && Number.isInteger(p.lk[1]) && p.lk[0] >= 0 && p.lk[1] >= 0 ? [p.lk[0], p.lk[1]] : null;
+}
+function ktTekan(e) {
+  if (!kt || !kt.main || kt.selesai) return; const k = e.key;
+  if (e.ctrlKey || e.metaKey || e.altKey || !(/^[a-zA-Z]$/.test(k) || k === ' ')) return;
+  e.preventDefault(); e.stopPropagation(); if (e.type !== 'keydown' || e.repeat || kt.selesai || k === ' ') return;
+  const me = kt.p[kt.me], t = kt.t; if (!me || me.out || !(t >= 0)) return; const ch = k.toLowerCase(), L = kt.lane[kt.me].list;
+  if (me.kunci >= 0) {   // sudah terkunci pada satu kata: hanya huruf berikutnya yang dihitung
+    const w = L[me.kunci];
+    if (w.teks[me.n] === ch) { me.n++; if (me.n >= w.teks.length) { me.d.add(w.k); me.skor += w.teks.length; me.kunci = -1; me.n = 0; } ktKirim(); }
+    return;
+  }
+  const w = L.filter(x => !me.d.has(x.k) && !me.lost.has(x.k) && ktX(x, t) < KT.W && ktX(x, t) > KT.TEPI).sort((a, b) => a.ts - b.ts).find(x => x.teks[0] === ch);   // kata milikmu paling dekat ke tepi kiri yang diawali huruf ini
+  if (w) { me.kunci = w.k; me.n = 1; ktKirim(); }
+}
+function ktLangkah() {
+  if (kt.selesai) return; const t = ktWaktu(), n = kt.p.length; kt.t = t; kt.p.forEach((q, i) => ktIsi(i, t));
+  if (t < 0) return; const me = kt.p[kt.me];
+  if (me && !me.out) {
+    let ubah = false;
+    for (const w of kt.lane[kt.me].list) { if (w.ts < t - 30 || me.d.has(w.k) || me.lost.has(w.k) || ktX(w, t) > KT.TEPI) continue; me.lost.add(w.k); me.l--; ubah = true; if (me.kunci === w.k) { me.kunci = -1; me.n = 0; } if (me.l <= 0) { me.out = true; me.l = 0; break; } }
+    if (ubah) ktKirim();
+  }
+  const hidup = kt.p.filter(q => !q.out).length;
+  if ((n > 1 && (hidup <= 1 || t >= KT.DURASI)) || (n === 1 && hidup === 0)) ktUsai();
+}
+function ktGambar() {
+  const c = kt.c, { W, H, CW, FONT } = KT, n = kt.p.length, t = kt.t; c.clearRect(0, 0, W, H);
+  if (!kt.ink || (kt.f = (kt.f || 0) + 1) % 40 === 0) kt.ink = getComputedStyle(document.body).color || '#fff'; const ink = kt.ink;
+  c.textBaseline = 'middle'; c.textAlign = 'center'; c.lineJoin = 'round';
+  if (t >= 0) kt.p.forEach((q, i) => {
+    const y = n === 1 ? H / 2 + 40 : 200 + (H - 270) * i / (n - 1), mine = i === kt.me;
+    c.font = '800 ' + FONT + 'px ui-monospace, Menlo, Consolas, monospace';
+    for (const w of kt.lane[i].list) {
+      const x = ktX(w, t), len = w.teks.length; if (x > W || x + len * CW < 0 || q.d.has(w.k) || w.ts > t) continue;
+      const ketik = mine ? (q.kunci === w.k ? q.n : 0) : (q.lk && q.lk[0] === w.k ? Math.min(len, q.lk[1]) : 0);
+      c.globalAlpha = x < KT.TEPI ? 0.3 : q.out ? 0.35 : 1;   // kata yang lolos ke tepi kiri memudar
+      for (let j = 0; j < len; j++) { const cx = x + j * CW + CW / 2; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.55)'; const hr = w.teks[j].toUpperCase(); c.strokeText(hr, cx, y); c.fillStyle = j < ketik ? ink : KT.WARNA[i]; c.fillText(hr, cx, y); }
+      if (ketik > 0) { c.fillStyle = ink; c.fillRect(x, y + FONT * 0.55, ketik * CW, 6); }
+      c.globalAlpha = 1;
+    }
+  });
+  const g = c.createLinearGradient(0, 0, 60, 0); g.addColorStop(0, 'rgba(229,57,53,.45)'); g.addColorStop(1, 'rgba(229,57,53,0)'); c.fillStyle = g; c.fillRect(0, 0, 60, H);   // zona bahaya
+  c.font = '600 22px system-ui, Arial, sans-serif'; c.textAlign = 'left';
+  ktPeringkat().forEach(({ q, i }, r) => {
+    const y = 52 + r * 28; c.globalAlpha = q.out ? 0.4 : 1; c.fillStyle = KT.WARNA[i]; const tx = '#' + (r + 1) + ' ' + q.nama + (i === kt.me ? ' (kamu)' : '');
+    c.font = (i === kt.me ? '800 ' : '600 ') + '22px system-ui, Arial, sans-serif'; c.fillText(tx, 44, y);
+    if (q.out) { c.fillRect(44, y, c.measureText(tx).width, 2); }
+    c.fillStyle = ink; c.fillText('♥'.repeat(q.l) + '♡'.repeat(KT.LIFE - q.l), 330, y); c.fillText(String(q.skor), 440, y); c.globalAlpha = 1;
+  });
+  c.textAlign = 'right'; c.font = '700 22px system-ui, Arial, sans-serif'; c.fillStyle = ink;
+  if (t >= 0 && n > 1) { const sisa = Math.max(0, Math.ceil(KT.DURASI - t)); c.fillText(Math.floor(sisa / 60) + ':' + String(sisa % 60).padStart(2, '0'), W - 30, 52); }
+  if (t < 0) { c.textAlign = 'center'; c.font = '800 220px ui-monospace, Menlo, Consolas, monospace'; c.fillText(String(Math.ceil(-t)), W / 2, H / 2 + 30); }
+}
+function ktUkur() {
+  if (!kt || !kt.cv) return; const r = kt.cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  kt.cv.width = Math.max(1, Math.round(r.width * d)); kt.cv.height = Math.max(1, Math.round(r.height * d)); kt.c.setTransform(kt.cv.width / KT.W, 0, 0, kt.cv.height / KT.H, 0, 0);
+}
+function ktLoop() { if (!kt) return; kt.raf = requestAnimationFrame(ktLoop); if (!kt.main || !kt.cv) return; ktLangkah(); ktGambar(); }
+function ktUsai() {
+  if (kt.selesai) return; kt.selesai = true; ktKirim(); setTimeout(hadir, 0);
+  const rk = ktPeringkat(), me = kt.p[kt.me], menang = rk[0].q;
+  const judul = kt.p.length === 1 ? 'Selesai. Skor akhir ' + me.skor + '.' : 'Pemenang: ' + menang.nama + (rk[0].i === kt.me ? ' (kamu)' : '') + '.';
+  const ulang = kt.mode === 'tamu' ? h('p', { class: 'mn-p' }, 'Menunggu pembuat ruang memulai ronde baru…') : h('button', { type: 'button', class: 'btn', onclick: ktUlang }, 'Main lagi');
+  kt.isi.append(h('div', { class: 'kt-hasil', role: 'status' }, h('p', { class: 'mn-p' }, judul + ' ' + rk.map(({ q }, r) => (r + 1) + '. ' + q.nama + ' ' + q.skor + (q.out ? ' (tersingkir)' : '')).join('; ')), h('div', { class: 'mn-ctl' }, ulang, h('button', { type: 'button', class: 'btn', onclick: tutupKetik }, 'Selesai'))));
+  umumkan(judul);
+}
+function ktUlang() {
+  if (!kt || kt.mode === 'tamu') return; const pl = kt.p.filter(q => !kt.pergi.has(q.id)).map(q => ({ id: q.id, nama: q.nama })); if (!pl.length) return;
+  const seed = Math.floor(Math.random() * 2147483647), t0 = waktuServer() + 3500;
+  if (pl.length > 1) ktKirimLobi('mulai', { host: idKlien, pl, seed, t0 });
+  ktMulai(pl, seed, t0);
+}
+function ktMulai(pl, seed, t0) {
+  kt.main = true; kt.selesai = false; kt.seed = seed | 0; kt.t0 = +t0; kt.t = -3; kt.pergi = new Set(); kt.menunggu = false;
+  kt.p = pl.map(x => ({ id: x.id, nama: x.nama, skor: 0, l: KT.LIFE, d: new Set(), lost: new Set(), lk: null, out: false, kunci: -1, n: 0 }));
+  kt.me = kt.p.findIndex(x => x.id === idKlien);
+  kt.lane = kt.p.map((_, i) => ({ rng: ktRng(kt.seed * 131 + i * 7919 + 17), list: [], next: 1.5 + i * 0.45 }));
+  const cv = h('canvas', { class: 'kt-cv', role: 'img', 'aria-label': 'Permainan mengetik Ketik-Dek. Fitur visual.' }); kt.cv = cv; kt.c = cv.getContext('2d');
+  kt.isi.className = 'kt-scena'; kt.isi.replaceChildren(cv); ktUkur();
+  clearInterval(kt.hb); kt.hb = setInterval(ktKirim, 1000); cancelAnimationFrame(kt.raf); kt.raf = requestAnimationFrame(ktLoop);
+  setTimeout(hadir, 0); umumkan('Ketik-Dek dimulai' + (pl.length > 1 ? ', ' + pl.length + ' pemain' : '') + '. Ketik kata berwarnamu persis seperti tertulis. Ini fitur visual.');
+}
+function ktLobi() {
+  if (!kt || kt.main) return; const kids = [h('p', { class: 'mn-p' }, 'Ketik kata yang bergerak ke kiri persis seperti tertulis. Tiap pemain punya jalur dan warna sendiri; kata yang lolos ke tepi kiri mengurangi nyawamu. Makin lama kata makin panjang. Sendirian, atau battle royale 2–4 pemain: yang terakhir bertahan atau skor tertinggi menang. Ini game visual.')];
+  if (kt.mode === 'host' || kt.mode === 'tamu') {
+    kids.push(h('div', { class: 'mn-jdl' }, 'Pemain (' + kt.pl.length + '/' + KT.MAKS + ')'), ...kt.pl.map((x, i) => h('p', { class: 'mn-p', style: 'border-color:' + KT.WARNA[i] }, x.nama + (x.id === idKlien ? ' (kamu)' : '') + (i === 0 ? ' · pembuat' : ''))));
+    if (kt.mode === 'host') { const bm = h('button', { type: 'button', class: 'btn mn-b', onclick: ktMulaiRuang }, kt.pl.length < 2 ? 'Mulai (tunggu pemain lain)' : 'Mulai'); if (kt.pl.length < 2) bm.disabled = true; kids.push(bm, h('button', { type: 'button', class: 'btn mn-b', onclick: ktBatal }, 'Batalkan ruang')); }
+    else kids.push(h('p', { class: 'mn-p', role: 'status' }, 'Menunggu pembuat ruang menekan Mulai…'), h('button', { type: 'button', class: 'btn mn-b', onclick: ktKeluarLobi }, 'Keluar dari ruang'));
+  } else {
+    kids.push(h('button', { type: 'button', class: 'btn mn-b', onclick: () => { kt.mode = 'solo'; ktKirimLobi('tutup', { id: idKlien }); ktMulai([{ id: idKlien, nama: namaSaya() }], Math.floor(Math.random() * 2147483647), waktuServer() + 3000); } }, 'Main sendiri'),
+      h('button', { type: 'button', class: 'btn mn-b', onclick: ktBuatRuang }, 'Buat ruang battle royale'));
+    const ud = [...kt.undangan.entries()]; kids.push(h('div', { class: 'mn-jdl' }, 'Ruang di sini'));
+    if (!ud.length) kids.push(h('p', { class: 'mn-p' }, 'Belum ada ruang.'));
+    ud.forEach(([id, u]) => kids.push(h('button', { type: 'button', class: 'btn mn-b', onclick: () => ktGabung(id) }, 'Gabung ruang ' + u.nama + ' (' + u.n + '/' + KT.MAKS + ')')));
+  }
+  kt.isi.replaceChildren(...kids);
+}
+function ktBuatRuang() { kt.mode = 'host'; kt.hostId = idKlien; kt.menunggu = true; kt.pl = [{ id: idKlien, nama: namaSaya() }]; ktKirimLobi('buka', { id: idKlien, nama: namaSaya(), n: 1 }); ktLobi(); umumkan('Ruang dibuat. Menunggu pemain lain.'); }
+function ktBatal() { ktKirimLobi('batal', { host: idKlien }); ktKirimLobi('tutup', { id: idKlien }); kt.mode = ''; kt.menunggu = false; kt.pl = []; ktLobi(); }
+function ktGabung(id) { kt.mode = 'tamu'; kt.hostId = id; kt.pl = []; ktKirimLobi('gabung', { id: idKlien, host: id, nama: namaSaya() }); toast('Meminta bergabung…'); ktLobi(); setTimeout(() => { if (kt && kt.mode === 'tamu' && !kt.pl.length) { kt.mode = ''; kt.undangan.delete(id); toast('Ruang sudah tidak tersedia.'); ktLobi(); } }, 5000); }
+function ktKeluarLobi() { ktKirimLobi('keluarlobi', { id: idKlien, host: kt.hostId }); kt.mode = ''; kt.pl = []; ktLobi(); }
+function ktMulaiRuang() {
+  if (!kt || kt.mode !== 'host' || kt.pl.length < 2) return; const seed = Math.floor(Math.random() * 2147483647), t0 = waktuServer() + 3500, pl = kt.pl.map(x => ({ id: x.id, nama: x.nama }));
+  ktKirimLobi('mulai', { host: idKlien, pl, seed, t0 }); ktKirimLobi('tutup', { id: idKlien }); ktMulai(pl, seed, t0);
+}
+const ktPl = a => (Array.isArray(a) ? a.slice(0, KT.MAKS) : []).map(x => ({ id: String((x && x.id) || '').slice(0, 40), nama: String((x && x.nama) || 'Teman').slice(0, 20) })).filter(x => x.id);
+function bukaKetik() {
+  if (document.getElementById('ketik-ov')) return;
+  if (!sb || !butuhLogin()) return;
+  if (!adalahEscape(ruangSaya)) { toast('Ketik-Dek hanya ada di Ruang Privat.'); return; }
+  if (mn) { toast('Tutup Gim-Dek dulu.'); return; }
+  const isi = h('div', { class: 'kt-kotak' });
+  const ov = h('div', { id: 'ketik-ov', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'kt-judul' }, h('div', { class: 'kt-bar' }, h('h2', { id: 'kt-judul' }, 'Ketik-Dek'), h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup permainan', onclick: tutupKetik }, '✕')), isi);
+  kt = { ov, isi, ruang: ruangSaya, undangan: new Map(), mode: '', hostId: '', pl: [], main: false, p: [], me: -1, pergi: new Set(), t: -3 };
+  document.body.append(ov); pasangEsc(tutupKetik);
+  kt.tekan = ktTekan; document.addEventListener('keydown', kt.tekan, true); document.addEventListener('keyup', kt.tekan, true);
+  kt.onUkur = () => ktUkur(); window.addEventListener('resize', kt.onUkur);
+  const lb = sb.channel('ketik-lobi-' + kunciRuangKv(ruangSaya), { config: { broadcast: { self: false } } });
+  lb.on('broadcast', { event: 'cari' }, () => { if (kt && kt.mode === 'host' && kt.menunggu && kt.pl.length < KT.MAKS) ktKirimLobi('buka', { id: idKlien, nama: namaSaya(), n: kt.pl.length }); });
+  lb.on('broadcast', { event: 'buka' }, m => { const p = m.payload || {}; if (!kt || !p.id || p.id === idKlien) return; kt.undangan.set(String(p.id), { nama: String(p.nama || 'Teman').slice(0, 20), n: ktBatas(p.n, 1, KT.MAKS) }); ktLobi(); });
+  lb.on('broadcast', { event: 'tutup' }, m => { const p = m.payload || {}; if (!kt || !p.id) return; kt.undangan.delete(String(p.id)); ktLobi(); });
+  lb.on('broadcast', { event: 'batal' }, m => { const p = m.payload || {}; if (!kt || kt.main || kt.mode !== 'tamu' || p.host !== kt.hostId) return; kt.mode = ''; kt.pl = []; toast('Pembuat membatalkan ruang.'); ktLobi(); });
+  lb.on('broadcast', { event: 'gabung' }, m => {
+    const p = m.payload || {}; if (!kt || kt.mode !== 'host' || !kt.menunggu || p.host !== idKlien || !p.id) return;
+    const id = String(p.id).slice(0, 40); if (!kt.pl.some(x => x.id === id) && kt.pl.length < KT.MAKS) kt.pl.push({ id, nama: String(p.nama || 'Teman').slice(0, 20) });
+    ktKirimLobi('daftar', { host: idKlien, pl: kt.pl }); ktKirimLobi(kt.pl.length >= KT.MAKS ? 'tutup' : 'buka', { id: idKlien, nama: namaSaya(), n: kt.pl.length }); ktLobi();
+  });
+  lb.on('broadcast', { event: 'keluarlobi' }, m => { const p = m.payload || {}; if (!kt || kt.mode !== 'host' || !kt.menunggu || p.host !== idKlien) return; kt.pl = kt.pl.filter(x => x.id !== p.id || x.id === idKlien); ktKirimLobi('daftar', { host: idKlien, pl: kt.pl }); ktKirimLobi('buka', { id: idKlien, nama: namaSaya(), n: kt.pl.length }); ktLobi(); });
+  lb.on('broadcast', { event: 'daftar' }, m => {
+    const p = m.payload || {}; if (!kt || kt.main || kt.mode !== 'tamu' || p.host !== kt.hostId) return; const pl = ktPl(p.pl);
+    if (!pl.some(x => x.id === idKlien)) { kt.mode = ''; kt.pl = []; toast('Ruang penuh.'); } else kt.pl = pl; ktLobi();
+  });
+  lb.on('broadcast', { event: 'mulai' }, m => {
+    const p = m.payload || {}; if (!kt || (kt.main && !kt.selesai) || kt.mode !== 'tamu' || p.host !== kt.hostId) return; const pl = ktPl(p.pl);
+    if (!pl.some(x => x.id === idKlien) || !Number.isFinite(+p.seed) || !Number.isFinite(+p.t0)) return; ktMulai(pl, +p.seed, +p.t0);
+  });
+  lb.on('broadcast', { event: 'ks' }, m => ktTerimaKs(m.payload));
+  lb.on('broadcast', { event: 'bye' }, m => { const p = m.payload || {}; if (!kt || !kt.main || p.h !== kt.hostId) return; const q = kt.p.find(x => x.id === p.i); if (q) { q.out = true; kt.pergi.add(q.id); } });
+  lb.subscribe(st => { if (st === 'SUBSCRIBED' && kt) ktKirimLobi('cari', { id: idKlien }); });
+  kt.lobi = lb; ktLobi();
+  const bt = document.querySelector('#bentuk-baris .ikon.ktr'); if (bt) bt.classList.add('pilih');
+  umumkan('Jendela permainan Ketik-Dek. Ini fitur visual. Escape untuk menutup.');
+}
+function tutupKetik() {
+  if (!kt) return; const m = kt; kt = null; setTimeout(hadir, 0);
+  try { cancelAnimationFrame(m.raf); clearInterval(m.hb); } catch (e) {}
+  try {
+    if (m.main && m.p.length > 1) m.lobi.send({ type: 'broadcast', event: 'bye', payload: { h: m.hostId, i: idKlien } });
+    if (m.mode === 'host' && m.menunggu) { m.lobi.send({ type: 'broadcast', event: 'batal', payload: { host: idKlien } }); m.lobi.send({ type: 'broadcast', event: 'tutup', payload: { id: idKlien } }); }
+    if (m.mode === 'tamu' && !m.main) m.lobi.send({ type: 'broadcast', event: 'keluarlobi', payload: { id: idKlien, host: m.hostId } });
+  } catch (e) {}
+  setTimeout(() => { try { sb.removeChannel(m.lobi); } catch (e) {} }, 200);
+  document.removeEventListener('keydown', m.tekan, true); document.removeEventListener('keyup', m.tekan, true); window.removeEventListener('resize', m.onUkur);
+  lepasEsc(); m.ov.remove(); const b = document.querySelector('#bentuk-baris .ikon.ktr'); if (b) { b.classList.remove('pilih'); b.focus(); }
 }
 /* Pencatat Waktu: jendela kecil di kolom kanan, diatur dosen, disebar lewat Presence ke semua ruang. */
 let tmSaya = null, tmDosen = null, tmKunci = '', tmHabisSudah = '', tmJud = 'Pencatat Waktu', tmMenit = 10, tmMode = 'mundur';
@@ -4050,7 +4257,7 @@ const bolehCoret = () => { if (dosenSaya) return true; if (!kanvasDibuka()) retu
 function hadirKirim() {
   if (!kanalHadir) return;
   const info = { id: idKlien, nama: tokenHidup() ? (getUser() || '') : '', ruang: ruangSaya, uid: tokenHidup() ? uidSaya() : '', dos: !!dosenSaya };
-  if (mn && mn.main && !mn.min && adalahEscape(ruangSaya)) info.gm = 1;   // sedang memainkan Gim-Dek (titik merah / hitungan di Statistik)
+  if (((mn && mn.main && !mn.min) || (kt && kt.main && !kt.selesai)) && adalahEscape(ruangSaya)) info.gm = 1;   // sedang memainkan Gim-Dek (titik merah / hitungan di Statistik)
   if (dosenSaya) { info.izin = [...izinKanvas].slice(0, 400); info.kvb = [...kvBukaSet].slice(0, 60); info.kvs = [...kvSemuaSet].slice(0, 60); if (umumSaya) info.um = umumSaya; if (dosenSaya && tmSaya) info.tm = tmSaya; }
   const sig = JSON.stringify(info); if (sig === hadirSig) return; hadirSig = sig;
   try { kanalHadir.track(info); } catch (e) {}

@@ -3916,7 +3916,7 @@ function bukaMenara() {
       h('button', { type: 'button', class: 'btn', id: 'mn-suara', 'aria-pressed': 'true', onclick: e => { mn.suara = !mn.suara; e.currentTarget.setAttribute('aria-pressed', String(mn.suara)); e.currentTarget.textContent = mn.suara ? '\u{1F50A}' : '\u{1F507}'; } }, '\u{1F50A}'),
       h('button', { type: 'button', class: 'btn', 'aria-label': 'Tutup permainan', onclick: tutupMenara }, '✕'))),
     h('div', { class: 'mn-isi' }));
-  const ov = h('div', { id: 'menara-ov' }, kotak); ov.addEventListener('mousedown', e => { if (e.target === ov) tutupMenara(); });
+  const ov = h('div', { id: 'menara-ov' }, kotak); 
   mn = { fx: [], gy: new Array(16).fill(null), kotak, ruang: ruangSaya, suara: true, undangan: new Map(), mode: '', peran: '', arah: 0, main: false, g: null, v: null };
   document.body.append(ov); pasangEsc(tutupMenara);
   mn.tekan = e => {

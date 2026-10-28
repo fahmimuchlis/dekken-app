@@ -3741,12 +3741,13 @@ function mnGambar() {
       for (let j = 0; j < s.c; j++) { mnJalur(c, MN.TIPE[s.k], bx + gw * (j / nn), LANTAI - R - j * TEBAL, R); c.fillStyle = mnPetak(s.k); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); } }
   });
   if (v.b) {
-    const b = v.b, ki = mnCari(v, b.x), n = ki >= 0 ? v.st[ki].c : 0, tx = ki >= 0 ? mnDekatS(v, v.st[ki], b.x) : (v.st.length < 4 ? mnSlotX(v, b.x) : b.x), ty = mnRest(n - 1), y1 = b.y + R + 8, y2 = ty - R - 6;
+    const b = v.b, ki = mnCari(v, b.x), n = ki >= 0 ? v.st[ki].c : 0, tx = ki >= 0 ? mnDekatS(v, v.st[ki], b.x) : (v.st.length < 4 ? mnSlotX(v, b.x) : b.x), ty = mnRest(n - 1);
     if (!b.jatuh) { c.save(); c.globalAlpha = 0.45; c.setLineDash([5, 4]); c.strokeStyle = ink; c.lineWidth = 1.6; mnJalur(c, b.tipe, tx, ty, R); c.stroke(); c.restore(); }   // bayangan tempat mendarat
-    if (y2 > y1 + 14) {   // konektor tipis bertitik lurus ke bawah, sampai tempat mendarat
-      c.fillStyle = ink; for (let y = y1; y < y2; y += 13) { c.beginPath(); c.arc(b.x, y, 3, 0, Math.PI * 2); c.fill(); }
-    }
     mnJalur(c, b.tipe, b.x, b.y, R); c.fillStyle = mnWarnaTipe(b.tipe); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke();
+  }
+  if (v.st.length >= 4) {   // penanda bentuk yang tidak ada di dek: hindari
+    const ada = v.st.map(q => q.k), ak = [0, 1, 2, 3, 4].find(i => !ada.includes(i));
+    if (ak !== undefined) { c.font = '600 13px system-ui, Arial, sans-serif'; c.textAlign = 'left'; const lb = 'Hindari', tw = c.measureText(lb).width, x0 = W / 2 - (tw + 30) / 2; c.fillStyle = ink; c.fillText(lb, x0, H - 14); mnJalur(c, MN.TIPE[ak], x0 + tw + 18, H - 19, 10); c.fillStyle = MN.WARNA[ak]; c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1; c.stroke(); }
   }
   for (const f of mn.fx) { c.save(); c.translate(f.x, f.y); c.rotate(f.r); mnJalur(c, f.tipe, 0, 0, R); c.fillStyle = mnWarnaTipe(f.tipe); c.fill(); c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 1.4; c.stroke(); c.restore(); }
   c.fillStyle = ink; c.font = '600 16px system-ui, Arial, sans-serif'; c.textAlign = 'left'; c.fillText('Skor ' + v.skor, 12, 30); if (v.st.length < 4) { c.textAlign = 'center'; c.fillText('Pasang ' + v.st.length + ' / 4', W / 2, 30); } c.textAlign = 'right'; c.fillText('Tinggi ' + Math.max(0, ...v.st.map(q => q.c)) + ' / ' + MN.NMAKS, W - 12, 30);
